@@ -41,5 +41,5 @@ void isr_handler(struct interrupt_registers regs) {
             // Handle unknown interrupt
             break;
     }
-    print("Unhandled interrupt: ", (char*) 0xb8000);
+    print("Unhandled interrupt: ", (char*) 0xb8200);
 }

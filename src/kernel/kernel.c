@@ -18,12 +18,11 @@ void main() {
     
     screen += 160;
     print(str, screen);
-
+    
     screen += 160;
     print(str, screen);
 
-    
-    //int fault = 1/0;
+    int x = 1/0; // This will trigger a divide by zero exception
 
     while(1);
 }

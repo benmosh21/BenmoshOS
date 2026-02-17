@@ -5,10 +5,7 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 
-// Standard types
-typedef unsigned char       uint8_t;
-typedef unsigned short      uint16_t;
-typedef unsigned int        uint32_t;
+#include <stdint.h>
 
 /* MAIN.C */
 extern unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count);

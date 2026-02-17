@@ -1,7 +1,7 @@
 /*
  * idt.h - IDT definitions for our OS
  * This file contains the definitions for the Interrupt Descriptor Table (IDT) and related structures.
- */
+*/
 
 #ifndef IDT_H
 #define IDT_H
@@ -38,7 +38,7 @@ extern struct idt_ptr idt_ptr;
 
 // Interrupt Service Routines (ISRs) declarations
 void set_idt_gate(int num, uint32_t base, uint16_t sel, uint8_t flags);
-void load_idt( void );
+void load_idt();
 
 // ISR handler declaration
 void isr_handler(struct interrupt_registers regs);
