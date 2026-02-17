@@ -1,3 +1,10 @@
+; 
+; entry.asm - The entry point of our kernel
+; This file is responsible for setting up the environment before calling main.
+; It clears the BSS section and then jumps to main.
+; 
+
+
 [bits 32]
 [extern main]       ; We need to call main
 [extern __bss_start]; Linker symbol

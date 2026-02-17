@@ -1,3 +1,8 @@
+/* 
+ * shell.c - A simple command-line shell for our OS
+ * This file implements a basic shell that can read user input, parse it, and execute commands.
+ */
+
 #include <stdio.h>
 
 #define LSH_RL_BUFSIZE 1024

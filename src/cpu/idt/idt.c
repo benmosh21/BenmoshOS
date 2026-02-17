@@ -1,3 +1,8 @@
+/*
+ * idt.c - IDT functions for our OS
+ * This file contains functions to set up and load the Interrupt Descriptor Table (IDT).
+ */
+
 #include "idt.h"
 
 // Define the IDT and its pointer

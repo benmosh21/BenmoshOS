@@ -1,3 +1,7 @@
+/*
+ * system.h - System definitions for our OS
+ * This file contains definitions and declarations for system-level functions.
+ */
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 

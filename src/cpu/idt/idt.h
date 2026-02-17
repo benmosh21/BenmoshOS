@@ -1,8 +1,13 @@
+/*
+ * idt.h - IDT definitions for our OS
+ * This file contains the definitions for the Interrupt Descriptor Table (IDT) and related structures.
+ */
+
 #ifndef IDT_H
 #define IDT_H
 
 #include <stdint.h>
-#include "print.h"
+#include "../../drivers/print.h"
 
 // IDT (Interrupt Descriptor Table) definitions
 struct idt_entry {

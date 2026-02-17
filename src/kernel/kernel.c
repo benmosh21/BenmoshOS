@@ -1,7 +1,12 @@
+/* 
+ * kernel.c - The main kernel code for our OS
+ * This file contains the entry point for the kernel and initializes the system.
+ */
+
 #include <stdint.h>
 #include "system.h"
-#include "idt.h"
-#include "print.h"
+#include "../cpu/idt/idt.h"
+#include "../drivers/print.h"
 
 
 __attribute__((section(".text.main")))

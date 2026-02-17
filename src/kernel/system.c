@@ -1,3 +1,8 @@
+/*
+ * system.c - System functions for our OS
+ * This file contains utility functions that are used throughout the kernel.
+ */
+
 #include "system.h"
 
 unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count) {

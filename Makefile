@@ -1,31 +1,45 @@
-# Variables
+# --- Variables ---
 ASM = nasm
 CC = gcc
 LD = ld
 
-# Flags
-CFLAGS = -ffreestanding -m32 -g -fno-pie
+# Directories
+SRC_DIR = src
+BUILD_DIR = build
+
+# Define source paths based on the new structure
+BOOT_SRC = $(SRC_DIR)/bootloader/boot.asm
+ENTRY_SRC = $(SRC_DIR)/bootloader/entry.asm
+KERNEL_SRC = $(SRC_DIR)/kernel/kernel.c
+# Assuming idt.c is inside the idt folder you moved to cpu
+IDT_SRC = $(SRC_DIR)/cpu/idt/idt.c  
+INTERRUPTS_SRC = $(SRC_DIR)/cpu/interrupts.asm
+PRINT_SRC = $(SRC_DIR)/drivers/print.c
+
+# --- Flags ---
+# -I flags tell GCC where to look for header files (.h)
+INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel
+CFLAGS = -ffreestanding -m32 -g -fno-pie $(INCLUDE_FLAGS)
 LDFLAGS = -T linker.ld -m elf_i386 --oformat binary
 
-# Files
-BOOT_SRC = boot.asm
-ENTRY_SRC = entry.asm
-KERNEL_SRC = kernel.c
-IDT_SRC = idt.c
-INTERRUPTS_SRC = interrupts.asm
-PRINT_SRC = print.c
-PRINT_OBJ = print.o
-
-BOOT_BIN = boot.bin
-ENTRY_OBJ = entry.o
-KERNEL_OBJ = kernel.o
-IDT_OBJ = idt.o
-INTERRUPTS_OBJ = interrupts.o
-KERNEL_BIN = kernel.bin
+# --- Output Files (placed in build dir) ---
+BOOT_BIN = $(BUILD_DIR)/boot.bin
+ENTRY_OBJ = $(BUILD_DIR)/entry.o
+KERNEL_OBJ = $(BUILD_DIR)/kernel.o
+IDT_OBJ = $(BUILD_DIR)/idt.o
+INTERRUPTS_OBJ = $(BUILD_DIR)/interrupts.o
+PRINT_OBJ = $(BUILD_DIR)/print.o
+KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 OS_IMAGE = os-image.bin
 
+# --- Targets ---
+
 # Default target
-all: $(OS_IMAGE)
+all: $(BUILD_DIR) $(OS_IMAGE)
+
+# Create build directory if it doesn't exist
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
 # 1. Build the Bootloader
 $(BOOT_BIN): $(BOOT_SRC)
@@ -52,6 +66,7 @@ $(PRINT_OBJ): $(PRINT_SRC)
 	$(CC) $(CFLAGS) -c $(PRINT_SRC) -o $(PRINT_OBJ)
 
 # 7. Link Everything Together
+# Note: The order of object files here matters for the linker!
 $(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PRINT_OBJ)
 	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PRINT_OBJ)
 
@@ -66,4 +81,4 @@ run: $(OS_IMAGE)
 
 # Clean up
 clean:
-	rm -f *.bin *.o $(OS_IMAGE)
+	rm -rf $(BUILD_DIR) $(OS_IMAGE)

@@ -1,3 +1,8 @@
+/*
+ * print.c - Print functions for our OS
+ * This file contains functions to print strings to the screen.
+ */
+
 #include "print.h"
 
 void print(char *str, char *screen) {
