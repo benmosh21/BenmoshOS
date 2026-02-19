@@ -66,24 +66,13 @@ void isr_handler(struct interrupt_registers regs) {
             // We can add timer handling code here if needed
             print("test");
             break;
-        case 0x21:
-            // Keyboard interrupt
-            unsigned char scancode = inportb(0x60);
-            if (scancode == 0x80) {
-                // Key release, ignore for now
-                break;
-            }
 
-            if (scancode == SCANCODE_UP_ARROW) {
-                scroll_history_up(100);
-            } else if (scancode == SCANCODE_DOWN_ARROW) {
-                scroll_history_down(100);
-            } else if (scancode < 58) { // Only print valid scancodes for keys
-                print_scancode(scancode);
-            }
+        case 0x21: 
+            // Keyboard interrupt (IRQ 1)
+            //print_scancode(inportb(0x60)); // Print the scancode for debugging
+            keyboard_handler(); // Let the driver handle EVERYTHING
+            break;
 
-            break;     
-            
         case 0x2c:
             // Mouse interrupt (IRQ12)
             print("Mouse interrupt received\n");

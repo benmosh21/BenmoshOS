@@ -15,11 +15,14 @@ void main() {
     load_idt(); // Load the Interrupt Descriptor Table (IDT)
     pic_remap(); // Remap PIC to avoid conflicts with CPU exceptions
 
+
     __asm__ volatile ("sti"); // Enable interrupts
 
     print("Welcome to BenmoshOS!\n");
     print("This is a simple kernel written in C.\n");
+    
 
-
-    while(1);
+    while(1) {
+        __asm__ volatile ("hlt"); // Halt the CPU until the next interrupt
+    }
 }

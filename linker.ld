@@ -7,7 +7,7 @@ SECTIONS
 
     /* 2. Define the code section */
     .text : {
-        *(.text.main)  /* Pull main() to the front */
+        *(.text.entry)  /* Pull main() to the front */
         *(.text)       /* All other code */
     }
 

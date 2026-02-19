@@ -14,6 +14,7 @@ IDT_SRC = $(SRC_DIR)/cpu/idt/idt.c
 PIC_SRC = $(SRC_DIR)/cpu/pic/pic.c
 INTERRUPTS_SRC = $(SRC_DIR)/cpu/interrupts.asm
 PRINT_SRC = $(SRC_DIR)/drivers/print.c
+KEYBOARD_SRC = $(SRC_DIR)/drivers/keyboard.c
 SYSTEM_SRC = $(SRC_DIR)/kernel/system.c
 
 # --- Flags ---
@@ -31,6 +32,7 @@ IDT_OBJ = $(BUILD_DIR)/idt.o
 PIC_OBJ = $(BUILD_DIR)/pic.o
 INTERRUPTS_OBJ = $(BUILD_DIR)/interrupts.o
 PRINT_OBJ = $(BUILD_DIR)/print.o
+KEYBOARD_OBJ = $(BUILD_DIR)/keyboard.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 OS_IMAGE = os-image.bin
 
@@ -75,14 +77,18 @@ $(PIC_OBJ): $(PIC_SRC)
 $(PRINT_OBJ): $(PRINT_SRC)
 	$(CC) $(CFLAGS) -c $(PRINT_SRC) -o $(PRINT_OBJ)
 
+# Compile the Keyboard C code
+$(KEYBOARD_OBJ): $(KEYBOARD_SRC)
+	$(CC) $(CFLAGS) -c $(KEYBOARD_SRC) -o $(KEYBOARD_OBJ)
+
 # Compile the System C code
 $(SYSTEM_OBJ): $(SYSTEM_SRC)
 	$(CC) $(CFLAGS) -c $(SYSTEM_SRC) -o $(SYSTEM_OBJ)
 
 # Link Everything Together
 # Note: The order of object files here matters for the linker!
-$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(PRINT_OBJ)
-	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(PRINT_OBJ)
+$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
 
 # 9. Glue them together into one OS Image
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)

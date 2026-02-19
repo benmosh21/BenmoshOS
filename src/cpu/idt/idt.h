@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "../../drivers/print.h"
+#include "../../drivers/keyboard.h"
 
 // IDT (Interrupt Descriptor Table) definitions
 struct idt_entry {

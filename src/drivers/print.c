@@ -62,6 +62,11 @@ void print_char(char c) {
     if (c == '\n') {
         write_col = 0;
         write_row++;
+    } else if (c == '\b') {
+        if (write_col > 0) {
+            write_col--;
+            line_buffer[write_row][write_col] = ' ';
+        } 
     } else {
         // Safety: Don't write past buffer end
         if (write_row < BUFFER_ROWS) {
@@ -163,15 +168,3 @@ void print_int(int n) {
     print(buffer);
 }
 
-void print_scancode(uint8_t scancode) {
-    static const unsigned char scancode_map[] = {
-        0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
-        '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
-        0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0, '\\',
-        'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' '
-    };
-
-    if (scancode < sizeof(scancode_map)) {
-        print_char(scancode_map[scancode]);
-    }
-}

@@ -6,6 +6,8 @@
 
 
 [bits 32]
+section .text.entry
+
 [extern main]       ; We need to call main
 [extern __bss_start]; Linker symbol
 [extern __bss_end]  ; Linker symbol
