@@ -4,6 +4,11 @@
  */
 
 #include "idt.h"
+#include "../pic/pic.h" // For sending EOI to PICs after handling interrupts
+
+
+#define SCANCODE_UP_ARROW   72
+#define SCANCODE_DOWN_ARROW 80
 
 // Define the IDT and its pointer
 struct idt_entry idt[256];
@@ -18,28 +23,81 @@ void set_idt_gate(int num, uint32_t base, uint16_t sel, uint8_t flags) {
     idt[num].offset_high = (base >> 16) & 0xFFFF;
 }
 
+
+// ISR stub table (defined in interrupts.asm)
+void *isr_stub_table[48] = {
+    isr0, isr1, isr2, isr3, isr4, isr5, isr6, isr7,
+    isr8, isr9, isr10, isr11, isr12, isr13, isr14, isr15,
+    isr16, isr17, isr18, isr19, isr20, isr21, isr22, isr23,
+    isr24, isr25, isr26, isr27, isr28, isr29, isr30, isr31,
+    isr32, isr33, isr34, isr35, isr36, isr37, isr38, isr39,
+    isr40, isr41, isr42, isr43, isr44, isr45, isr46, isr47
+};
+
+// Load the IDT into the CPU
 void load_idt() {
     idt_ptr.limit = sizeof(struct idt_entry) * 256 - 1;
     idt_ptr.base = (uint32_t) &idt;
 
-    extern void isr0(); // Declare ISR handlers (defined in interrupts.asm)
-    set_idt_gate(0, (uint32_t) isr0, 0x08, 0x8E); // Set the first entry for divide by zero exception
+    for (int i = 0; i < 48; i++) {
+        set_idt_gate(i, (uint32_t) isr_stub_table[i], 0x08, 0x8E);
+    }
 
     __asm__ volatile ("lidt (%0)" : : "r" (&idt_ptr));
 }
 
+// ISR handler function
 void isr_handler(struct interrupt_registers regs) {
     switch (regs.int_no) {
         case 0x00:
-            print("Divide by zero exception", (char*) 0xb8000);
-            for (;;);
+            print("Divide by zero exception\n");
+            for (;;) {
+                __asm__ volatile("hlt");
+            }
             break;
+
         case 0x01:
-            // Handle debug exception
+            print("Debug exception\n");
+            for (;;) __asm__ volatile("hlt");
             break;
+        
+        case 0x20:
+            // Timer interrupt (IRQ0)
+            // We can add timer handling code here if needed
+            print("test");
+            break;
+        case 0x21:
+            // Keyboard interrupt
+            unsigned char scancode = inportb(0x60);
+            if (scancode == 0x80) {
+                // Key release, ignore for now
+                break;
+            }
+
+            if (scancode == SCANCODE_UP_ARROW) {
+                scroll_history_up(100);
+            } else if (scancode == SCANCODE_DOWN_ARROW) {
+                scroll_history_down(100);
+            } else if (scancode < 58) { // Only print valid scancodes for keys
+                print_scancode(scancode);
+            }
+
+            break;     
+            
+        case 0x2c:
+            // Mouse interrupt (IRQ12)
+            print("Mouse interrupt received\n");
+            break;
+
         default:
             // Handle unknown interrupt
-            break;
+            print("Unhandled interrupt:\n");
+            print_int(regs.int_no); // Let's see the number!
+            print("\n");
+            return;
+        }
+
+    if (regs.int_no >= 32 && regs.int_no < 48) {
+        pic_send_eoi(regs.int_no - 32);
     }
-    print("Unhandled interrupt: ", (char*) 0xb8200);
 }

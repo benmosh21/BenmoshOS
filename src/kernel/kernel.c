@@ -6,23 +6,20 @@
 #include <stdint.h>
 #include "system.h"
 #include "../cpu/idt/idt.h"
+#include "../cpu/pic/pic.h"
 #include "../drivers/print.h"
 
 
 __attribute__((section(".text.main")))
 void main() {
-    load_idt();
+    load_idt(); // Load the Interrupt Descriptor Table (IDT)
+    pic_remap(); // Remap PIC to avoid conflicts with CPU exceptions
 
-    char *screen = (char*) 0xb8000;
-    char *str = "this is from C";
-    
-    screen += 160;
-    print(str, screen);
-    
-    screen += 160;
-    print(str, screen);
+    __asm__ volatile ("sti"); // Enable interrupts
 
-    int x = 1/0; // This will trigger a divide by zero exception
+    print("Welcome to BenmoshOS!\n");
+    print("This is a simple kernel written in C.\n");
+
 
     while(1);
 }

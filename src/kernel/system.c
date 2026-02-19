@@ -5,6 +5,8 @@
 
 #include "system.h"
 
+// Memory manipulation functions
+// Copies 'count' bytes from 'src' to 'dest'
 unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count) {
     for (uint32_t i = 0; i < count; i++) {
         dest[i] = src[i];
@@ -12,6 +14,7 @@ unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count) {
     return dest;
 }
 
+// Sets 'count' bytes in 'dest' to the value 'val'
 unsigned char *memset(unsigned char *dest, uint8_t val, uint32_t count) {
     for (uint32_t i = 0; i < count; i++) {
         dest[i] = val;
@@ -19,6 +22,7 @@ unsigned char *memset(unsigned char *dest, uint8_t val, uint32_t count) {
     return dest;
 }
 
+// Sets 'count' 16-bit words in 'dest' to the value 'val'
 unsigned short *memsetw(unsigned short *dest, uint16_t val, uint32_t count) {
     for (uint32_t i = 0; i < count; i++) {
         dest[i] = val;
@@ -26,6 +30,7 @@ unsigned short *memsetw(unsigned short *dest, uint16_t val, uint32_t count) {
     return dest;
 }
 
+// Returns the length of a null-terminated string
 int strlen(const char *str) {
     int len = 0;
     while (str[len] != '\0') {
@@ -34,13 +39,17 @@ int strlen(const char *str) {
     return len;
 }
 
-
+// I/O port functions
+// Reads a byte from the specified I/O port
 unsigned char inportb(uint16_t _port) {
     unsigned char rv;
     __asm__ volatile ("inb %1, %0" : "=a" (rv) : "Nd" (_port));
     return rv;
 }
 
+// Writes a byte to the specified I/O port
 void outportb(uint16_t _port, unsigned char _data) {
     __asm__ volatile ("outb %0, %1" : : "a" (_data), "Nd" (_port));
 }
+
+

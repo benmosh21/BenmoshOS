@@ -5,7 +5,7 @@
 ![Platform](https://img.shields.io/badge/platform-x86-blue)
 
 ## 📖 About
-This is a me bored and insane making (traing very bad and failing even with ai) a somting that is an os (not even sure about that), but I have no idea how to do it.
+This is a me bored and insane making (traing very bad and failing even worse with ai) a somting that is an os (not even sure about that), but I have no idea how to do it.
 
 I am learning as I go, documenting the process of moving from "I have no idea what I'm doing".
 

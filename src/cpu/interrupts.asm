@@ -20,9 +20,12 @@
         jmp isr_common_stub
 %endmacro
 
+; This file is purely assembly and will be linked with our C code.
 [bits 32]
 extern isr_handler
 
+; --- ISRs for CPU Exceptions (Interrupts 0-31) ---
+; Define ISRs for CPU exceptions (0-31)
 ISR_NOERRCODE 0   ; Divide by Zero
 ISR_NOERRCODE 1   ; Debug
 ISR_NOERRCODE 2   ; Non-Maskable Interrupt
@@ -55,6 +58,27 @@ ISR_NOERRCODE 28  ; (Intel reserved. Do not use.)
 ISR_NOERRCODE 29  ; (Intel reserved. Do not use.)
 ISR_NOERRCODE 30  ; (Intel reserved. Do not use.)
 ISR_NOERRCODE 31  ; (Intel reserved. Do not use.)
+
+; --- IRQs (Hardware Interrupts) ---
+; Master PIC (IRQ 0-7) -> Maps to IDT entries 32-39
+ISR_NOERRCODE 32  ; IRQ0 - Timer
+ISR_NOERRCODE 33  ; IRQ1 - Keyboard
+ISR_NOERRCODE 34  ; IRQ2 - Cascade (used internally by the PIC)
+ISR_NOERRCODE 35  ; IRQ3 - COM2
+ISR_NOERRCODE 36  ; IRQ4 - COM1
+ISR_NOERRCODE 37  ; IRQ5 - LPT2
+ISR_NOERRCODE 38  ; IRQ6 - Floppy Disk
+ISR_NOERRCODE 39  ; IRQ7 - LPT1
+
+; Slave PIC (IRQ 8-15) -> Maps to IDT entries 40-47
+ISR_NOERRCODE 40  ; IRQ8 - RTC
+ISR_NOERRCODE 41  ; IRQ9 - Free for peripherals (legacy SCSI, NIC, etc.)
+ISR_NOERRCODE 42  ; IRQ10 - Free for peripherals
+ISR_NOERRCODE 43  ; IRQ11 - Free for peripherals
+ISR_NOERRCODE 44  ; IRQ12 - PS/2 Mouse
+ISR_NOERRCODE 45  ; IRQ13 - FPU / Coprocessor / Internal errors
+ISR_NOERRCODE 46  ; IRQ14 - Primary ATA Hard Disk
+ISR_NOERRCODE 47  ; IRQ15 - Secondary ATA Hard Disk
 
 isr_common_stub:
     pushad              ; 1. Save all registers
