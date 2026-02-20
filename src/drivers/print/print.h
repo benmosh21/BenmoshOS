@@ -2,7 +2,7 @@
 #define PRINT_H
 
 #include <stdint.h>
-#include "../kernel/system.h"
+#include "../../kernel/system.h"
 
 
 // Print functions for our OS

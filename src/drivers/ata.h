@@ -1,0 +1,9 @@
+#ifndef ATA_H
+#define ATA_H
+
+#include <stdint.h>
+#include "../kernel/system.h"
+
+void ata_read_sector(uint32_t lba, uint8_t *buffer);
+
+#endif

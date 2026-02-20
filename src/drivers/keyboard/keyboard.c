@@ -1,6 +1,4 @@
 #include "keyboard.h"
-#include "print.h"
-#include "../kernel/system.h" // For inportb
 
 #define BACKSPACE 0x0E
 #define ENTER 0x1C

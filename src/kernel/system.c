@@ -41,9 +41,15 @@ int strlen(const char *str) {
 
 // I/O port functions
 // Reads a byte from the specified I/O port
-unsigned char inportb(uint16_t _port) {
+uint8_t inportb(uint16_t _port) {
     unsigned char rv;
     __asm__ volatile ("inb %1, %0" : "=a" (rv) : "Nd" (_port));
+    return rv;
+}
+
+uint16_t inportw (uint16_t _port) {
+    uint16_t rv;
+    __asm__ volatile ("inw %1, %0" : "=a" (rv) : "Nd" (_port));
     return rv;
 }
 

@@ -4,7 +4,6 @@
  */
 
 #include "idt.h"
-#include "../pic/pic.h" // For sending EOI to PICs after handling interrupts
 
 
 #define SCANCODE_UP_ARROW   72

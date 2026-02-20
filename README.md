@@ -26,6 +26,8 @@ To build and run this OS, you will need the following tools installed (Linux/WSL
 * **GCC** (C Compiler)
 * **Make** (Build system)
 * **QEMU** (Emulator)
+* **dd** (Disk image creation)
+* **mkfs.fat** (FAT filesystem creation)
 
 
 ## 🚀 How to Build & Run

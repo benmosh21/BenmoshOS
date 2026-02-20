@@ -12,7 +12,8 @@ extern unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t c
 extern unsigned char *memset(unsigned char *dest, uint8_t val, uint32_t count);
 extern unsigned short *memsetw(unsigned short *dest, uint16_t val, uint32_t count);
 extern int strlen(const char *str);
-unsigned char inportb (uint16_t _port);
+uint8_t inportb (uint16_t _port);
+uint16_t inportw (uint16_t _port);
 void outportb (uint16_t _port, unsigned char _data);
 
 #endif

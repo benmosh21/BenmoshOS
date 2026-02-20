@@ -7,8 +7,31 @@
 [bits 16]
 
 start:
-	jmp main
-	
+	jmp short main
+	nop
+
+; --- BIOS Parameters Block (BPB) ---
+oem_name: 				db 'BenMOS  ' 		; 8 bytes
+bytes_per_sector:		dw 512				;
+sectors_per_cluster:	db 1 				;
+reserved_sectors:		dw 50				; Sector 0 is fir the bootloader
+fat_count:				db 2 				; One is the primary FAT, the other is a backup
+root_dir_entries: 		dw 512				;
+total_sectors_16: 		dw 0				; we will use the 32-bite count
+media_descriptor: 		db 0xF8				; 0xF8 means Hard Drive
+sectors_per_fat:		dw 256				;
+sectors_per_track: 		dw 63				;
+head_count:				dw 16				;
+hidden_sectors: 		dd 0				;
+total_sectors_32: 		dd 20480			; The total number of sectors on the disk (10MB)
+
+; --- Extended Boot Record (EBR) ---	
+drive_number:			db 0x80				; 0x80 means Hard Drive 0
+reserved:				db 0				; Must be 0
+boot_signature:			db 0x29				;
+volume_id:				dd 0x67676767		; Random serial (67 67 67) number
+volume_label:			db 'BenmoshOS  '	; 11 bytes
+file_system_type:		db 'FAT16   '		; 8 bytes
 
 ;
 ; Print a string to the screen.
@@ -58,7 +81,7 @@ main:
 	
 	; go to the next section
 	mov bx, 0x7e00
-	mov ax, 0x0250
+	mov ax, 0x0210
 	mov cl, 2
 	xor ch, ch
 	xor dh, dh

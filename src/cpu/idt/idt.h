@@ -7,8 +7,10 @@
 #define IDT_H
 
 #include <stdint.h>
-#include "../../drivers/print.h"
-#include "../../drivers/keyboard.h"
+#include "../../drivers/print/print.h"
+#include "../../drivers/keyboard/keyboard.h"
+#include "../pic/pic.h" // For sending EOI to PICs after handling interrupts
+
 
 // IDT (Interrupt Descriptor Table) definitions
 struct idt_entry {

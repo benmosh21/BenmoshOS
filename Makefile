@@ -12,9 +12,10 @@ ENTRY_SRC = $(SRC_DIR)/bootloader/entry.asm
 KERNEL_SRC = $(SRC_DIR)/kernel/kernel.c
 IDT_SRC = $(SRC_DIR)/cpu/idt/idt.c
 PIC_SRC = $(SRC_DIR)/cpu/pic/pic.c
+ATA_SRC = $(SRC_DIR)/drivers/ata.c
 INTERRUPTS_SRC = $(SRC_DIR)/cpu/interrupts.asm
-PRINT_SRC = $(SRC_DIR)/drivers/print.c
-KEYBOARD_SRC = $(SRC_DIR)/drivers/keyboard.c
+PRINT_SRC = $(SRC_DIR)/drivers/print/print.c
+KEYBOARD_SRC = $(SRC_DIR)/drivers/keyboard/keyboard.c
 SYSTEM_SRC = $(SRC_DIR)/kernel/system.c
 
 # --- Flags ---
@@ -30,6 +31,7 @@ KERNEL_OBJ = $(BUILD_DIR)/kernel.o
 SYSTEM_OBJ = $(BUILD_DIR)/system.o
 IDT_OBJ = $(BUILD_DIR)/idt.o
 PIC_OBJ = $(BUILD_DIR)/pic.o
+ATA_OBJ = $(BUILD_DIR)/ata.o
 INTERRUPTS_OBJ = $(BUILD_DIR)/interrupts.o
 PRINT_OBJ = $(BUILD_DIR)/print.o
 KEYBOARD_OBJ = $(BUILD_DIR)/keyboard.o
@@ -73,6 +75,10 @@ $(IDT_OBJ): $(IDT_SRC)
 $(PIC_OBJ): $(PIC_SRC)
 	$(CC) $(CFLAGS) -c $(PIC_SRC) -o $(PIC_OBJ)
 
+# Compile the ATA C code
+$(ATA_OBJ): $(ATA_SRC)
+	$(CC) $(CFLAGS) -c $(ATA_SRC) -o $(ATA_OBJ)
+
 # Compile the Print C code
 $(PRINT_OBJ): $(PRINT_SRC)
 	$(CC) $(CFLAGS) -c $(PRINT_SRC) -o $(PRINT_OBJ)
@@ -81,22 +87,20 @@ $(PRINT_OBJ): $(PRINT_SRC)
 $(KEYBOARD_OBJ): $(KEYBOARD_SRC)
 	$(CC) $(CFLAGS) -c $(KEYBOARD_SRC) -o $(KEYBOARD_OBJ)
 
-# Compile the System C code
-$(SYSTEM_OBJ): $(SYSTEM_SRC)
-	$(CC) $(CFLAGS) -c $(SYSTEM_SRC) -o $(SYSTEM_OBJ)
-
 # Link Everything Together
 # Note: The order of object files here matters for the linker!
-$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
-	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
+$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
 
-# 9. Glue them together into one OS Image
+# Glue them together into one OS Image
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
+	# Concatenate the bootloader (Sectors 0 and 1) and the kernel (Sector 2+)
 	cat $(BOOT_BIN) $(KERNEL_BIN) > $(OS_IMAGE)
-	dd if=/dev/zero of=$(OS_IMAGE) bs=512 count=100 oflag=append conv=notrunc
-
+	
+	# Pad the disk with empty space so QEMU recognizes it as a hard drive (10MB)
+	dd if=/dev/zero bs=512 count=20480 >> $(OS_IMAGE)
 # Run the OS in QEMU
-run: $(OS_IMAGE)
+run: all
 	qemu-system-x86_64 -drive format=raw,file=$(OS_IMAGE)
 
 # Clean up
