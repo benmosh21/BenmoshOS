@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "../print/print.h"
 #include "../../kernel/system.h" // For inportb
-
+#include "../../shell/shell.h"
 
 void keyboard_handler();
 

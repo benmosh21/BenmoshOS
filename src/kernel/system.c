@@ -39,6 +39,22 @@ int strlen(const char *str) {
     return len;
 }
 
+int strcmp(char* s1, char* s2) {
+    int i = 0;
+
+    // Keep looping as long as the letters match
+    while (s1[i] == s2[i]) {
+        // If we reach the null terminator without any mismatches, it is a perfect match
+        if (s1[i] == '\0') {
+            return 1;
+        }
+        i++;
+    }
+
+    // If we exit the loop early, a letter didn't match
+    return 0;
+}
+
 // I/O port functions
 // Reads a byte from the specified I/O port
 uint8_t inportb(uint16_t _port) {
@@ -56,6 +72,10 @@ uint16_t inportw (uint16_t _port) {
 // Writes a byte to the specified I/O port
 void outportb(uint16_t _port, unsigned char _data) {
     __asm__ volatile ("outb %0, %1" : : "a" (_data), "Nd" (_port));
+}
+
+void outportw(uint16_t _port, uint16_t _data) {
+	__asm__ volatile ("outw %0, %1" : : "a" (_data), "Nd" (_port));
 }
 
 

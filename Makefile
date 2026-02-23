@@ -12,15 +12,17 @@ ENTRY_SRC = $(SRC_DIR)/bootloader/entry.asm
 KERNEL_SRC = $(SRC_DIR)/kernel/kernel.c
 IDT_SRC = $(SRC_DIR)/cpu/idt/idt.c
 PIC_SRC = $(SRC_DIR)/cpu/pic/pic.c
-ATA_SRC = $(SRC_DIR)/drivers/ata.c
+ATA_SRC = $(SRC_DIR)/drivers/ata/ata.c
 INTERRUPTS_SRC = $(SRC_DIR)/cpu/interrupts.asm
 PRINT_SRC = $(SRC_DIR)/drivers/print/print.c
 KEYBOARD_SRC = $(SRC_DIR)/drivers/keyboard/keyboard.c
 SYSTEM_SRC = $(SRC_DIR)/kernel/system.c
+SHELL_SRC = $(SRC_DIR)/shell/shell.c
+FAT16_SRC = $(SRC_DIR)/fs/fat16.c
 
 # --- Flags ---
 # -I flags tell GCC where to look for header files (.h)
-INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel
+INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell
 CFLAGS = -ffreestanding -m32 -g -fno-pie $(INCLUDE_FLAGS)
 LDFLAGS = -T linker.ld -m elf_i386 --oformat binary
 
@@ -36,6 +38,8 @@ INTERRUPTS_OBJ = $(BUILD_DIR)/interrupts.o
 PRINT_OBJ = $(BUILD_DIR)/print.o
 KEYBOARD_OBJ = $(BUILD_DIR)/keyboard.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
+SHELL_OBJ = $(BUILD_DIR)/shell.o
+FAT16_OBJ = $(BUILD_DIR)/fat16.o
 OS_IMAGE = os-image.bin
 
 # --- Targets ---
@@ -87,19 +91,42 @@ $(PRINT_OBJ): $(PRINT_SRC)
 $(KEYBOARD_OBJ): $(KEYBOARD_SRC)
 	$(CC) $(CFLAGS) -c $(KEYBOARD_SRC) -o $(KEYBOARD_OBJ)
 
+# Compile the FAT16 C code
+$(FAT16_OBJ): $(FAT16_SRC)
+	$(CC) $(CFLAGS) -c $(FAT16_SRC) -o $(FAT16_OBJ)
+
+# Compile the Shell C code
+$(SHELL_OBJ): $(SHELL_SRC)
+	$(CC) $(CFLAGS) -c $(SHELL_SRC) -o $(SHELL_OBJ)
+
 # Link Everything Together
 # Note: The order of object files here matters for the linker!
-$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
-	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ)
+$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ)
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ)
 
 # Glue them together into one OS Image
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
-	# Concatenate the bootloader (Sectors 0 and 1) and the kernel (Sector 2+)
-	cat $(BOOT_BIN) $(KERNEL_BIN) > $(OS_IMAGE)
+	# Create a blank 10MB file
+	dd if=/dev/zero of=$(OS_IMAGE) bs=1M count=10
 	
-	# Pad the disk with empty space so QEMU recognizes it as a hard drive (10MB)
-	dd if=/dev/zero bs=512 count=20480 >> $(OS_IMAGE)
-# Run the OS in QEMU
+	# Format it as a FAT16 file system, explicitly reserving 50 sectors (-R 50)
+	mkfs.fat -F 16 -R 50 $(OS_IMAGE)
+	
+	# Inject the Bootloader Jump (First 3 bytes)
+	dd if=$(BOOT_BIN) of=$(OS_IMAGE) bs=1 count=3 conv=notrunc
+	
+	# Inject the Bootloader Code AND the 0xAA55 signature! (450 bytes)
+	dd if=$(BOOT_BIN) of=$(OS_IMAGE) bs=1 skip=62 seek=62 count=450 conv=notrunc
+	
+	# Inject the 32-bit switch code safely into Sector 1
+	dd if=$(BOOT_BIN) of=$(OS_IMAGE) bs=512 skip=1 seek=1 count=1 conv=notrunc
+	
+	# Inject the C kernel directly into the reserved space at Sector 2
+	dd if=$(KERNEL_BIN) of=$(OS_IMAGE) bs=512 seek=2 conv=notrunc
+	
+	# Copy the test file into the FAT16 file system
+	mcopy -i $(OS_IMAGE) test.txt ::my_super_long_test_file.txt	
+
 run: all
 	qemu-system-x86_64 -drive format=raw,file=$(OS_IMAGE)
 

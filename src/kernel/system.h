@@ -15,5 +15,7 @@ extern int strlen(const char *str);
 uint8_t inportb (uint16_t _port);
 uint16_t inportw (uint16_t _port);
 void outportb (uint16_t _port, unsigned char _data);
+void outportw (uint16_t _port, uint16_t _data);
+int strcmp(char* s1, char* s2);
 
 #endif

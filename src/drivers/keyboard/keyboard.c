@@ -45,11 +45,10 @@ void keyboard_handler() {
         print("\n");
         key_buffer[buffer_index] = '\0'; // Null-terminate the string
         
-        // TODO: Send key_buffer to a shell/command parser!
-        print("You typed: ");
-        print(key_buffer);
-        print("\n");
-        
+		// Execute the command in the buffer
+		execute_command(key_buffer);
+        print("BenmoshOS> ");
+
         // Reset the buffer for the next command
         buffer_index = 0;
         return;

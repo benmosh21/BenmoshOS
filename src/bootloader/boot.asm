@@ -14,12 +14,12 @@ start:
 oem_name: 				db 'BenMOS  ' 		; 8 bytes
 bytes_per_sector:		dw 512				;
 sectors_per_cluster:	db 1 				;
-reserved_sectors:		dw 50				; Sector 0 is fir the bootloader
+reserved_sectors:		dw 50				; Sector 0 is for the bootloader and the rest are for the kernel
 fat_count:				db 2 				; One is the primary FAT, the other is a backup
-root_dir_entries: 		dw 512				;
+root_dir_entries: 		dw 512				; the number of entries in the root directory (512 entries * 32 bytes per entry = 16KB for the root directory)
 total_sectors_16: 		dw 0				; we will use the 32-bite count
 media_descriptor: 		db 0xF8				; 0xF8 means Hard Drive
-sectors_per_fat:		dw 256				;
+sectors_per_fat:		dw 256				; the size of the fat
 sectors_per_track: 		dw 63				;
 head_count:				dw 16				;
 hidden_sectors: 		dd 0				;
@@ -81,7 +81,7 @@ main:
 	
 	; go to the next section
 	mov bx, 0x7e00
-	mov ax, 0x0210
+	mov ax, 0x0250
 	mov cl, 2
 	xor ch, ch
 	xor dh, dh

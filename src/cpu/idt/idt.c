@@ -82,7 +82,7 @@ void isr_handler(struct interrupt_registers regs) {
             print("Unhandled interrupt:\n");
             print_int(regs.int_no); // Let's see the number!
             print("\n");
-            return;
+            break;
         }
 
     if (regs.int_no >= 32 && regs.int_no < 48) {

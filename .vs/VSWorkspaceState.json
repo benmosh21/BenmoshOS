@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\bootloader",
+    "\\src\\cpu",
+    "\\src\\cpu\\idt",
+    "\\src\\cpu\\pic",
+    "\\src\\drivers",
+    "\\src\\drivers\\keyboard",
+    "\\src\\drivers\\print",
+    "\\src\\shell"
+  ],
+  "SelectedNode": "\\Makefile",
+  "PreviewInSolutionExplorer": false
+}

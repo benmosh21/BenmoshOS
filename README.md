@@ -47,6 +47,11 @@ make run
 make clean
 ```
 
+**4. if you want to add a file to the os image, you can use the following command:**
+```bash
+mcopy -i os-image.bin file.txt ::file.txt
+```
+
 ## 📚 Resources & Inspiration
 ### 🌐 Documentation & Wikis
 * **[OSDev Wiki](https://wiki.osdev.org/Main_Page)**: The most comprehensive resource available. It covers everything from GDT and IDT to memory management and file systems.

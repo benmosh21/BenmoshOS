@@ -6,7 +6,7 @@
 
 #define MAX_ROW 25
 #define MAX_COL 80
-#define BUFFER_ROWS 1000  // Size of our history
+#define BUFFER_ROWS 4000  // Size of our history
 #define VIDEO_ADDRESS 0xb8000
 #define WHITE_ON_BLACK 0x0f
 
@@ -18,8 +18,19 @@ int write_row = 0;     // Current line we are writing to in the buffer
 int write_col = 0;     // Current column in that line
 int view_start_row = 0;// The top line currently visible on screen
 
+void update_cursor(int x, int y) {
+    uint16_t pos = (y * MAX_COL) +x;
+
+    // Send the High byte of the position
+    outportb(0x3D4, 0x0E);
+    outportb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
+    
+    // Send the Low byte of the position
+    outportb(0x3D4, 0x0F);
+    outportb(0x3D5, (uint8_t)(pos & 0xFF));}
+
 // --- Core Helper: Sync Buffer to Screen ---
-// This copies 25 lines from the buffer to the actual video memory
+// This copies MAX_ROWS(25) lines from the buffer to the actual video memory
 void update_screen() {
     char *video_memory = (char*) VIDEO_ADDRESS;
     
@@ -40,6 +51,18 @@ void update_screen() {
             video_memory[offset] = c;
             video_memory[offset + 1] = WHITE_ON_BLACK;
         }
+    }
+
+    // --- Sync the Hardware Cursor ---
+    // Calculate the cursor's position relative to the camera view
+    int screen_cursor_y = write_row - view_start_row;
+    
+    // Only draw the cursor if it is currently visible on the screen
+    if (screen_cursor_y >= 0 && screen_cursor_y < MAX_ROW) {
+        update_cursor(write_col, screen_cursor_y);
+    } else {
+        // If we scrolled away from the cursor, hide it off-screen
+        update_cursor(0, MAX_ROW + 1); 
     }
 }
 
@@ -66,6 +89,11 @@ void print_char(char c) {
         if (write_col > 0) {
             write_col--;
             line_buffer[write_row][write_col] = ' ';
+        } else if (write_row > 0) {
+            // Jump back to the previous line.
+            write_row--;
+            write_col = MAX_COL - 1;
+            line_buffer[write_col][write_row]  = ' ';
         } 
     } else {
         // Safety: Don't write past buffer end
@@ -127,11 +155,17 @@ void scroll_history_up(int lines) {
 }
 
 void scroll_history_down(int lines) {
+    int max_view_start = write_row - MAX_ROW + 1;
+
+    if (max_view_start < 0) {
+        max_view_start = 0;
+    }
+
     // Don't scroll past the text we have written
-    if (view_start_row + MAX_ROW <= write_row) {
+    if (view_start_row < max_view_start) {
         view_start_row += lines; // Look "down" (higher index)
-        if (view_start_row > write_row - MAX_ROW) {
-            view_start_row = write_row - MAX_ROW;
+        if (view_start_row > max_view_start) {
+            view_start_row = max_view_start;
         }
         update_screen();
     }
