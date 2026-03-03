@@ -93,7 +93,7 @@ void print_char(char c) {
             // Jump back to the previous line.
             write_row--;
             write_col = MAX_COL - 1;
-            line_buffer[write_col][write_row]  = ' ';
+            line_buffer[write_row][write_col]  = ' ';
         } 
     } else {
         // Safety: Don't write past buffer end

@@ -11,6 +11,6 @@
     "\\src\\drivers\\print",
     "\\src\\shell"
   ],
-  "SelectedNode": "\\Makefile",
+  "SelectedNode": "\\src\\bootloader\\boot.asm",
   "PreviewInSolutionExplorer": false
 }

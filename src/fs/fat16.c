@@ -523,6 +523,8 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
 
     int write_offset = 0;
     int data_len = strlen(data);
+    int new_file_size = 0;
+    
 
     if (!rewriting && file_size > 0) {
         // APPEND MODE: Start writing at the end of the existing file size
@@ -531,22 +533,57 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
         // Add a newline before appending so it doesn't mash into the previous sentence
         buffer[write_offset] = '\n';
         write_offset++;
-
-        // Safety check to prevent overflowing a 512-byte sector
+        
         if (write_offset + data_len >= 512) {
-            print("Error: File exceeds 1 sector. Multi-sector appending not supported yet!\n");
-            return;
+            // Multi-Sector APPENDING
+			
+			// 1. Fill the rest of the current sector and write it to the disk immediately
+			int first_chunk_size = 512 - write_offset;
+			memcpy(buffer + write_offset, (uint8_t*)data, first_chunk_size);
+			ata_write_sector(file_lba, buffer); // Save it before we reuse the buffer
+
+            // 2. Read the FAT table to allocate a new cluster
+            ata_read_sector(fat_start_sector, buffer)
+			uint16_t* fat_table = (uint16_t*)buffer;
+			int next_cluster = 0;
+
+            for (int i = 2; i < 256; i++) {
+                if (fat_table[i] == 0x0000) {
+                    next_cluster = i;
+					fat_table[file_cluster] = next_cluster; // Link the old cluster to the new one
+                    fat_table[i] = 0xFFFF; // Mark as new EOF
+                    ata_write_sector(fat_start_sector, buffer); // Save FAT
+                    break;
+                }
+            }
+
+            if (next_cluster = 0) {
+                print("Error: Disk is full, cannot append!\n");
+                return;
+            }
+
+			// 3. Write the remaining text to the new cluster
+			uint32_t new_cluster_offset = next_cluster - 2;
+			uint32_t new_file_lba = data_sector + (new_cluster_offset * clusters_size);
+
+			for (int i = 0; i < 512l i++) buffer[i] = 0; // Clear the buffer before writing new data
+
+			int remaining_data_len = data_len - first_chunk_size;
+			// Copy starting from where we left off in the data string
+            memcpy(buffer, (uint8_t*)(data + first_chunk_size), remaining_data_len);
+			ata_write_sector(new_file_lba, buffer); // Write the second chunk to the new cluster
+
+            new_file_size = write_offset + data_len;
         }
     }
     else {
-        // OVERWRITE MODE: Erase the buffer back to zeros
+        // OVERWRITE MODE
         for (int i = 0; i < 512; i++) buffer[i] = 0;
-        write_offset = 0;
+        memcpy(buffer, (uint8_t*)data, data_len);
+        ata_write_sector(file_lba, buffer);
+        new_file_size = data_len;
     }
 
-    // Copy the new text into the buffer and write to disk
-    memcpy(buffer + write_offset, (uint8_t*)data, data_len);
-    ata_write_sector(file_lba, buffer);
 
     // 4. UPDATE ROOT DIRECTORY
     ata_read_sector(target_dir_sector, buffer);

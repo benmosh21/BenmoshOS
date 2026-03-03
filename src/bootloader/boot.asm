@@ -156,7 +156,7 @@ sect2_start:
 		dw gdt_end - gdt_start - 1
 		dd gdt_start
 		
-[bits 32] 	; tell the assembler we are know in 32-bits mode
+[bits 32] 	; tell the assembler we are now in 32-bits mode
 init_pm:
 	
 	mov ax, 0x10

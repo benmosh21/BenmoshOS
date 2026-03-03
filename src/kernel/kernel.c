@@ -24,6 +24,8 @@ void main() {
 
 
     print("BenmoshOS> ");
+    
+    //int x = 1/0;
 
     while(1) {
         __asm__ volatile ("hlt"); // Halt the CPU until the next interrupt

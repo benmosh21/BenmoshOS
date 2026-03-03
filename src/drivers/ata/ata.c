@@ -2,13 +2,23 @@
 
 // Add this helper function at the top
 void ata_wait_ready() {
+	int timeout = 1000000; // Arbitrary large timeout to prevent infinite loops
     // Wait while the BSY bit (bit 7, 0x80) is 1
-    while ((inportb(0x1F7) & 0xC0) != 0x40);
+    while ((inportb(0x1F7) & 0xC0) != 0x40) {
+        if (--timeout == 0) {
+            return 0; // Drive time out
+        }
+    }
+	return 1; // Drive is ready
 }
 
 void ata_read_sector(uint32_t lba, uint8_t *buffer) {
     // 1. WAIT FIRST! Do not touch ports if the drive is busy.
-    ata_wait_ready();
+    if (!ata_wait_ready()) {
+		// Handle timeout error
+		print("Error: ATA drive is not responding or is busy.\n")
+		return;
+    }
 
     // 2. Select Drive and LBA
     outportb(0x1F6, 0xE0 | ((lba >> 24) & 0x0F));
@@ -32,7 +42,11 @@ void ata_read_sector(uint32_t lba, uint8_t *buffer) {
 
 void ata_write_sector(uint32_t lba, const uint8_t* buffer) {
     // 1. WAIT FIRST! 
-    ata_wait_ready();
+    if (!ata_wait_ready()) {
+		// Handle timeout error
+        print("Error: ATA drive is not responding or is busy.\n");
+		return;
+    }
 
     // 2. Select Drive and LBA
     outportb(0x1F6, 0xE0 | ((lba >> 24) & 0x0F));
