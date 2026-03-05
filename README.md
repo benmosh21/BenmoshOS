@@ -13,11 +13,13 @@ I am learning as I go, documenting the process of moving from "I have no idea wh
 The project is organized into the following modules:
 ```text
 src/
-├── boot/       # Bootloader (Assembly)
-├── kernel/     # Core Kernel logic (C)
-├── cpu/        # Interrupts and GDT/IDT (Assembly/C)
-├── drivers/    # Hardware drivers (Screen, Keyboard)
-└── build/      # Compiled binaries (Ignored by git)
+├── bootloader/         # Bootloader (Assembly)
+├── cpu/                # Interrupts and GDT/IDT (Assembly/C)
+├── drivers/            # Hardware drivers (Screen, Keyboard)
+├── fs/                 # File system implementation (C)
+├── kernel/             # Core Kernel logic (C)
+└── 
+build/                  # Compiled binaries (Ignored by git)
 ```
 
 ## 🛠️ Prerequisites

@@ -44,7 +44,6 @@ struct lfn_entry {
     uint16_t name3[2];        // Last 2 characters (UTF-16)
 } __attribute__((packed));
 
-
 // Our main function that the kernel will call
 void fat16_print_file(char* target_file);
 void fat16_list_files();

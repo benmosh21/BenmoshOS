@@ -117,6 +117,10 @@ dw 0xAA55 ; tell the BIOS that is an OS
 
 
 sect2_start:
+
+	mov di, 0x5000  ; Set the destination address for the memory map entries
+	mov ebx, 0
+	call load_pmm
 	
 	cli					  ; Disable interrupts
 	lgdt [gdt_descriptor] ; Load the DGT descriptor
@@ -159,6 +163,8 @@ sect2_start:
 [bits 32] 	; tell the assembler we are now in 32-bits mode
 init_pm:
 	
+	
+	
 	mov ax, 0x10
 	mov ds, ax
 	mov ss, ax
@@ -184,7 +190,24 @@ init_pm:
 	call 0x8000
 	
 	jmp $
+
+
+load_pmm:
+	mov eax, 0xE820      ; Get Memory Map
+	mov edx, 0x534D4150  ; 'SMAP'
+	mov ecx, 24			 ; Size of the buffer for the memory map entry
+	int 0x15
 	
+	jc .done
+	cmp ebx, 0
+	je .done
+	
+	add di, 24
+	jmp load_pmm
+	
+.done:
+	ret
+
 clear_screen_pm:
     pusha               ; Save all registers
     mov edx, 0xb8000    ; Start of video memory

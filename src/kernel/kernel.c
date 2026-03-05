@@ -10,12 +10,18 @@
 #include "../drivers/print/print.h"
 #include "../drivers/ata/ata.h"
 #include "../fs/fat16.h"
+#include "../memory/pmm/pmm.h"
+#include "../memory/vmm/vmm.h"
 
 
 __attribute__((section(".text.main")))
 void main() {
     load_idt(); // Load the Interrupt Descriptor Table (IDT)
     pic_remap(); // Remap PIC to avoid conflicts with CPU exceptions
+
+	pmm_init(); // Initialize the Physical Memory Manager (PMM)
+
+	vmm_init(); // Initialize the Virtual Memory Manager (VMM)
 
     __asm__ volatile ("sti"); // Enable interrupts
 
