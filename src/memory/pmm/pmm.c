@@ -25,12 +25,20 @@ void pmm_init() {
 				uint32_t bit_position = current_frame % 32;	 // Calculate the bit offset within the uint32_t
 
 				// Clear the bit to mark the frame as free
-				bitmap[bucket] &= ~(1 << bit_position);
+				bitmap[bucket] &= ~(1U << bit_position);
 			}
 
 		}
 		entry++; // Move to the next entry
 	}
+
+	// Protect the first 1 MB of memory (BIOS, VGA buffer, Bootloader)
+	pmm_release_block(0x00000000, 0x100000); // Mark the first 1 MB as allocated
+
+	// Protect the memory used by the kernel
+	extern uint32_t kernel_end; // This symbol is defined in the linker script
+	pmm_release_block(0x00100000, (uint32_t)&kernel_end - 0x100000); // Mark the kernel memory as allocated
+
 }
 
 uint32_t pmm_alloc_block() {
@@ -40,10 +48,10 @@ uint32_t pmm_alloc_block() {
 
 			// Check each bit in the bucket
 			for (int i = 0; i < 32; i++) {
-				if ((bitmap[current_bucket] & (1 << i)) == 0) {
+				if ((bitmap[current_bucket] & (1U << i)) == 0) {
 
 					// 1. Mark the bit as used
-					bitmap[current_bucket] |= (1 << i);
+					bitmap[current_bucket] |= (1U << i);
 
 					// 2. Calculate the frame index
 					uint32_t allocated_frame = (32 * current_bucket) + i;
@@ -69,6 +77,19 @@ void pmm_free_block(uint32_t physical_address, uint32_t num_frames) {
 		uint32_t bit_position = current_frame % 32;
 
 		// Clear the bit to 0 (Free)
-		bitmap[bucket] &= ~(1 << bit_position);
+		bitmap[bucket] &= ~(1U << bit_position);
+	}
+}
+
+void pmm_reserve_block(uint32_t physical_address, uint32_t size) {
+	uint32_t starting_frame = physical_address / 4096;
+	uint32_t num_frames = (size + 4095) / 4096; // Round up to the nearest frame
+
+	for (uint32_t i = 0; i < num_frames; i++) {
+		uint32_t current_frame = starting_frame + i;
+		uint32_t bucket = current_frame / 32;
+		uint32_t bit_position = current_frame % 32;
+
+		bitmap[bucket] |= (1U << bit_position); // Set the bit to 1 (Allocated)
 	}
 }

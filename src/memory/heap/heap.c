@@ -16,44 +16,42 @@ void init_heap() {
 }
 
 void* malloc(uint32_t requested_size) {
+// Align requested_size up to the nearest multiple of 4
+    // This ensures the bottom bits (including our flag bit) are always 0
+    if (requested_size % 4 != 0) {
+        requested_size += 4 - (requested_size % 4);
+    }
+
     struct block_header* current = first_header;
 
     while (current != NULL) {
+        // Calculate current_size by masking out the flag bit
+        uint32_t current_size = current->size_and_free & ~1;
 
-        if ((current->size_and_free & 1) && ((current->size_and_free & ~1) >= requested_size)) {
-
+        if ((current->size_and_free & 1) && (current_size >= requested_size)) {
+            
             // Step A: Mark the block as USED
             current->size_and_free &= ~1;
 
             // Step B: Carve the block if it's bigger than we need
             if ((current_size - requested_size) >= 24) {
-                // 1. Create the new header
                 struct block_header* new_block = (struct block_header*)((uint32_t)current + 8 + requested_size);
-
-                // 2. Set the new block's size and free flag
+                
                 new_block->size_and_free = (current_size - requested_size - 8) | 1;
-
-                // 3. Update current block's size (and keep free flag 0)
+                
+                // This is now safe because requested_size is guaranteed to be even
                 current->size_and_free = requested_size;
 
-				// 4. Update the linked list pointers
-				new_block->next = current->next;
-				current->next = (uint32_t)new_block;
-            }
-            else {
-				// If we can't carve, just mark the whole block as used
-				current->size_and_free &= ~1; // Clear the free flag
+                new_block->next = current->next;
+                current->next = (uint32_t)new_block;
             }
 
-
-            // Step C: Return the usable memory space to the program
+            // Step C: Return the usable memory space
             return (void*)((uint32_t)current + 8);
         }
 
-        // Move to the next block in the linked list
         current = (struct block_header*)current->next;
     }
 
-    // We reached the end of the list and found nothing
     return NULL;
 }

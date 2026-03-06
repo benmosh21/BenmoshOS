@@ -59,6 +59,15 @@ void isr_handler(struct interrupt_registers regs) {
             print("Debug exception\n");
             for (;;) __asm__ volatile("hlt");
             break;
+
+        case 0x1e:
+            uint32_t faulting_address;
+            __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_address));
+			print("Page fault at address: 0x");
+			print_hex(faulting_address);
+			print("\n");
+			for (;;) __asm__ volatile("hlt");
+			break;
         
         case 0x20:
             // Timer interrupt (IRQ0)
