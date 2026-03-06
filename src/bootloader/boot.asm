@@ -118,6 +118,8 @@ dw 0xAA55 ; tell the BIOS that is an OS
 
 sect2_start:
 
+	xor ax, ax
+	mov es, ax
 	mov di, 0x5000  ; Set the destination address for the memory map entries
 	mov ebx, 0
 	call load_pmm
@@ -159,6 +161,29 @@ sect2_start:
 	gdt_descriptor:
 		dw gdt_end - gdt_start - 1
 		dd gdt_start
+
+load_pmm:
+	mov eax, 0xE820      ; Get Memory Map
+	mov edx, 0x534D4150  ; 'SMAP'
+	mov ecx, 24			 ; Size of the buffer for the memory map entry
+	int 0x15
+	
+	jc .done
+	cmp eax, 0x534d4150
+	jne .done
+	
+	add di, 20
+	inc bp
+
+	cmp ebx, 0
+	je .done
+	jmp load_pmm
+	
+.done:
+	mov dword [di + 8], 0
+	mov dword [di + 12], 0
+	ret
+
 		
 [bits 32] 	; tell the assembler we are now in 32-bits mode
 init_pm:
@@ -192,21 +217,6 @@ init_pm:
 	jmp $
 
 
-load_pmm:
-	mov eax, 0xE820      ; Get Memory Map
-	mov edx, 0x534D4150  ; 'SMAP'
-	mov ecx, 24			 ; Size of the buffer for the memory map entry
-	int 0x15
-	
-	jc .done
-	cmp ebx, 0
-	je .done
-	
-	add di, 24
-	jmp load_pmm
-	
-.done:
-	ret
 
 clear_screen_pm:
     pusha               ; Save all registers

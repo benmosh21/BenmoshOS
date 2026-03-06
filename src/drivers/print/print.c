@@ -202,3 +202,17 @@ void print_int(int n) {
     print(buffer);
 }
 
+void print_hex(int n) {
+	char buffer[9];
+	for (int i = 0; i < 8; i++) {
+		int digit = (n >> ((7 - i) * 4)) & 0xF;
+		if (digit < 10) {
+			buffer[i] = '0' + digit;
+		}
+		else {
+			buffer[i] = 'A' + (digit - 10);
+		}
+	}
+	buffer[8] = '\0';
+	print(buffer);
+}

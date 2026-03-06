@@ -543,7 +543,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
 			ata_write_sector(file_lba, buffer); // Save it before we reuse the buffer
 
             // 2. Read the FAT table to allocate a new cluster
-            ata_read_sector(fat_start_sector, buffer)
+            ata_read_sector(fat_start_sector, buffer);
 			uint16_t* fat_table = (uint16_t*)buffer;
 			int next_cluster = 0;
 
@@ -566,7 +566,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
 			uint32_t new_cluster_offset = next_cluster - 2;
 			uint32_t new_file_lba = data_sector + (new_cluster_offset * clusters_size);
 
-			for (int i = 0; i < 512l i++) buffer[i] = 0; // Clear the buffer before writing new data
+            for (int i = 0; i < 512; i++) buffer[i] = 0; // Clear the buffer before writing new data
 
 			int remaining_data_len = data_len - first_chunk_size;
 			// Copy starting from where we left off in the data string

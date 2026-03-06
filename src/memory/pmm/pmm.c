@@ -15,8 +15,12 @@ void pmm_init() {
 	while (entry->length > 0) {
 		// Type 1 means Usable RAM
 		if (entry->type == 1) {
-			uint32_t starting_frame_index = entry->base / 4096; // Calculate the starting frame index
-			uint32_t num_frames = entry->length / 4096; // Calculate the number of frames in this region
+
+			uint32_t length_32 = (uint32_t)(entry->length);
+			uint32_t base_32 = (uint32_t)(entry->base);
+
+			uint32_t starting_frame_index = base_32 / 4096; // Calculate the starting frame index
+			uint32_t num_frames = length_32 / 4096; // Calculate the number of frames in this region
 
 			// Free the frames in this usable memory region
 			for (uint32_t i = 0; i < num_frames; i++) {
@@ -33,12 +37,17 @@ void pmm_init() {
 	}
 
 	// Protect the first 1 MB of memory (BIOS, VGA buffer, Bootloader)
-	pmm_release_block(0x00000000, 0x100000); // Mark the first 1 MB as allocated
+	pmm_reserve_block(0x00000000, 0x100000); // Mark the first 1 MB as allocated
 
 	// Protect the memory used by the kernel
 	extern uint32_t kernel_end; // This symbol is defined in the linker script
-	pmm_release_block(0x00100000, (uint32_t)&kernel_end - 0x100000); // Mark the kernel memory as allocated
+	uint32_t kernel_end_address = (uint32_t)&kernel_end;
 
+	if (kernel_end_address > 0x100000) {
+		// If the kernel is larger than 1 MB, we need to reserve the additional memory it occupies
+		uint32_t spill_size = kernel_end_address - 0x100000; // Calculate how much memory spills beyond the first 1 MB
+		pmm_reserve_block(0x100000, spill_size);
+	}
 }
 
 uint32_t pmm_alloc_block() {

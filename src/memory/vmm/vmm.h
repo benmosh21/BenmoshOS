@@ -2,6 +2,7 @@
 #define VMM_H
 
 #include <stdint.h>
+#include "../pmm/pmm.h"
 
 // Initialize the Virtual Memory Manager (VMM)
 void vmm_init();

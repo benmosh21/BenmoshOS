@@ -19,10 +19,13 @@ KEYBOARD_SRC = $(SRC_DIR)/drivers/keyboard/keyboard.c
 SYSTEM_SRC = $(SRC_DIR)/kernel/system.c
 SHELL_SRC = $(SRC_DIR)/shell/shell.c
 FAT16_SRC = $(SRC_DIR)/fs/fat16.c
+PMM_SRC = $(SRC_DIR)/memory/pmm/pmm.c
+VMM_SRC = $(SRC_DIR)/memory/vmm/vmm.c
+HEAP_SRC = $(SRC_DIR)/memory/heap/heap.c
 
 # --- Flags ---
 # -I flags tell GCC where to look for header files (.h)
-INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell
+INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell -I$(SRC_DIR)/memory
 CFLAGS = -ffreestanding -m32 -g -fno-pie $(INCLUDE_FLAGS)
 LDFLAGS = -T linker.ld -m elf_i386 --oformat binary
 
@@ -40,6 +43,9 @@ KEYBOARD_OBJ = $(BUILD_DIR)/keyboard.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 SHELL_OBJ = $(BUILD_DIR)/shell.o
 FAT16_OBJ = $(BUILD_DIR)/fat16.o
+PMM_OBJ = $(BUILD_DIR)/pmm.o
+VMM_OBJ = $(BUILD_DIR)/vmm.o
+HEAP_OBJ = $(BUILD_DIR)/heap.o
 OS_IMAGE = os-image.bin
 
 # --- Targets ---
@@ -99,10 +105,22 @@ $(FAT16_OBJ): $(FAT16_SRC)
 $(SHELL_OBJ): $(SHELL_SRC)
 	$(CC) $(CFLAGS) -c $(SHELL_SRC) -o $(SHELL_OBJ)
 
+# Compile the PMM C code
+$(PMM_OBJ): $(PMM_SRC)
+	$(CC) $(CFLAGS) -c $(PMM_SRC) -o $(PMM_OBJ)
+
+# Compile the VMM C code
+$(VMM_OBJ): $(VMM_SRC)
+	$(CC) $(CFLAGS) -c $(VMM_SRC) -o $(VMM_OBJ)
+
+# Compile the Heap C code
+$(HEAP_OBJ): $(HEAP_SRC)
+	$(CC) $(CFLAGS) -c $(HEAP_SRC) -o $(HEAP_OBJ)
+
 # Link Everything Together
 # Note: The order of object files here matters for the linker!
-$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ)
-	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ)
+$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ)
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ)
 
 # Glue them together into one OS Image
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)

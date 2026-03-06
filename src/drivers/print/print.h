@@ -9,6 +9,7 @@
 void print_char(char c);
 void print(char *str);
 void print_int(int n);
+void print_hex(int n);
 void print_scancode(uint8_t scancode);
 void screen_clear();
 void update_screen();

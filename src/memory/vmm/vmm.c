@@ -64,12 +64,18 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
         __asm__ volatile("invlpg (%0)" ::"r" (0x003FF000) : "memory");
     }
 
-    // 3. Find the page table in memory (masking out the flags from the directory entry)
-    // We can access this safely because we know the directory itself is mapped into virtual memory.
-    uint32_t* page_table = (uint32_t*)(page_directory[pdi] & ~0xFFF);
+    // Temporarily map the target page table to the scratchpad virtual address
+    extern uint32_t first_page_table[];
+    first_page_table[1023] = (page_directory[pdi] & ~0xFFF) | 3;
+    __asm__ volatile("invlpg (%0)" ::"r" (0x003FF000) : "memory");
 
-    // 4. Map the requested physical address into the table with the requested flags
+    // Access the page table via the virtual scratchpad address
+    uint32_t* page_table = (uint32_t*)0x003FF000;
     page_table[pti] = physical_address | flags;
+
+    // Unmap the scratchpad
+    first_page_table[1023] = 0;
+    __asm__ volatile("invlpg (%0)" ::"r" (0x003FF000) : "memory");
 
     // 5. Flush the TLB for the requested virtual address
     __asm__ volatile("invlpg (%0)" ::"r" (virtual_address) : "memory");

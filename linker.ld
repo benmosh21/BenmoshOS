@@ -22,4 +22,7 @@ SECTIONS
         *(.bss)
         __bss_end = .;      /* Mark the end of BSS */
     }
+
+    /* 5. Define the end of the kernel in memory */
+    kernel_end = .;
 }

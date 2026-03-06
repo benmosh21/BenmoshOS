@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // Initialize the heap
-void init_heap();
+void heap_init();
 
 // Allocate memory
 void* malloc(uint32_t size);
