@@ -15,19 +15,6 @@
 #include "../memory/heap/heap.h"
 
 
-void test_memory() {
-	print("--- STARTING MEMORY TEST ---\n");
-
-    // ==========================================
-    // TEST 1: PMM (Physical Memory Manager)
-    // ==========================================
-    uint32_t frame1 = pmm_alloc_block();
-    uint32_t frame2 = pmm_alloc_block();
-
-    print("PMM Frame 1: 0x"); print_int(frame1); print("\n");
-    print("PMM Frame 2: 0x"); print_int(frame2); print("\n");
-    // You should see that Frame 2 is exactly 0x1000 greater than Frame 1.
-}
 
 __attribute__((section(".text.main")))
 void main() {
@@ -43,10 +30,9 @@ void main() {
     __asm__ volatile ("sti"); // Enable interrupts
 
     print("Welcome to BenmoshOS!\n");
+    set_color(YELLOW_ON_BLACK);
     print("This is a simple kernel written in C.\n");
-
-
-	test_memory(); // Run the memory test to verify PMM and VMM functionality
+    set_color(RED_ON_BLUE);
 
     print("BenmoshOS> ");
     

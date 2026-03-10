@@ -8,7 +8,8 @@
 #define MAX_COL 80
 #define BUFFER_ROWS 4000  // Size of our history
 #define VIDEO_ADDRESS 0xb8000
-#define WHITE_ON_BLACK 0x0f
+
+
 
 // The Big Buffer: Stores all text history
 char line_buffer[BUFFER_ROWS][MAX_COL]; 
@@ -17,6 +18,7 @@ char line_buffer[BUFFER_ROWS][MAX_COL];
 int write_row = 0;     // Current line we are writing to in the buffer
 int write_col = 0;     // Current column in that line
 int view_start_row = 0;// The top line currently visible on screen
+Color current_color = WHITE_ON_BLACK; // Default color
 
 void update_cursor(int x, int y) {
     uint16_t pos = (y * MAX_COL) +x;
@@ -27,7 +29,8 @@ void update_cursor(int x, int y) {
     
     // Send the Low byte of the position
     outportb(0x3D4, 0x0F);
-    outportb(0x3D5, (uint8_t)(pos & 0xFF));}
+    outportb(0x3D5, (uint8_t)(pos & 0xFF));
+}
 
 // --- Core Helper: Sync Buffer to Screen ---
 // This copies MAX_ROWS(25) lines from the buffer to the actual video memory
@@ -215,4 +218,24 @@ void print_hex(int n) {
 	}
 	buffer[8] = '\0';
 	print(buffer);
+}
+
+void print_float(float f) {
+    int int_part = (int)f;
+    float frac_part = f - int_part;
+
+    print_int(int_part);
+    print(".");
+
+    // Print 6 decimal places
+    for (int i = 0; i < 6; i++) {
+        frac_part *= 10;
+        int digit = (int)frac_part;
+        print_int(digit);
+        frac_part -= digit;
+    }
+}
+
+void set_color(Color color) {
+	current_color = color;
 }

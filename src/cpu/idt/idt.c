@@ -60,7 +60,7 @@ void isr_handler(struct interrupt_registers regs) {
             for (;;) __asm__ volatile("hlt");
             break;
 
-        case 0x1e:
+        case 0xe:
             uint32_t faulting_address;
             __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_address));
 			print("Page fault at address: 0x");

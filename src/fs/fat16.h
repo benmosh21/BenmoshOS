@@ -2,6 +2,7 @@
 #define FAT16_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include "../drivers/print/print.h"
 
 #pragma pack(push, 1)
@@ -46,6 +47,7 @@ struct lfn_entry {
 
 // Our main function that the kernel will call
 void fat16_print_file(char* target_file);
+uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size);
 void fat16_list_files();
 void fat16_create_file(char* target_name);
 void fat16_write_file(char* target_file, char* data, int rewriting);

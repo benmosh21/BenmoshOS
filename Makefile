@@ -148,6 +148,18 @@ $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 run: all
 	qemu-system-x86_64 -drive format=raw,file=$(OS_IMAGE)
 
-# Clean up
+# --- Build for VMware ---
+vmdk: all
+	# Convert the raw binary image into a VMware Virtual Disk format
+	qemu-img convert -f raw -O vmdk $(OS_IMAGE) BenmoshOS.vmdk
+	@echo "VMware image created: BenmoshOS.vmdk"
+
+# --- Build for VirtualBox ---
+vdi: $(OS_IMAGE)
+	# Convert the raw binary image into a VirtualBox Disk Image format
+	qemu-img convert -f raw -O vdi $(OS_IMAGE) BenmoshOS.vdi
+	@echo "VirtualBox image created: BenmoshOS.vdi"
+
+# Clean up (updated to remove the new images)
 clean:
-	rm -rf $(BUILD_DIR) $(OS_IMAGE)
+	rm -rf $(BUILD_DIR) $(OS_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi

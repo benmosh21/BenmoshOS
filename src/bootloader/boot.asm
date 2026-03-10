@@ -139,7 +139,7 @@ sect2_start:
 	gdt_start:
 		dq 0 ; 8 bytes of 0
 		
-	gdt_code:
+	gdt_kernel_code:
 		dw 0xFFFF		; Limit (bits 0-15)
 		dw 0			; Base (bits 0-15) 
 		db 0			; Base (bits 16-23)
@@ -148,14 +148,31 @@ sect2_start:
 		db 0			; Base (bits 24-31)
 	
 	
-	gdt_data:
+	gdt_kernel_data:
         dw 0xFFFF		; Limit (bits 0-15)
 		dw 0			; Base (bits 0-15) 
 		db 0			; Base (bits 16-23)
-		db 10010011b ; Access Byte (Present, Ring 0, Data, Read/Write)
+		db 10010011b    ; Access Byte (Present, Ring 0, Data, Read/Write)
 		db 11001111b	; Flags (4 bits) + Limit (4 bits)
 		db 0			; Base (bits 24-31)
-		
+	
+	gdt_user_code:
+		dw 0xFFFF		; Limit (bits 0-15)
+		dw 0			; Base (bits 0-15) 
+		db 0			; Base (bits 16-23)
+		db 11111010b	; Access Byte (Present, Ring 3, Code, Exec/Read)
+		db 11001111b	; Flags (4 bits) + Limit (4 bits)
+		db 0			; Base (bits 24-31)
+	
+	
+	gdt_user_data:
+        dw 0xFFFF		; Limit (bits 0-15)
+		dw 0			; Base (bits 0-15) 
+		db 0			; Base (bits 16-23)
+		db 11110011b    ; Access Byte (Present, Ring 3, Data, Read/Write)
+		db 11001111b	; Flags (4 bits) + Limit (4 bits)
+		db 0			; Base (bits 24-31)
+	
 	gdt_end:
 		
 	gdt_descriptor:
@@ -172,7 +189,7 @@ load_pmm:
 	cmp eax, 0x534d4150
 	jne .done
 	
-	add di, 20
+	add di, 24
 	inc bp
 
 	cmp ebx, 0
@@ -254,7 +271,7 @@ print_string_pm:
 .done
 	ret
 	
-msg_hello_32bits: db 'we in 32 bits     '
-msg_hello_asm: db 'this is from assembly'
+msg_hello_32bits: db 'we in 32 bits     ', 0
+msg_hello_asm: db 'this is from assembly', 0
 
 times 512+ 512 -($ - $$) db 0 ; put 0 in every locatoin after the code

@@ -1,6 +1,7 @@
 #include "fat16.h"
 #include "../drivers/ata/ata.h"      // Needed for ata_read_sector
 #include "../drivers/print/print.h"  // Needed for your print function
+#include "../memory/heap/heap.h"
 
 // ==========================================
 // --- HELPER FUNCTIONS ---
@@ -222,6 +223,110 @@ void fat16_print_file(char* target_file) {
     else {
         print("File not found!\n");
     }
+}
+
+uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size) {
+	uint8_t buffer[512];
+	char lfn_buffer[256];
+    
+	for (int i = 0; i < 256; i++) lfn_buffer[i] = '\0';
+
+	ata_read_sector(0, buffer);
+	bpb_t* bpb = (bpb_t*)buffer;
+
+	uint32_t root_dir_sector = bpb->reserved_sectors + (bpb->fat_count * bpb->sectors_per_fat);
+	uint32_t root_dir_size = (bpb->root_dir_entries * 32) / 512;
+	uint32_t data_sector = root_dir_sector + root_dir_size;
+	uint8_t clusters_size = bpb->sectors_per_cluster;
+	uint32_t fat_start_sector = bpb->reserved_sectors;
+
+	int file_found = 0;
+	uint16_t target_cluster = 0;
+	uint32_t directory_entry_file_size = 0;
+
+    for (uint32_t s = 0; s < root_dir_size; s++) {
+		ata_read_sector(root_dir_sector + s, buffer);
+		dir_entry_t* directory = (dir_entry_t*)buffer;
+
+		for (int i = 0; i < 16; i++) {
+			uint8_t first_byte = directory[i].filename[0];
+
+			if (first_byte == 0x00) break;
+            if (first_byte == 0xE5) {
+                lfn_buffer[0] = '\0';
+                continue;
+            }
+
+            if (directory[i].attributes == 0x0F) {
+                struct lfn_entry* lfn = (struct lfn_entry*)&directory[i];
+                int index = (lfn->sequence_number & 0x1F) - 1;
+                if (index >= 0 && index < 20) {
+                    int offset = index * 13;
+                    for (int j = 0; j < 5; j++) lfn_buffer[offset++] = (lfn->name1[j] == 0xFFFF) ? '\0' : (char)(lfn->name1[j] & 0xFF);
+                    for (int j = 0; j < 6; j++) lfn_buffer[offset++] = (lfn->name2[j] == 0xFFFF) ? '\0' : (char)(lfn->name2[j] & 0xFF);
+                    for (int j = 0; j < 2; j++) lfn_buffer[offset++] = (lfn->name3[j] == 0xFFFF) ? '\0' : (char)(lfn->name3[j] & 0xFF);
+                }
+            }
+            else if (directory[i].attributes != 0x08) {
+                if (lfn_buffer[0] != '\0') {
+                    if (string_match(lfn_buffer, target_file) == 1) {
+                        target_cluster = directory[i].starting_cluster;
+                        directory_entry_file_size = directory[i].file_size;
+                        file_found = 1;
+                        break;
+                    }
+                }
+                for (int reset = 0; reset < 256; reset++) lfn_buffer[reset] = '\0';
+            }
+        }
+        if (file_found == 1) break;
+    }
+
+    if (file_found == 1) {
+		uint8_t* file_ram_buffer= (uint8_t*)malloc(directory_entry_file_size);
+
+        if (file_ram_buffer == NULL) {
+			print("Memory allocation failed for file buffer.\n");
+			return NULL;
+
+        }
+
+		uint16_t current_cluster = target_cluster;
+        uint32_t bytes_remaining = directory_entry_file_size;
+        uint32_t write_offset = 0;
+
+        // READ DISK AND COPY INTO THE HEAP
+        while (current_cluster < 0xFFF8 && bytes_remaining > 0) {
+            uint32_t cluster_offset = current_cluster - 2;
+            uint32_t file_lba = data_sector + (cluster_offset * clusters_size);
+
+            ata_read_sector(file_lba, buffer);
+
+            uint32_t bytes_to_copy = 512;
+            if (bytes_remaining < 512) {
+                bytes_to_copy = bytes_remaining;
+            }
+
+            for (uint32_t i = 0; i < bytes_to_copy; i++) {
+                file_ram_buffer[write_offset + i] = buffer[i];
+            }
+
+            write_offset += bytes_to_copy;
+            bytes_remaining -= bytes_to_copy;
+
+            uint32_t fat_sector_offset = (current_cluster * 2) / 512;
+            uint32_t fat_byte_offset = (current_cluster * 2) % 512;
+
+            ata_read_sector(fat_start_sector + fat_sector_offset, buffer);
+            uint16_t* fat_table = (uint16_t*)buffer;
+            current_cluster = fat_table[fat_byte_offset / 2];
+        }
+
+        *out_file_size = directory_entry_file_size;
+        return file_ram_buffer;
+    }
+
+    return NULL;
 }
 
 // Scans the root directory and prints all filenames.
@@ -522,9 +627,10 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
     ata_read_sector(file_lba, buffer);
 
     int write_offset = 0;
-    int data_len = strlen(data);
-    int new_file_size = 0;
-    
+
+    // Quick strlen implementation since it's not in the headers
+    int data_len = 0;
+    while (data[data_len] != '\0') data_len++;
 
     if (!rewriting && file_size > 0) {
         // APPEND MODE: Start writing at the end of the existing file size
@@ -533,55 +639,66 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
         // Add a newline before appending so it doesn't mash into the previous sentence
         buffer[write_offset] = '\n';
         write_offset++;
-        
+
         if (write_offset + data_len >= 512) {
             // Multi-Sector APPENDING
-			
-			// 1. Fill the rest of the current sector and write it to the disk immediately
-			int first_chunk_size = 512 - write_offset;
-			memcpy(buffer + write_offset, (uint8_t*)data, first_chunk_size);
-			ata_write_sector(file_lba, buffer); // Save it before we reuse the buffer
+
+            // 1. Fill the rest of the current sector and write it to the disk immediately
+            int first_chunk_size = 512 - write_offset;
+            // Quick memcpy implementation
+            for (int i = 0; i < first_chunk_size; i++) {
+                buffer[write_offset + i] = ((uint8_t*)data)[i];
+            }
+            ata_write_sector(file_lba, buffer); // Save it before we reuse the buffer
 
             // 2. Read the FAT table to allocate a new cluster
             ata_read_sector(fat_start_sector, buffer);
-			uint16_t* fat_table = (uint16_t*)buffer;
-			int next_cluster = 0;
+            uint16_t* fat_table = (uint16_t*)buffer;
+            int next_cluster = 0;
 
             for (int i = 2; i < 256; i++) {
                 if (fat_table[i] == 0x0000) {
                     next_cluster = i;
-					fat_table[file_cluster] = next_cluster; // Link the old cluster to the new one
+                    fat_table[file_cluster] = next_cluster; // Link the old cluster to the new one
                     fat_table[i] = 0xFFFF; // Mark as new EOF
                     ata_write_sector(fat_start_sector, buffer); // Save FAT
                     break;
                 }
             }
 
-            if (next_cluster = 0) {
+            if (next_cluster == 0) {
                 print("Error: Disk is full, cannot append!\n");
                 return;
             }
 
-			// 3. Write the remaining text to the new cluster
-			uint32_t new_cluster_offset = next_cluster - 2;
-			uint32_t new_file_lba = data_sector + (new_cluster_offset * clusters_size);
+            // 3. Write the remaining text to the new cluster
+            uint32_t new_cluster_offset = next_cluster - 2;
+            uint32_t new_file_lba = data_sector + (new_cluster_offset * clusters_size);
 
             for (int i = 0; i < 512; i++) buffer[i] = 0; // Clear the buffer before writing new data
 
-			int remaining_data_len = data_len - first_chunk_size;
-			// Copy starting from where we left off in the data string
-            memcpy(buffer, (uint8_t*)(data + first_chunk_size), remaining_data_len);
-			ata_write_sector(new_file_lba, buffer); // Write the second chunk to the new cluster
-
-            new_file_size = write_offset + data_len;
+            int remaining_data_len = data_len - first_chunk_size;
+            // Copy starting from where we left off in the data string
+            for (int i = 0; i < remaining_data_len; i++) {
+                buffer[i] = ((uint8_t*)(data + first_chunk_size))[i];
+            }
+            ata_write_sector(new_file_lba, buffer); // Write the second chunk to the new cluster
+        }
+        else {
+            // Single sector append - just copy the bytes
+            for (int i = 0; i < data_len; i++) {
+                buffer[write_offset + i] = ((uint8_t*)data)[i];
+            }
+            ata_write_sector(file_lba, buffer);
         }
     }
     else {
         // OVERWRITE MODE
         for (int i = 0; i < 512; i++) buffer[i] = 0;
-        memcpy(buffer, (uint8_t*)data, data_len);
+        for (int i = 0; i < data_len; i++) {
+            buffer[i] = ((uint8_t*)data)[i];
+        }
         ata_write_sector(file_lba, buffer);
-        new_file_size = data_len;
     }
 
 
