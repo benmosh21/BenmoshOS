@@ -88,6 +88,6 @@ typedef enum {
 	MAGENTA_ON_CYAN = 0x34
 } Color ;
 
-void set_color(Color color);
+void set_color(uint16_t color);
 
 #endif

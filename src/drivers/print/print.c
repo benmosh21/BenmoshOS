@@ -3,6 +3,7 @@
  */
 
 #include "print.h"
+#include "../memory/heap/heap.h"
 
 #define MAX_ROW 25
 #define MAX_COL 80
@@ -12,13 +13,13 @@
 
 
 // The Big Buffer: Stores all text history
-char line_buffer[BUFFER_ROWS][MAX_COL]; 
+uint16_t(*line_buffer)[MAX_COL];
 
 // Cursors
 int write_row = 0;     // Current line we are writing to in the buffer
 int write_col = 0;     // Current column in that line
 int view_start_row = 0;// The top line currently visible on screen
-Color current_color = WHITE_ON_BLACK; // Default color
+uint8_t current_color = 0x0F; // Default color
 
 void update_cursor(int x, int y) {
     uint16_t pos = (y * MAX_COL) +x;
@@ -35,45 +36,46 @@ void update_cursor(int x, int y) {
 // --- Core Helper: Sync Buffer to Screen ---
 // This copies MAX_ROWS(25) lines from the buffer to the actual video memory
 void update_screen() {
-    char *video_memory = (char*) VIDEO_ADDRESS;
-    
+    // Treat the screen as an array of 16-bit blocks, not 8-bit chars
+    uint16_t* video_memory = (uint16_t*)VIDEO_ADDRESS;
+
     for (int row = 0; row < MAX_ROW; row++) {
         int buffer_index = view_start_row + row;
 
         for (int col = 0; col < MAX_COL; col++) {
-            // Calculate video memory offset
-            int offset = 2 * (row * MAX_COL + col);
-            
-            // Get char from buffer (safely)
-            char c = ' ';
-            if (buffer_index < BUFFER_ROWS) {
-                c = line_buffer[buffer_index][col];
-            }
-            if (c == 0) c = ' '; // Convert nulls to spaces for display
+            // Default to a colored space
+            uint16_t cell = (uint16_t)' ' | ((uint16_t)current_color << 8);
 
-            video_memory[offset] = c;
-            video_memory[offset + 1] = WHITE_ON_BLACK;
+            // Safety check: Only read if we are inside the buffer
+            if (buffer_index >= 0 && buffer_index < BUFFER_ROWS) {
+                if (line_buffer[buffer_index][col] != 0) {
+                    cell = line_buffer[buffer_index][col];
+                }
+            }
+
+            // Write the entire 16-bit block directly to the VGA hardware
+            video_memory[row * MAX_COL + col] = cell;
         }
     }
 
     // --- Sync the Hardware Cursor ---
-    // Calculate the cursor's position relative to the camera view
     int screen_cursor_y = write_row - view_start_row;
-    
-    // Only draw the cursor if it is currently visible on the screen
     if (screen_cursor_y >= 0 && screen_cursor_y < MAX_ROW) {
         update_cursor(write_col, screen_cursor_y);
-    } else {
-        // If we scrolled away from the cursor, hide it off-screen
-        update_cursor(0, MAX_ROW + 1); 
+    }
+    else {
+        update_cursor(0, MAX_ROW + 1);
     }
 }
 
+
 void screen_clear() {
-    // Clear the buffer
+
+	line_buffer = (uint16_t(*)[MAX_COL])malloc(BUFFER_ROWS * MAX_COL * sizeof(uint16_t));
+
     for (int i = 0; i < BUFFER_ROWS; i++) {
         for (int j = 0; j < MAX_COL; j++) {
-            line_buffer[i][j] = ' ';
+            line_buffer[i][j] = (uint16_t)' ' | ((uint16_t)current_color << 8);
         }
     }
     write_row = 0;
@@ -84,61 +86,56 @@ void screen_clear() {
 
 // --- Printing Logic ---
 
-void print_char(char c) {
-    if (c == '\n') {
+void print_char(char character) {
+    if (character == '\n') {
         write_col = 0;
         write_row++;
-    } else if (c == '\b') {
+    }
+    else if (character == '\b') {
         if (write_col > 0) {
             write_col--;
-            line_buffer[write_row][write_col] = ' ';
-        } else if (write_row > 0) {
-            // Jump back to the previous line.
+            line_buffer[write_row][write_col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
+        }
+        else if (write_row > 0) {
             write_row--;
             write_col = MAX_COL - 1;
-            line_buffer[write_row][write_col]  = ' ';
-        } 
-    } else {
-        // Safety: Don't write past buffer end
+            line_buffer[write_row][write_col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
+        }
+    }
+    else {
         if (write_row < BUFFER_ROWS) {
-            line_buffer[write_row][write_col] = c;
+            // STRICT CASTING: Prevents C from corrupting the color bits
+            line_buffer[write_row][write_col] = (uint16_t)((uint8_t)character) | ((uint16_t)current_color << 8);
         }
         write_col++;
 
-        // Wrap to next line if we hit edge
         if (write_col >= MAX_COL) {
             write_col = 0;
             write_row++;
         }
     }
 
+    // --- Scrolling Logic ---
     if (write_row >= BUFFER_ROWS) {
-        // Shift every row up by one
         for (int r = 1; r < BUFFER_ROWS; r++) {
-            for (int c = 0; c < MAX_COL; c++) {
-                line_buffer[r-1][c] = line_buffer[r][c];
+            for (int col = 0; col < MAX_COL; col++) {
+                line_buffer[r - 1][col] = line_buffer[r][col];
             }
         }
-        
-        // Clear the last row (now row 99) so it's ready for new text
-        for (int c = 0; c < MAX_COL; c++) {
-            line_buffer[BUFFER_ROWS-1][c] = ' ';
-        }
 
-        // Keep our write pointer at the last line
+        // Clear the bottom row with properly colored spaces
+        for (int col = 0; col < MAX_COL; col++) {
+            line_buffer[BUFFER_ROWS - 1][col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
+        }
         write_row = BUFFER_ROWS - 1;
     }
 
-    // --- Auto-Scroll Logic ---
-    // Ensure the view follows the cursor
     if (write_row >= view_start_row + MAX_ROW) {
         view_start_row = write_row - MAX_ROW + 1;
     }
-    
-    // Update the screen
+
     update_screen();
 }
-
 void print(char *str) {
     int i = 0;
     while (str[i] != 0) {
@@ -236,6 +233,6 @@ void print_float(float f) {
     }
 }
 
-void set_color(Color color) {
+void set_color(uint16_t color) {
 	current_color = color;
 }
