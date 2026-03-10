@@ -89,5 +89,6 @@ typedef enum {
 } Color ;
 
 void set_color(uint16_t color);
+void enable_dynamic_history(int total_rows);
 
 #endif

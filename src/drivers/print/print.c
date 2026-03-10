@@ -4,6 +4,7 @@
 
 #include "print.h"
 #include "../memory/heap/heap.h"
+#include <stddef.h>
 
 #define MAX_ROW 25
 #define MAX_COL 80
@@ -13,6 +14,8 @@
 
 
 // The Big Buffer: Stores all text history
+int max_history_rows = 25; // Stage 1: Tiny safe limit for early boot
+uint16_t boot_buffer[25][MAX_COL]; // Stage 1: The tiny array that fits in the bootloader
 uint16_t(*line_buffer)[MAX_COL];
 
 // Cursors
@@ -36,29 +39,29 @@ void update_cursor(int x, int y) {
 // --- Core Helper: Sync Buffer to Screen ---
 // This copies MAX_ROWS(25) lines from the buffer to the actual video memory
 void update_screen() {
-    // Treat the screen as an array of 16-bit blocks, not 8-bit chars
+    // Cast the VGA hardware directly to a 16-bit pointer
     uint16_t* video_memory = (uint16_t*)VIDEO_ADDRESS;
 
     for (int row = 0; row < MAX_ROW; row++) {
         int buffer_index = view_start_row + row;
 
         for (int col = 0; col < MAX_COL; col++) {
-            // Default to a colored space
+            // Default: A blank space merged with the current color
             uint16_t cell = (uint16_t)' ' | ((uint16_t)current_color << 8);
 
-            // Safety check: Only read if we are inside the buffer
-            if (buffer_index >= 0 && buffer_index < BUFFER_ROWS) {
+            // Safety check: Only read if we are inside our known history bounds
+            if (buffer_index >= 0 && buffer_index < max_history_rows) {
                 if (line_buffer[buffer_index][col] != 0) {
                     cell = line_buffer[buffer_index][col];
                 }
             }
 
-            // Write the entire 16-bit block directly to the VGA hardware
+            // Write the 16-bit block directly to the VGA hardware
             video_memory[row * MAX_COL + col] = cell;
         }
     }
 
-    // --- Sync the Hardware Cursor ---
+    // Hardware Cursor Sync
     int screen_cursor_y = write_row - view_start_row;
     if (screen_cursor_y >= 0 && screen_cursor_y < MAX_ROW) {
         update_cursor(write_col, screen_cursor_y);
@@ -67,7 +70,6 @@ void update_screen() {
         update_cursor(0, MAX_ROW + 1);
     }
 }
-
 
 void screen_clear() {
 
@@ -91,7 +93,7 @@ void print_char(char character) {
         write_col = 0;
         write_row++;
     }
-    else if (character == '\b') {
+    else if (character == '\b') { // Backspace
         if (write_col > 0) {
             write_col--;
             line_buffer[write_row][write_col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
@@ -103,8 +105,8 @@ void print_char(char character) {
         }
     }
     else {
-        if (write_row < BUFFER_ROWS) {
-            // STRICT CASTING: Prevents C from corrupting the color bits
+        if (write_row < max_history_rows) {
+            // THE MAGIC MATH: Combine the letter and the color!
             line_buffer[write_row][write_col] = (uint16_t)((uint8_t)character) | ((uint16_t)current_color << 8);
         }
         write_col++;
@@ -115,19 +117,17 @@ void print_char(char character) {
         }
     }
 
-    // --- Scrolling Logic ---
-    if (write_row >= BUFFER_ROWS) {
-        for (int r = 1; r < BUFFER_ROWS; r++) {
+    // Scrolling Logic
+    if (write_row >= max_history_rows) {
+        for (int r = 1; r < max_history_rows; r++) {
             for (int col = 0; col < MAX_COL; col++) {
                 line_buffer[r - 1][col] = line_buffer[r][col];
             }
         }
-
-        // Clear the bottom row with properly colored spaces
         for (int col = 0; col < MAX_COL; col++) {
-            line_buffer[BUFFER_ROWS - 1][col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
+            line_buffer[max_history_rows - 1][col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
         }
-        write_row = BUFFER_ROWS - 1;
+        write_row = max_history_rows - 1;
     }
 
     if (write_row >= view_start_row + MAX_ROW) {
@@ -136,6 +136,7 @@ void print_char(char character) {
 
     update_screen();
 }
+
 void print(char *str) {
     int i = 0;
     while (str[i] != 0) {
@@ -235,4 +236,19 @@ void print_float(float f) {
 
 void set_color(uint16_t color) {
 	current_color = color;
+}
+
+void enable_dynamic_history(int total_rows) {
+    // Stage 2: Ask the heap for a massive chunk of RAM
+    uint16_t(*new_buffer)[MAX_COL] = (uint16_t(*)[MAX_COL])malloc(total_rows * MAX_COL * sizeof(uint16_t));
+
+    if (new_buffer != NULL) {
+        // Swap the master pointer to the massive heap memory
+        line_buffer = new_buffer;
+        max_history_rows = total_rows;
+
+        // Wipe the new memory clean so we don't print random garbage
+        screen_clear();
+    }
+    // If malloc fails, we silently keep using the safe boot_buffer
 }

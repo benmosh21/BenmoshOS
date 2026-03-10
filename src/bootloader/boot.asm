@@ -6,6 +6,8 @@
 [org 0x7c00]
 [bits 16]
 
+global gdt_start
+
 start:
 	jmp short main
 	nop
@@ -152,7 +154,7 @@ sect2_start:
         dw 0xFFFF		; Limit (bits 0-15)
 		dw 0			; Base (bits 0-15) 
 		db 0			; Base (bits 16-23)
-		db 10010011b    ; Access Byte (Present, Ring 0, Data, Read/Write)
+		db 10010010b    ; Access Byte (Present, Ring 0, Data, Read/Write)
 		db 11001111b	; Flags (4 bits) + Limit (4 bits)
 		db 0			; Base (bits 24-31)
 	
@@ -169,9 +171,17 @@ sect2_start:
         dw 0xFFFF		; Limit (bits 0-15)
 		dw 0			; Base (bits 0-15) 
 		db 0			; Base (bits 16-23)
-		db 11110011b    ; Access Byte (Present, Ring 3, Data, Read/Write)
+		db 11110010b    ; Access Byte (Present, Ring 3, Data, Read/Write)
 		db 11001111b	; Flags (4 bits) + Limit (4 bits)
 		db 0			; Base (bits 24-31)
+	
+	gdt_tss:
+		dw 104          ; Limit (The TSS is exactly 104 bytes long)
+		dw 0            ; Base (bits 0-15) - We will set this in C
+		db 0            ; Base (bits 16-23) - We will set this in C
+		db 10001001b    ; Access: Present, Ring 0, Type: 32-bit TSS
+		db 00000000b    ; Flags
+		db 0            ; Base (bits 24-31) - We will set this in C
 	
 	gdt_end:
 		

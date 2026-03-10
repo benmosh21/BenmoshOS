@@ -26,13 +26,12 @@ void main() {
 	vmm_init(); // Initialize the Virtual Memory Manager (VMM)
 
 	heap_init(); // Initialize the heap for dynamic memory allocation
+    enable_dynamic_history(1000);
 
     __asm__ volatile ("sti"); // Enable interrupts
 
     print("Welcome to BenmoshOS!\n");
-    set_color(YELLOW_ON_BLACK);
     print("This is a simple kernel written in C.\n");
-    set_color(RED_ON_BLUE);
 
     print("BenmoshOS> ");
     

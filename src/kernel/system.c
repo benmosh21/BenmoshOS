@@ -79,3 +79,17 @@ void outportw(uint16_t _port, uint16_t _data) {
 }
 
 
+void init_tss() {
+	gdt_start[40 + 5] = 0xe9; // Access byte: present, ring 0, type 9 (32-bit TSS)
+	gdt_start[40 + 6] = 0x00; // Limit low byte
+
+	for (int i = 0; i < sizeof(tss_entry); i++) {
+		((uint8_t*)&tss_entry)[i] = 0; // Clear the TSS entry
+	}
+
+	tss_entry.ss0 = 0x10; // Ring 0 data segment selector
+	tss_entry.esp0 = 0x90000; // Stack pointer for Ring 0 (top of our 4KB stack)
+	tss_entry.iomap_base = sizeof(tss_entry_t); // No I/O bitmap, so set to end of TSS
+
+    flush_tss();
+}
