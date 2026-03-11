@@ -6,23 +6,32 @@ SECTIONS
     . = 0x8000;
 
     /* 2. Define the code section */
-    .text : {
-        *(.text.entry)  /* Pull main() to the front */
-        *(.text)       /* All other code */
+    .text : ALIGN(4) {
+        *(.text.entry)  
+        *(.text)        
+        *(.text.*)      /* Catch GCC sub-sections */
     }
 
-    /* 3. Define initialized data */
-    .data : {
+    /* 3. Define Read-Only Data (WHERE YOUR STRINGS LIVE!) */
+    .rodata : ALIGN(4) {
+        *(.rodata)
+        *(.rodata.*)
+    }
+
+    /* 4. Define initialized data */
+    .data : ALIGN(4) {
         *(.data)
+        *(.data.*)      /* THE GOLDEN FIX: Catches current_color and pointers! */
     }
 
-    /* 4. Define uninitialized data (BSS) */
-    .bss : {
-        __bss_start = .;    /* Mark the start of BSS */
+    /* 5. Define uninitialized data (BSS) */
+    .bss : ALIGN(4) {
+        __bss_start = .;    
         *(.bss)
-        __bss_end = .;      /* Mark the end of BSS */
+        *(.bss.*)
+        *(COMMON)           
+        __bss_end = .;      
     }
 
-    /* 5. Define the end of the kernel in memory */
     kernel_end = .;
 }

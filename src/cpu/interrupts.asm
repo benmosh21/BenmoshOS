@@ -102,3 +102,35 @@ isr_common_stub:
     popad               ; 2. Restore all general-purpose registers (EAX, ECX, etc.)
     add esp, 8          ; 3. Clean up the pushed error code and ISR number
     iret                ; 4. The special "Interrupt Return" instruction
+
+
+global jump_usermode
+
+jump_usermode:
+    cli                 ; Disable hardware interrupts during the transition
+    
+    ; Grab the C function pointer we passed as an argument
+    mov ebx, [esp + 4]  
+    
+    ; 1. Load User Data Segment
+    ; In your GDT, User Data is at 0x20. We add 3 for Ring 3 Privilege = 0x23
+    mov ax, 0x23
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    ; --- Construct the fake IRET Stack ---
+    push 0x23           ; 1. SS: The User Data Segment (0x23)
+    push 0x80000        ; 2. ESP: Give Ring 3 a safe, empty memory address for its stack
+    
+    pushf               ; 3. EFLAGS: Push the current CPU flags
+    pop eax
+    or eax, 0x200       ; Enable interrupts (Bit 9) so the keyboard still works
+    push eax            ; Repush the modified flags
+    
+    ; In your GDT, User Code is at 0x18. We add 3 for Ring 3 Privilege = 0x1B
+    push 0x1B           ; 4. CS: The User Code Segment (0x1B)
+    push ebx            ; 5. EIP: The C function pointer we grabbed earlier!
+
+    iret                ; Execute the jump! The CPU is now in Ring 3!

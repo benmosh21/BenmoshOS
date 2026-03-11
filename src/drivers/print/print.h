@@ -88,7 +88,7 @@ typedef enum {
 	MAGENTA_ON_CYAN = 0x34
 } Color ;
 
-void set_color(uint16_t color);
+void set_print_color(uint16_t color);
 void enable_dynamic_history(int total_rows);
 
 #endif

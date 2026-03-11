@@ -8,7 +8,7 @@
 
 #define MAX_ROW 25
 #define MAX_COL 80
-#define BUFFER_ROWS 4000  // Size of our history
+#define BUFFER_ROWS 40000  // Size of our history
 #define VIDEO_ADDRESS 0xb8000
 
 
@@ -234,7 +234,7 @@ void print_float(float f) {
     }
 }
 
-void set_color(uint16_t color) {
+void set_print_color(uint16_t color) {
 	current_color = color;
 }
 

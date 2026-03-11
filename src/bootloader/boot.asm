@@ -1,7 +1,4 @@
-; 
 ; boot.asm - The bootloader for our OS
-; This file is responsible for loading the kernel from disk and transitioning to protected mode.
-;
 
 [org 0x7c00]
 [bits 16]
@@ -18,7 +15,7 @@ bytes_per_sector:		dw 512				;
 sectors_per_cluster:	db 1 				;
 reserved_sectors:		dw 50				; Sector 0 is for the bootloader and the rest are for the kernel
 fat_count:				db 2 				; One is the primary FAT, the other is a backup
-root_dir_entries: 		dw 512				; the number of entries in the root directory (512 entries * 32 bytes per entry = 16KB for the root directory)
+root_dir_entries: 		dw 512				; the number of entries in the root directory
 total_sectors_16: 		dw 0				; we will use the 32-bite count
 media_descriptor: 		db 0xF8				; 0xF8 means Hard Drive
 sectors_per_fat:		dw 256				; the size of the fat
@@ -35,20 +32,15 @@ volume_id:				dd 0x67676767		; Random serial (67 67 67) number
 volume_label:			db 'BenmoshOS  '	; 11 bytes
 file_system_type:		db 'FAT16   '		; 8 bytes
 
-;
-; Print a string to the screen.
-; Parameters:
-; 	- ds:si points to string
-;
 
+; Print a string to the screen.
 puts:
-	; save regusters we will modify
 	push si
 	push ax
 	
 .loop:
-	lodsb		; loads next character in al
-	or al, al	; verify if next character is null (if result 0 is null)
+	lodsb		
+	or al, al	
 	jz .done
 	
 	mov ah, 0x0E
@@ -62,126 +54,113 @@ puts:
 	pop si
 	ret
 
-;
-; MAIN PROGRAM FOR SECTION 1
-;
 
 main:
-	
-	; setup data segments
 	xor ax, ax	
 	mov ds, ax
 	mov es, ax
 	
-	; setup stack
 	mov ss, ax
 	mov sp, 0x7c00
 	
-	;print message
 	mov si, msg_hello
 	call puts
 	
-	; go to the next section
-	mov bx, 0x7e00
-	mov ax, 0x0250
-	mov cl, 2
-	xor ch, ch
-	xor dh, dh
+	; --- EXTENDED LBA READ ---
+	mov ah, 0x42
+	mov dl, 0x80     ; 0x80 is the First Hard Drive
+	mov si, dap      ; Load the address of our Disk Address Packet
 	int 0x13
 	
-	; IF FAILURE (Carry flag = 1), JUMP TO ERROR
 	jc disk_error
-	
-	; IF SUCCESS (Carry flag = 0), JUMP TO SECTION 2
-	jmp bx
+	jmp 0x7E00
 
-
-;
-; ERROR HANDLERS
-;
 
 disk_error:
 	mov si, disk_error_msg
 	call puts
-	jmp .halt
-
-	
 .halt:
 	jmp .halt
 
-	
+
+; --- Disk Address Packet (DAP) ---
+align 4
+dap:
+	db 0x10      ; Size of DAP (16 bytes)
+	db 0         ; Unused
+	dw 127       ; Number of sectors to read (120 sectors = 60 KB of kernel code)
+	dw 0x7E00    ; Offset where to load it in RAM
+	dw 0         ; Segment where to load it in RAM
+	dq 1         ; LBA sector to start reading from (LBA 1 is immediately after the boot sector)
+
 msg_hello: db 'hello, world!', 10, 13, 0
 disk_error_msg: db 'Error: Disk Read Failed!', 10, 13, 0
 
-times 510 -($ - $$) db 0 ; put 0 in every locatoin after the code
+times 510 -($ - $$) db 0 
+dw 0xAA55 
 
-dw 0xAA55 ; tell the BIOS that is an OS
-
-
+; ==========================================
+; SECTION 2 (Loaded by the LBA read)
+; ==========================================
 sect2_start:
 
 	xor ax, ax
 	mov es, ax
-	mov di, 0x5000  ; Set the destination address for the memory map entries
+	mov di, 0x5000  
 	mov ebx, 0
 	call load_pmm
 	
-	cli					  ; Disable interrupts
-	lgdt [gdt_descriptor] ; Load the DGT descriptor
-
-	extern __bss_start
-	extern __bss_end
+	cli					  
+	lgdt [gdt_descriptor] 
 	
-	mov eax, cr0    ; 1. Read the current CR0 register
-	or eax, 0x1     ; 2. Set the 0th bit to 1 (keep others same)
-	mov cr0, eax    ; 3. Write it back to CR0
+	mov eax, cr0    
+	or eax, 0x1     
+	mov cr0, eax    
 	
 	jmp 0x08:init_pm
 	
 	gdt_start:
-		dq 0 ; 8 bytes of 0
+		dq 0 
 		
 	gdt_kernel_code:
-		dw 0xFFFF		; Limit (bits 0-15)
-		dw 0			; Base (bits 0-15) 
-		db 0			; Base (bits 16-23)
-		db 10011010b	; Access Byte (Present, Ring 0, Code, Exec/Read)
-		db 11001111b	; Flags (4 bits) + Limit (4 bits)
-		db 0			; Base (bits 24-31)
-	
+		dw 0xFFFF		
+		dw 0			
+		db 0			
+		db 10011010b	
+		db 11001111b	
+		db 0			
 	
 	gdt_kernel_data:
-        dw 0xFFFF		; Limit (bits 0-15)
-		dw 0			; Base (bits 0-15) 
-		db 0			; Base (bits 16-23)
-		db 10010010b    ; Access Byte (Present, Ring 0, Data, Read/Write)
-		db 11001111b	; Flags (4 bits) + Limit (4 bits)
-		db 0			; Base (bits 24-31)
+        dw 0xFFFF		
+		dw 0			
+		db 0			
+		db 10010010b    
+		db 11001111b	
+		db 0			
 	
 	gdt_user_code:
-		dw 0xFFFF		; Limit (bits 0-15)
-		dw 0			; Base (bits 0-15) 
-		db 0			; Base (bits 16-23)
-		db 11111010b	; Access Byte (Present, Ring 3, Code, Exec/Read)
-		db 11001111b	; Flags (4 bits) + Limit (4 bits)
-		db 0			; Base (bits 24-31)
-	
+		dw 0xFFFF		
+		dw 0			
+		db 0			
+		db 11111010b	
+		db 11001111b	
+		db 0			
 	
 	gdt_user_data:
-        dw 0xFFFF		; Limit (bits 0-15)
-		dw 0			; Base (bits 0-15) 
-		db 0			; Base (bits 16-23)
-		db 11110010b    ; Access Byte (Present, Ring 3, Data, Read/Write)
-		db 11001111b	; Flags (4 bits) + Limit (4 bits)
-		db 0			; Base (bits 24-31)
+        dw 0xFFFF		
+		dw 0			
+		db 0			
+		db 11110010b    
+		db 11001111b	
+		db 0			
 	
 	gdt_tss:
-		dw 104          ; Limit (The TSS is exactly 104 bytes long)
-		dw 0            ; Base (bits 0-15) - We will set this in C
-		db 0            ; Base (bits 16-23) - We will set this in C
-		db 10001001b    ; Access: Present, Ring 0, Type: 32-bit TSS
-		db 00000000b    ; Flags
-		db 0            ; Base (bits 24-31) - We will set this in C
+		dw 104          
+		dw 0            
+		db 0            
+		db 10001001b    
+		db 00000000b    
+		db 0            
 	
 	gdt_end:
 		
@@ -190,32 +169,30 @@ sect2_start:
 		dd gdt_start
 
 load_pmm:
-	mov eax, 0xE820      ; Get Memory Map
-	mov edx, 0x534D4150  ; 'SMAP'
-	mov ecx, 24			 ; Size of the buffer for the memory map entry
+	mov eax, 0xE820      
+	mov edx, 0x534D4150  
+	mov ecx, 24			 
 	int 0x15
 	
-	jc .done
+	jc .done_pmm
 	cmp eax, 0x534d4150
-	jne .done
+	jne .done_pmm
 	
 	add di, 24
 	inc bp
 
 	cmp ebx, 0
-	je .done
+	je .done_pmm
 	jmp load_pmm
 	
-.done:
+.done_pmm:
 	mov dword [di + 8], 0
 	mov dword [di + 12], 0
 	ret
 
 		
-[bits 32] 	; tell the assembler we are now in 32-bits mode
+[bits 32] 	
 init_pm:
-	
-	
 	
 	mov ax, 0x10
 	mov ds, ax
@@ -224,11 +201,9 @@ init_pm:
 	mov fs, ax
 	mov gs, ax
 	
-	
-	mov ebp, 0x90000 ; Move stack far away to safty
+	mov ebp, 0x90000 
 	mov esp, ebp
 	
-	; set the start of the screen
 	mov edx, 0xb8000
 	
 	call clear_screen_pm
@@ -239,49 +214,46 @@ init_pm:
 	mov esi, msg_hello_asm
 	call print_string_pm
 
-	call 0x8000
+	; JUMP DIRECTLY TO THE C KERNEL ENTRY POINT!
+	jmp 0x8000 
 	
-	jmp $
-
-
 
 clear_screen_pm:
-    pusha               ; Save all registers
-    mov edx, 0xb8000    ; Start of video memory
-    mov ecx, 2000       ; Loop 2000 times (80 cols * 25 rows)
+    pusha               
+    mov edx, 0xb8000    
+    mov ecx, 2000       
 
-.loop:
-    mov byte [edx], ' ' ; Write a space (ASCII 0x20)
-    mov byte [edx+1], 0x0F ; Write color (White on Black)
+.loop_clear:
+    mov byte [edx], ' ' 
+    mov byte [edx+1], 0x0F 
     
-    add edx, 2          ; Move to next character cell
-    dec ecx             ; Decrease counter
-    jnz .loop           ; If counter is not 0, jump back to loop
+    add edx, 2          
+    dec ecx             
+    jnz .loop_clear     
     
-    popa                ; Restore registers
+    popa                
     ret
 	
 print_string_pm:
 
-	jmp .loop
+	jmp .loop_print
 	
-	
-.loop:
-	lodsb		; loads next character in al
-	or al, al	; verify if next character is null (if result 0 is null)
-	jz .done
+.loop_print:
+	lodsb		
+	or al, al	
+	jz .done_print
 	
 	mov [edx], al
-	mov [edx + 1], byte 0x0f ; need to find what number is for the right color
+	mov [edx + 1], byte 0x0f 
 	
 	add edx, 2
 	
-	jmp .loop
+	jmp .loop_print
 
-.done
+.done_print:
 	ret
-	
+
 msg_hello_32bits: db 'we in 32 bits     ', 0
 msg_hello_asm: db 'this is from assembly', 0
 
-times 512+ 512 -($ - $$) db 0 ; put 0 in every locatoin after the code
+times 512+ 512 -($ - $$) db 0

@@ -55,13 +55,9 @@ typedef struct tss_entry_struct tss_entry_t;
 extern uint8_t gdt_start[];
 
 // We use a global variable so the TSS stays in memory forever
-tss_entry_t tss_entry;
+extern tss_entry_t tss_entry;
 
-void flush_tss() {
-    // 0x28 is the byte offset of the TSS entry in your GDT
-    // (Null=0x00, KCode=0x08, KData=0x10, UCode=0x18, UData=0x20, TSS=0x28)
-    __asm__ volatile ("ltr %%ax" : : "a" (0x28));
-}
+void flush_tss();
 
 void init_tss();
 

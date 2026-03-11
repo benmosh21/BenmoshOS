@@ -79,17 +79,56 @@ void outportw(uint16_t _port, uint16_t _data) {
 }
 
 
+// Define the actual physical variable here in the C file
+tss_entry_t tss_entry;
+
+// Define the function body here
+void flush_tss() {
+    __asm__ volatile ("ltr %%ax" : : "a" (0x28));
+}
+
+// A tiny struct to hold the hardware's GDT pointer
+struct gdt_ptr {
+    uint16_t limit;
+    uint32_t base;
+} __attribute__((packed));
+
+
 void init_tss() {
-	gdt_start[40 + 5] = 0xe9; // Access byte: present, ring 0, type 9 (32-bit TSS)
-	gdt_start[40 + 6] = 0x00; // Limit low byte
+    // 1. ASK THE HARDWARE WHERE THE GDT IS
+    struct gdt_ptr current_gdt;
+    __asm__ volatile ("sgdt %0" : "=m" (current_gdt));
 
-	for (int i = 0; i < sizeof(tss_entry); i++) {
-		((uint8_t*)&tss_entry)[i] = 0; // Clear the TSS entry
-	}
+    // Create a pointer to the GDT in memory
+    uint8_t* gdt_start = (uint8_t*)current_gdt.base;
 
-	tss_entry.ss0 = 0x10; // Ring 0 data segment selector
-	tss_entry.esp0 = 0x90000; // Stack pointer for Ring 0 (top of our 4KB stack)
-	tss_entry.iomap_base = sizeof(tss_entry_t); // No I/O bitmap, so set to end of TSS
+    // 2. Get the physical memory address of the TSS struct, and its size
+    uint32_t base = (uint32_t)&tss_entry;
+    uint32_t limit = sizeof(tss_entry_t);
 
+    // 3. Splice the LIMIT into the GDT
+    gdt_start[40 + 0] = limit & 0xFF;         // Limit lowest 8 bits
+    gdt_start[40 + 1] = (limit >> 8) & 0xFF;  // Limit highest 8 bits
+
+    // 4. Splice the BASE (memory address) into the GDT using bitwise shifts
+    gdt_start[40 + 2] = base & 0xFF;          // Base lowest 8 bits
+    gdt_start[40 + 3] = (base >> 8) & 0xFF;   // Base middle bits (8-15)
+    gdt_start[40 + 4] = (base >> 16) & 0xFF;  // Base middle bits (16-23)
+    gdt_start[40 + 7] = (base >> 24) & 0xFF;  // Base highest 8 bits (24-31)
+
+    // 5. Set the Access and Flags
+    gdt_start[40 + 5] = 0xE9; // Access byte: present, ring 3 allowed, 32-bit TSS
+    gdt_start[40 + 6] = 0x00; // Flags
+
+    // 6. Initialize the actual TSS Struct
+    for (int i = 0; i < sizeof(tss_entry); i++) {
+        ((uint8_t*)&tss_entry)[i] = 0;
+    }
+
+    tss_entry.ss0 = 0x10;
+    tss_entry.esp0 = 0x90000;
+    tss_entry.iomap_base = sizeof(tss_entry_t);
+
+    // 7. Lock it into the CPU silicon
     flush_tss();
 }
