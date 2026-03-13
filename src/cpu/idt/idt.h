@@ -88,6 +88,8 @@ extern void isr45();
 extern void isr46();
 extern void isr47();
 
+extern void isr128(); // System call interrupt (int 0x80)
+
 // Interrupt Service Routines (ISRs) declarations
 void set_idt_gate(int num, uint32_t base, uint16_t sel, uint8_t flags);
 void load_idt();

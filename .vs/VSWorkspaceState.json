@@ -2,15 +2,15 @@
   "ExpandedNodes": [
     "",
     "\\src",
+    "\\src\\bootloader",
+    "\\src\\cpu",
+    "\\src\\cpu\\idt",
+    "\\src\\cpu\\pic",
     "\\src\\drivers",
-    "\\src\\drivers\\ata",
-    "\\src\\drivers\\print",
-    "\\src\\fs",
+    "\\src\\drivers\\keyboard",
     "\\src\\kernel",
-    "\\src\\kernel\\pmm",
-    "\\src\\kernel\\vmm",
-    "\\src\\shell"
+    "\\src\\memory"
   ],
-  "SelectedNode": "\\src\\kernel\\vmm\\vmm.c",
+  "SelectedNode": "\\src\\memory\\vmm\\vmm.c",
   "PreviewInSolutionExplorer": false
 }

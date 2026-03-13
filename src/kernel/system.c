@@ -132,3 +132,12 @@ void init_tss() {
     // 7. Lock it into the CPU silicon
     flush_tss();
 }
+
+void syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
+    if (eax == 1) {
+        print("Kernel: Syscall 1 (Print) triggered from Ring 3!\n");
+    }
+    else {
+        print("Kernel: Unknown syscall triggered.\n");
+    }
+}

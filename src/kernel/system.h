@@ -6,6 +6,7 @@
 #define __SYSTEM_H
 
 #include <stdint.h>
+#include "../drivers/print/print.h"
 
 /* MAIN.C */
 extern unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count);
@@ -60,5 +61,7 @@ extern tss_entry_t tss_entry;
 void flush_tss();
 
 void init_tss();
+
+void syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 
 #endif

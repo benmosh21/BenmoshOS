@@ -1,60 +1,62 @@
+/* * kernel.c - The main kernel code for our OS
+ */
+
+#include <stdint.h>
+#include "system.h"
+#include "../cpu/idt/idt.h"
+#include "../cpu/pic/pic.h"
 #include "../drivers/print/print.h"
+#include "../drivers/ata/ata.h"
+#include "../fs/fat16.h"
 #include "../memory/pmm/pmm.h"
 #include "../memory/vmm/vmm.h"
 #include "../memory/heap/heap.h"
-#include "system.h"
 
+ // External assembly function to drop to Ring 3
+extern void jump_usermode(void* function_pointer);
 
+// Our very first Ring 3 user application!
+void my_user_program() {
+    // 1. Put the system call number (1) into the EAX register
+    // 2. Trigger interrupt 0x80
+    __asm__ volatile("mov $1, %eax; int $0x80");
+
+    while (1) {
+        // Trapped safely in User Mode
+    }
+}
+
+__attribute__((section(".text.main")))
 void main() {
-    // --- HARDWARE DEBUG: Print 'C' (Red background) ---
-    // Cast the physical VGA memory address to a pointer and force a write
-    *((char*)0xb8004) = 'C';
-    *((char*)0xb8005) = 0x4F;
+    // 1. Hardware Interrupts
+    load_idt();
+    pic_remap();
 
-    // --- FREEZE THE OS SO WE CAN SEE THE LETTERS! ---
-   // while (1);
+    // 2. Memory Subsystems
+    pmm_init();
+    vmm_init();
+    heap_init();
 
-    // Anything below this will NOT run right now.
-    // 1. Basic Screen Setup
+    // 3. User Interface
+    enable_dynamic_history(1000);
     screen_clear();
-    //set_print_color(0x0F); // White text
-    print("Booting BenmoshOS...\n");
 
-    //// 2. Memory Subsystems
-    //print("Initializing PMM...\n");
-    //pmm_init();
-    //
-    //print("Initializing VMM...\n");
-    //vmm_init();
-    //
-    //print("Initializing Heap...\n");
-    //heap_init();
-    //
-    //print("Enabling Dynamic History...\n");
-    //enable_dynamic_history(1000);
-    //
-    //// 3. Security Subsystems (Phase 2)
-    //print("Initializing TSS...\n");
-    //init_tss();
-    //
-    //set_print_color(0x0A); // Light Green
-    //print("TSS Initialized successfully!\n");
-    //set_print_color(0x0F); // Back to White
-    //
-    //print("\n--- FREEZE TEST ACTIVE ---\n");
-    //print("If the OS freezes here without rebooting, Phase 1 is perfect!\n");
-    //
-    //// ==========================================
-    //// THE FREEZE: The CPU will get stuck here.
-    //// ==========================================
-    //while (1);
-    //
-    //// ==========================================
-    //// Anything below this line will NOT execute yet.
-    //// ==========================================
-    //
-    //print("Jumping to User Mode...\n");
-   //// jump_usermode(my_user_program);
-    //
-    //print("If you see this, the jump failed.\n");
+    // 4. Security Sandbox (Ring 3 Preparation)
+    init_tss();
+
+    // 5. Enable hardware interrupts (Keyboard, Timer)
+    jump_usermode(my_user_program);
+    __asm__ volatile ("sti");
+
+    print("Welcome to BenmoshOS!\n");
+    print("All memory subsystems initialized.\n\n");
+
+    print("Dropping to Ring 3 User Mode...\n");
+    print("BenmoshOS> ");
+    // Execute the jump!
+
+    // The CPU should never reach this line because it is trapped in my_user_program
+    while (1) {
+        __asm__ volatile ("hlt");
+    }
 }

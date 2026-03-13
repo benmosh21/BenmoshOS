@@ -16,7 +16,7 @@
 // The Big Buffer: Stores all text history
 int max_history_rows = 25; // Stage 1: Tiny safe limit for early boot
 uint16_t boot_buffer[25][MAX_COL]; // Stage 1: The tiny array that fits in the bootloader
-uint16_t(*line_buffer)[MAX_COL];
+uint16_t(*line_buffer)[MAX_COL] = boot_buffer;
 
 // Cursors
 int write_row = 0;     // Current line we are writing to in the buffer
@@ -73,9 +73,7 @@ void update_screen() {
 
 void screen_clear() {
 
-	line_buffer = (uint16_t(*)[MAX_COL])malloc(BUFFER_ROWS * MAX_COL * sizeof(uint16_t));
-
-    for (int i = 0; i < BUFFER_ROWS; i++) {
+    for (int i = 0; i < max_history_rows; i++) {
         for (int j = 0; j < MAX_COL; j++) {
             line_buffer[i][j] = (uint16_t)' ' | ((uint16_t)current_color << 8);
         }

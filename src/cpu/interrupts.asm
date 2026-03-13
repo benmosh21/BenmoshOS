@@ -134,3 +134,22 @@ jump_usermode:
     push ebx            ; 5. EIP: The C function pointer we grabbed earlier!
 
     iret                ; Execute the jump! The CPU is now in Ring 3!
+	
+global isr128
+extern syscall_dispatcher
+
+isr128:
+    pusha               ; Save all general purpose registers
+    
+    ; Push the arguments for the C dispatcher
+    push edx
+    push ecx
+    push ebx
+    push eax
+    
+    call syscall_dispatcher
+    
+    ; Restore stack and registers
+    add esp, 16         ; Clean up the 4 pushed arguments
+    popa
+    iret                ; Return back to Ring 3

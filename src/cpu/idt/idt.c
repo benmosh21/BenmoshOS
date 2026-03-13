@@ -42,6 +42,8 @@ void load_idt() {
         set_idt_gate(i, (uint32_t) isr_stub_table[i], 0x08, 0x8E);
     }
 
+	set_idt_gate(128, (uint32_t)isr128, 0x08, 0xEE); // System call interrupt (int 0x80)
+
     __asm__ volatile ("lidt (%0)" : : "r" (&idt_ptr));
 }
 
