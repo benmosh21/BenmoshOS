@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 #include "../print/print.h"
-#include "../../kernel/system.h" // For inportb
-#include "../../shell/shell.h"
+#include "../../kernel/system.h"
+
+/* Forward declaration — avoids circular include with shell.h */
+void execute_command(char* command);
 
 void keyboard_handler();
 

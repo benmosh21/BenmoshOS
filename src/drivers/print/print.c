@@ -250,3 +250,9 @@ void enable_dynamic_history(int total_rows) {
     }
     // If malloc fails, we silently keep using the safe boot_buffer
 }
+
+void print_scancode(uint8_t scancode) {
+    print("SC:0x");
+    print_hex(scancode);
+    print(" ");
+}

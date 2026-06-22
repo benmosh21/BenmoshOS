@@ -1,67 +1,70 @@
-/*
- * system.h - System definitions for our OS
- * This file contains definitions and declarations for system-level functions.
- */
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 
 #include <stdint.h>
-#include "../drivers/print/print.h"
 
-/* MAIN.C */
-extern unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count);
-extern unsigned char *memset(unsigned char *dest, uint8_t val, uint32_t count);
+/* Forward declarations from print.h to break circular include */
+void print(char *str);
+void print_int(int n);
+void print_hex(int n);
+void set_print_color(uint16_t color);
+
+/* Memory utilities */
+extern unsigned char  *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count);
+extern unsigned char  *memset(unsigned char *dest, uint8_t val, uint32_t count);
 extern unsigned short *memsetw(unsigned short *dest, uint16_t val, uint32_t count);
 int strlen(const char *str);
-uint8_t inportb (uint16_t _port);
-uint16_t inportw (uint16_t _port);
-void outportb (uint16_t _port, unsigned char _data);
-void outportw (uint16_t _port, uint16_t _data);
 int strcmp(char* s1, char* s2);
 
+/* I/O ports */
+uint8_t  inportb(uint16_t _port);
+uint16_t inportw(uint16_t _port);
+void     outportb(uint16_t _port, unsigned char _data);
+void     outportw(uint16_t _port, uint16_t _data);
 
-// A structure that perfectly aligns with the x86 hardware TSS
+/* TSS structure — must match x86 hardware layout exactly */
 struct tss_entry_struct {
-    uint32_t prev_tss; // Hardware task linkage (Unused)
-    uint32_t esp0;     // The Ring 0 Stack Pointer we care about!
-    uint32_t ss0;      // The Ring 0 Stack Segment we care about!
-    uint32_t esp1;     // Unused
-    uint32_t ss1;      // Unused
-    uint32_t esp2;     // Unused
-    uint32_t ss2;      // Unused
-    uint32_t cr3;      // Unused
-    uint32_t eip;      // Unused
-    uint32_t eflags;   // Unused
-    uint32_t eax;      // Unused
-    uint32_t ecx;      // Unused
-    uint32_t edx;      // Unused
-    uint32_t ebx;      // Unused
-    uint32_t esp;      // Unused
-    uint32_t ebp;      // Unused
-    uint32_t esi;      // Unused
-    uint32_t edi;      // Unused
-    uint32_t es;       // Unused
-    uint32_t cs;       // Unused
-    uint32_t ss;       // Unused
-    uint32_t ds;       // Unused
-    uint32_t fs;       // Unused
-    uint32_t gs;       // Unused
-    uint32_t ldt;      // Unused
-    uint16_t trap;     // Unused
-    uint16_t iomap_base; // Unused
+    uint32_t prev_tss;
+    uint32_t esp0;        /* Ring0 stack pointer */
+    uint32_t ss0;         /* Ring0 stack segment */
+    uint32_t esp1;
+    uint32_t ss1;
+    uint32_t esp2;
+    uint32_t ss2;
+    uint32_t cr3;
+    uint32_t eip;
+    uint32_t eflags;
+    uint32_t eax;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t ebx;
+    uint32_t esp;
+    uint32_t ebp;
+    uint32_t esi;
+    uint32_t edi;
+    uint32_t es;
+    uint32_t cs;
+    uint32_t ss;
+    uint32_t ds;
+    uint32_t fs;
+    uint32_t gs;
+    uint32_t ldt;
+    uint16_t trap;
+    uint16_t iomap_base;
 } __attribute__((packed));
 
 typedef struct tss_entry_struct tss_entry_t;
 
-extern uint8_t gdt_start[];
-
-// We use a global variable so the TSS stays in memory forever
 extern tss_entry_t tss_entry;
 
 void flush_tss();
-
 void init_tss();
 
+/* Syscall dispatcher — called from isr128 (int 0x80)
+ *   eax = syscall number
+ *   ebx = arg1 (string pointer for syscall 2)
+ *   ecx = arg2
+ *   edx = arg3 */
 void syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 
 #endif
