@@ -1,21 +1,3 @@
-/*
- * shell.c - BenmoshOS command shell
- *
- * FIXES:
- *  - strcmp returns 1 on MATCH, 0 on mismatch.
- *    All if(strcmp(...)) checks were logically inverted — the "else" branch
- *    was executing on a match, and the "if" branch on a mismatch.
- *    Fixed: changed every if(strcmp(argv[0],"cmd")) to if(!strcmp(argv[0],"cmd"))
- *    so the logic reads: "if NOT a match, skip to next elif".
- *    Actually cleaner fix: check == 1 for match.
- *
- * NEW COMMANDS:
- *  - clear    : clear the screen
- *  - color N  : change text color (0-15)
- *  - echo     : print arguments
- *  - sysinfo  : show system info
- */
-
 #include "shell.h"
 #include "../memory/heap/heap.h"
 #include "../kernel/system.h"
@@ -44,36 +26,29 @@ void execute_command(char* command) {
     }
 
     if (argc == 0) {
-        /* Empty enter — just reprint the prompt, no insult needed */
         free(argv);
         return;
     }
 
-    /* ---- Command dispatch ----
-     * strcmp() returns 1 on match, 0 on no-match.
-     * We use (strcmp(argv[0], "cmd") == 1) for clarity. */
 
-    if (strcmp(argv[0], "purge") == 1) {
-        /* purge: list files on disk */
+    if (!strcmp(argv[0], "ls")) {
         if (argc > 1) {
-            print("Usage: purge   (no arguments)\n");
+            print("Usage: ls      (no arguments)\n");
         } else {
             print("Files on disk:\n");
             fat16_list_files();
         }
     }
-    else if (strcmp(argv[0], "void") == 1) {
-        /* void <filename>: print file contents */
+    else if (!strcmp(argv[0], "cat")) {
         if (argc < 2) {
-            print("Usage: void <filename>\n");
+            print("Usage: cat <filename>\n");
         } else if (argc > 2) {
-            print("Usage: void <filename>   (one file at a time)\n");
+            print("Usage: cat <filename>   (one file at a time)\n");
         } else {
             fat16_print_file(argv[1]);
         }
     }
-    else if (strcmp(argv[0], "wipe") == 1) {
-        /* wipe <filename>: create empty file */
+    else if (!strcmp(argv[0], "touch")) {
         if (argc < 2) {
             print("Usage: wipe <filename>\n");
         } else if (argc > 2) {
@@ -82,8 +57,7 @@ void execute_command(char* command) {
             fat16_create_file(argv[1]);
         }
     }
-    else if (strcmp(argv[0], "write") == 1) {
-        /* write <word> <filename>: write word into file */
+    else if (!strcmp(argv[0], "write")) {
         if (argc < 3) {
             print("Usage: write <word> <filename>\n");
         } else {
@@ -91,27 +65,25 @@ void execute_command(char* command) {
             print("Written.\n");
         }
     }
-    else if (strcmp(argv[0], "echo") == 1) {
-        /* echo [args...]: print arguments */
+    else if (!strcmp(argv[0], "echo")) {
         for (int i = 1; i < argc; i++) {
             print(argv[i]);
             if (i < argc - 1) print(" ");
         }
         print("\n");
     }
-    else if (strcmp(argv[0], "clear") == 1) {
-        /* clear: clear the screen */
+    else if (!strcmp(argv[0], "clear")) {
         screen_clear();
     }
-    else if (strcmp(argv[0], "color") == 1) {
-        /* color <0-15>: change text color */
+    else if (!strcmp(argv[0], "color")) {
+        
         if (argc < 2) {
             print("Usage: color <0-15>\n");
             print("  0=black 1=blue 2=green 3=cyan 4=red 5=magenta\n");
             print("  6=brown 7=gray 8=dk-gray 9=lt-blue 10=lt-green\n");
             print("  11=lt-cyan 12=lt-red 13=pink 14=yellow 15=white\n");
         } else {
-            /* Parse the number from argv[1] */
+            
             int col = 0;
             for (int i = 0; argv[1][i] != '\0'; i++) {
                 if (argv[1][i] >= '0' && argv[1][i] <= '9') {
@@ -121,10 +93,11 @@ void execute_command(char* command) {
             if (col < 0 || col > 15) col = 15;
             set_print_color((uint16_t)col);
             print("Color changed.\n");
+
         }
     }
-    else if (strcmp(argv[0], "sysinfo") == 1) {
-        /* sysinfo: print system information */
+    else if (!strcmp(argv[0], "sysinfo")) {
+
         set_print_color(0x0B);
         print("=== BenmoshOS System Info ===\n");
         set_print_color(0x0F);
@@ -140,24 +113,25 @@ void execute_command(char* command) {
         print("    0x28 TSS\n");
         print("  Filesystem   : FAT16\n");
         print("  Syscall gate : int 0x80\n");
+
     }
-    else if (strcmp(argv[0], "stupid") == 1) {
+    else if (!strcmp(argv[0], "stupid")) {
         /* stupid: show help */
         set_print_color(0x0E);
         print("=== BenmoshOS Help ===\n");
         set_print_color(0x0F);
-        print("  purge               - List files on disk\n");
-        print("  void <file>         - Print file contents\n");
-        print("  wipe <file>         - Create empty file\n");
+        print("  help                - Show this help\n");
+        print("  ls                  - List files on disk\n");
+        print("  cat <file>          - Print file contents\n");
+        print("  touch <file>        - Create empty file\n");
         print("  write <text> <file> - Write text to file\n");
         print("  echo [text...]      - Print text\n");
         print("  clear               - Clear the screen\n");
         print("  color <0-15>        - Change text color\n");
         print("  sysinfo             - Show system information\n");
         print("  activate [program]  - Launch a program\n");
-        print("  stupid              - Show this help\n");
     }
-    else if (strcmp(argv[0], "activate") == 1) {
+    else if (!strcmp(argv[0], "activate")) {
         if (argc == 1) {
             set_print_color(0x0C);
             print("ACTIVATING SELF DESTRUCT... just kidding :P\n");
@@ -174,7 +148,7 @@ void execute_command(char* command) {
     else {
         print("Unknown command: '");
         print(argv[0]);
-        print("'  (type 'stupid' for help)\n");
+        print("'  (use command 'help' for help)\n");
     }
 
     free(argv);

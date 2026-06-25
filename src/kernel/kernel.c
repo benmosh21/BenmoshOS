@@ -92,5 +92,3 @@ void main() {
     /* Never reached — all further work done in IRQ handlers */
     while (1) { __asm__ volatile("hlt"); }
 }
-
-ss

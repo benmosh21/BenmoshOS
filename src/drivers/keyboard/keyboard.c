@@ -13,19 +13,22 @@
 #define BACKSPACE 0x0E
 #define ENTER     0x1C
 
-/* --- Shift state --- */
+
 static int shift_pressed = 0;
 static int ctrl_pressed  = 0;
 
-/* --- Input line buffer --- */
+
 char key_buffer[256];
 int  buffer_index = 0;
 
-/* --- Command history --- */
+
 #define HISTORY_SIZE 16
 static char history[HISTORY_SIZE][256];
-static int  history_count = 0;      /* total entries stored */
-static int  history_pos   = -1;     /* -1 = not browsing history */
+static int  history_count = 0;      
+static int  history_pos   = -1;
+
+static char live_line_backup[256];
+static int  live_line_backup_index = 0;
 
 static void history_save(const char* cmd) {
     if (cmd[0] == '\0') return;
@@ -93,6 +96,7 @@ void keyboard_handler() {
         print("^C\n");
         buffer_index = 0;
         history_pos  = -1;
+        live_line_backup_index = 0;
         set_print_color(0x0E);
         print("BenmoshOS> ");
         set_print_color(0x0F);
@@ -102,7 +106,19 @@ void keyboard_handler() {
     /* Up arrow — older history */
     if (scancode == 72) {
         int next = (history_pos < 0) ? 0 : history_pos + 1;
-        if (next < history_count) { history_pos = next; history_load(history_pos); }
+        if (next < history_count) { 
+            if (history_pos == -1) {
+                int k = 0;
+                while (k < buffer_index) {
+                    live_line_backup[k] = key_buffer[k];
+                    k++;
+                }
+                live_line_backup[k] = '\0';
+                live_line_backup_index = buffer_index;
+            }
+            history_pos = next; 
+            history_load(history_pos); 
+        }
         return;
     }
 
@@ -115,6 +131,14 @@ void keyboard_handler() {
                 buffer_index--;
                 print_char('\b'); print_char(' '); print_char('\b');
             }
+
+            int k = 0;
+            while ( k < live_line_backup_index) {
+                key_buffer[k] = live_line_backup[k];
+                print_char(live_line_backup[k]);
+                k++;
+            }
+            buffer_index = live_line_backup_index;
             history_pos = -1;
         }
         return;
@@ -130,6 +154,7 @@ void keyboard_handler() {
         key_buffer[buffer_index] = '\0';
         history_save(key_buffer);
         history_pos = -1;
+        live_line_backup_index = 0;
 
         execute_command(key_buffer);
 
