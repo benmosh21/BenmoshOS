@@ -2,3 +2,4 @@ build/*
 .vs/*
 os-image.bin
 .vscode/c_cpp_properties.json
+roadmap.md
