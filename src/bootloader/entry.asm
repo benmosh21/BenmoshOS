@@ -15,6 +15,18 @@ _start:
     ; Reload the GDT
     lgdt [gdt_descriptor] 
 
+    ; Force the CPU to flush its Code Segment (CS) cache
+    jmp 0x08:.reload_segments
+
+    .reload_segments:
+        ; Force the CPU to flush its Data Segment caches
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        mov ss, ax
+
     ; --- HARDWARE DEBUG: Print 'E' (Blue background) ---
     mov byte [0xb8000], 'E'
     mov byte [0xb8001], 0x1F

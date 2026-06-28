@@ -3,8 +3,6 @@
 [org 0x7c00]
 [bits 16]
 
-global gdt_start
-
 start:
 	jmp short main
 	nop
@@ -111,7 +109,8 @@ sect2_start:
 	call load_pmm
 	
 	cli					  
-	
+	lgdt [gdt_descriptor] 
+
 	mov eax, cr0    
 	or eax, 0x1     
 	mov cr0, eax    
@@ -205,5 +204,63 @@ print_string_pm:
 
 msg_hello_32bits: db 'we in 32 bits     ', 0
 msg_hello_asm: db 'this is from assembly', 0
+
+gdt_start: 
+    dq 0 			; Null Descriptor (Selector 0x00)
+    
+gdt_kernel_code: 	; (Selector 0x08)
+    dw 0xFFFF     	; Limit (Bits 0-15)  = 0xFFFF (Combined with Flags to reach 4GB)
+    dw 0x0000     	; Base  (Bits 0-15)  = 0x0000 (Base address starts at 0x00000000)
+    db 0x00         ; Base  (Bits 16-23) = 0x00	
+
+    ; Access Byte: 10011010b (0x9A)
+    ; Bit 7 (P)   = 1 -> Present in memory
+    ; Bit 6-5 (Pr)= 00 -> Descriptor Privilege Level (Ring 0 - Kernel)
+    ; Bit 4 (S)   = 1 -> Descriptor Type (1 = Code or Data segment)
+    ; Bit 3 (E)   = 1 -> Executable flag (1 = Code segment)
+    ; Bit 2 (DC)  = 0 -> Conforming bit (0 = Regular execution protection)
+    ; Bit 1 (R)   = 1 -> Readable bit (1 = Code can be read as constants)
+    ; Bit 0 (A)   = 0 -> Accessed bit (0 = Automatically flipped to 1 by CPU when loaded)
+    db 10011010b     
+                    
+    ; Flags & Limit 16-19: 11001111b (0xCF)
+    ; Upper 4 bits [1100b / 0xC] = Flags:
+    ;   Bit 7 (G)  = 1 -> Granularity (1 = Multiplies limit by 4KB pages. 0xFFFFF * 4KB = 4GB)
+    ;   Bit 6 (D)  = 1 -> Size flag (1 = 32-bit Protected Mode execution)
+    ;   Bit 5 (L)  = 0 -> Long mode flag (0 = Not 64-bit mode)
+    ;   Bit 4 (AV) = 0 -> Available for system software use
+    ; Lower 4 bits [1111b / 0xF] = Limit (Bits 16-19):
+    ;   Appends to the lower 0xFFFF to build the full 20-bit limit 0xFFFFF
+    db 11001111b     
+    db 0x00          ; Base  (Bits 24-31) = 0x00
+
+gdt_kernel_data:  	; (Selector 0x10)
+    dw 0xFFFF       ; Limit (Bits 0-15)  = 0xFFFF
+    dw 0x0000       ; Base  (Bits 0-15)  = 0x0000
+    db 0x00         ; Base  (Bits 16-23) = 0x00
+    
+    ; Access Byte: 10010010b (0x92)
+    ; Bit 7 (P)   = 1 -> Present in memory
+    ; Bit 6-5 (Pr)= 00 -> Descriptor Privilege Level (Ring 0 - Kernel)
+    ; Bit 4 (S)   = 1 -> Descriptor Type (1 = Code or Data segment)
+    ; Bit 3 (E)   = 0 -> Executable flag (0 = Data segment)
+    ; Bit 2 (DC)  = 0 -> Direction bit (0 = Stack grows upwards / regular data segment)
+    ; Bit 1 (W)   = 1 -> Writable bit (1 = Data can be written to)
+    ; Bit 0 (A)   = 0 -> Accessed bit (0 = Managed by CPU)
+    db 10010010b     
+                    
+    ; Flags & Limit 16-19: 11001111b (0xCF)
+    ; Upper 4 bits [1100b / 0xC] = Flags (Granular=1, 32-bit=1, LongMode=0, Available=0)
+    ; Lower 4 bits [1111b / 0xF] = Limit Bits 16-19
+    db 11001111b     
+    db 0x00        	; Base  (Bits 24-31) = 0x00
+	
+gdt_end:
+    
+gdt_descriptor:
+    ; The GDT register tracking pointer loaded via the LGDT assembly instruction
+    dw gdt_end - gdt_start - 1  	; Size limit of the GDT array minus 1 byte
+    dd gdt_start                 	; Core 32-bit linear address pointing to gdt_start base memory
+
 
 times 512+ 512 -($ - $$) db 0

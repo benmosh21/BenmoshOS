@@ -83,14 +83,12 @@ void main() {
     set_print_color(0x07);
     print("  Type 'help' for help\n\n");
 
-    /* 5. TSS — must be done before ring3 jump */
-    init_tss();
 
-    /* 6. Enable hardware interrupts BEFORE ring3 jump
+    /* Enable hardware interrupts BEFORE ring3 jump
      *    (keyboard IRQ must fire while ring3 is spinning) */
     __asm__ volatile("sti");
 
-    /* 7. Print prompt then drop to ring3 */
+    /* Print prompt then drop to ring3 */
     set_print_color(0x0E);
     print("BenmoshOS> ");
     set_print_color(0x0F);
