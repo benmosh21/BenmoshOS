@@ -111,7 +111,6 @@ sect2_start:
 	call load_pmm
 	
 	cli					  
-	lgdt [gdt_descriptor] 
 	
 	mov eax, cr0    
 	or eax, 0x1     
@@ -119,55 +118,6 @@ sect2_start:
 	
 	jmp 0x08:init_pm
 	
-	gdt_start:
-		dq 0 
-		
-	gdt_kernel_code:
-		dw 0xFFFF		
-		dw 0			
-		db 0			
-		db 10011010b	
-		db 11001111b	
-		db 0			
-	
-	gdt_kernel_data:
-        dw 0xFFFF		
-		dw 0			
-		db 0			
-		db 10010010b    
-		db 11001111b	
-		db 0			
-	
-	gdt_user_code:
-		dw 0xFFFF		
-		dw 0			
-		db 0			
-		db 11111010b	
-		db 11001111b	
-		db 0			
-	
-	gdt_user_data:
-        dw 0xFFFF		
-		dw 0			
-		db 0			
-		db 11110010b    
-		db 11001111b	
-		db 0			
-	
-	gdt_tss:
-		dw 104          
-		dw 0            
-		db 0            
-		db 10001001b    
-		db 00000000b    
-		db 0            
-	
-	gdt_end:
-		
-	gdt_descriptor:
-		dw gdt_end - gdt_start - 1
-		dd gdt_start
-
 load_pmm:
 	mov eax, 0xE820      
 	mov edx, 0x534D4150  

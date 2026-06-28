@@ -112,7 +112,7 @@ jump_usermode:
     ; Grab the C function pointer we passed as an argument
     mov ebx, [esp + 4]  
     
-    ; 1. Load User Data Segment
+    ; Load User Data Segment
     ; In your GDT, User Data is at 0x20. We add 3 for Ring 3 Privilege = 0x23
     mov ax, 0x23
     mov ds, ax
@@ -122,7 +122,7 @@ jump_usermode:
 
     ; --- Construct the fake IRET Stack ---
     push 0x23           ; 1. SS: The User Data Segment (0x23)
-    push 0x80000        ; 2. ESP: Give Ring 3 a safe, empty memory address for its stack
+    push 0x00A00000     ; 2. ESP: Safe unprivleged User Stack page ceiling
     
     pushf               ; 3. EFLAGS: Push the current CPU flags
     pop eax
@@ -153,3 +153,13 @@ isr128:
     add esp, 16         ; Clean up the 4 pushed arguments
     popa
     iret                ; Return back to Ring 3
+
+global flush_tss
+
+flush_tss:
+    ; Offset 0x28 handles entry 5 in your GDT.
+    ; We combine it with the Requested Privilege Level (RPL) of Ring 3: 
+    ; 0x28 | 3 = 0x2B
+    mov ax, 0x2B        
+    ltr ax              ; Load the CPU Task Register (TR) with the selector
+    ret

@@ -2,6 +2,7 @@
 #define PRINT_H
 
 #include <stdint.h>
+#include "../../kernel/system.h"
 
 /* Forward declarations from system.h to break circular include */
 void outportb(uint16_t _port, unsigned char _data);
@@ -11,7 +12,7 @@ void print_char(char c);
 void print(char *str);
 void print_int(int n);
 void print_hex(int n);
-void print_float(float f);
+//void print_float(float f); - removed untile i implement FPU
 void print_scancode(uint8_t scancode);
 
 /* Screen control */
@@ -21,6 +22,11 @@ void scroll_history_up(int lines);
 void scroll_history_down(int lines);
 void set_print_color(uint16_t color);
 void enable_dynamic_history(int total_rows);
+
+/* hardware functions */
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+void disable_cursor();
+void update_cursor(int x, int y);
 
 /* Helpers */
 void reverse(char s[]);

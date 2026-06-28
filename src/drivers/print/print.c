@@ -1,135 +1,205 @@
 /*
- * print.c - Buffered printing with history
+ * print.c - Buffered printing with Ring Buffer, ANSI, and printf
  */
 
 #include "print.h"
 #include "../memory/heap/heap.h"
 #include <stddef.h>
+#include <stdarg.h> /* Required for printf */
 
 #define MAX_ROW 25
 #define MAX_COL 80
-#define BUFFER_ROWS 40000  // Size of our history
 #define VIDEO_ADDRESS 0xb8000
 
+/* The Ring Buffer variables */
+int max_history_rows = 25;
+uint16_t boot_buffer[25][MAX_COL];
+uint8_t boot_line_lengths[25];
+
+uint16_t (*line_buffer)[MAX_COL] = boot_buffer;
+uint8_t *line_lengths = boot_line_lengths; /* Tracks where each line ended for accurate backspace */
+
+/* Absolute counters for the ring buffer */
+uint32_t absolute_write_row = 0; 
+int write_col = 0;
+uint32_t view_start_row = 0; 
+uint8_t current_color = 0x0F;
 
 
-// The Big Buffer: Stores all text history
-int max_history_rows = 25; // Stage 1: Tiny safe limit for early boot
-uint16_t boot_buffer[25][MAX_COL]; // Stage 1: The tiny array that fits in the bootloader
-uint16_t(*line_buffer)[MAX_COL] = boot_buffer;
+/* --- Hardware Cursor Control --- */
 
-// Cursors
-int write_row = 0;     // Current line we are writing to in the buffer
-int write_col = 0;     // Current column in that line
-int view_start_row = 0;// The top line currently visible on screen
-uint8_t current_color = 0x0F; // Default color
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+    outportb(0x3D4, 0x0A);
+    outportb(0x3D5, (inportb(0x3D5) & 0xC0) | cursor_start);
+    
+    outportb(0x3D4, 0x0B);
+    outportb(0x3D5, (inportb(0x3D5) & 0xE0) | cursor_end);
+}
+
+void disable_cursor() {
+    outportb(0x3D4, 0x0A);
+    outportb(0x3D5, 0x20);
+}
 
 void update_cursor(int x, int y) {
-    uint16_t pos = (y * MAX_COL) +x;
-
-    // Send the High byte of the position
+    uint16_t pos = (y * MAX_COL) + x;
     outportb(0x3D4, 0x0E);
     outportb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
-    
-    // Send the Low byte of the position
     outportb(0x3D4, 0x0F);
     outportb(0x3D5, (uint8_t)(pos & 0xFF));
 }
 
-// --- Core Helper: Sync Buffer to Screen ---
-// This copies MAX_ROWS(25) lines from the buffer to the actual video memory
+
+/* --- Ring Buffer Screen Sync --- */
+
 void update_screen() {
-    // Cast the VGA hardware directly to a 16-bit pointer
     uint16_t* video_memory = (uint16_t*)VIDEO_ADDRESS;
+    uint16_t blank_cell = (uint16_t)' ' | ((uint16_t)current_color << 8);
 
     for (int row = 0; row < MAX_ROW; row++) {
-        int buffer_index = view_start_row + row;
+        uint32_t abs_row = view_start_row + row;
+        
+        // Calculate the oldest row we still have in memory
+        uint32_t oldest_row = 0;
+        if (absolute_write_row >= max_history_rows) {
+            oldest_row = absolute_write_row - max_history_rows + 1;
+        }
 
-        for (int col = 0; col < MAX_COL; col++) {
-            // Default: A blank space merged with the current color
-            uint16_t cell = (uint16_t)' ' | ((uint16_t)current_color << 8);
-
-            // Safety check: Only read if we are inside our known history bounds
-            if (buffer_index >= 0 && buffer_index < max_history_rows) {
-                if (line_buffer[buffer_index][col] != 0) {
-                    cell = line_buffer[buffer_index][col];
-                }
+        // If the row requested is within our valid ring buffer history
+        if (abs_row >= oldest_row && abs_row <= absolute_write_row) {
+            int buffer_idx = abs_row % max_history_rows;
+            for (int col = 0; col < MAX_COL; col++) {
+                video_memory[row * MAX_COL + col] = line_buffer[buffer_idx][col];
             }
-
-            // Write the 16-bit block directly to the VGA hardware
-            video_memory[row * MAX_COL + col] = cell;
+        } else {
+            // Out of bounds (either lost history or future blank lines)
+            for (int col = 0; col < MAX_COL; col++) {
+                video_memory[row * MAX_COL + col] = blank_cell;
+            }
         }
     }
 
     // Hardware Cursor Sync
-    int screen_cursor_y = write_row - view_start_row;
+    int screen_cursor_y = absolute_write_row - view_start_row;
     if (screen_cursor_y >= 0 && screen_cursor_y < MAX_ROW) {
         update_cursor(write_col, screen_cursor_y);
-    }
-    else {
-        update_cursor(0, MAX_ROW + 1);
+    } else {
+        update_cursor(0, MAX_ROW + 1); // Hide cursor if typing is happening off-screen
     }
 }
 
 void screen_clear() {
-
-    for (int i = 0; i < max_history_rows; i++) {
-        for (int j = 0; j < MAX_COL; j++) {
-            line_buffer[i][j] = (uint16_t)' ' | ((uint16_t)current_color << 8);
-        }
-    }
-    write_row = 0;
+    uint16_t blank_cell = (uint16_t)' ' | ((uint16_t)current_color << 8);
+    uint32_t total_cells = max_history_rows * MAX_COL;
+    memsetw((unsigned short*)line_buffer, blank_cell, total_cells);
+    
+    absolute_write_row = 0;
     write_col = 0;
     view_start_row = 0;
+    
+    for(int i = 0; i < max_history_rows; i++) {
+        line_lengths[i] = 0;
+    }
+    
     update_screen();
 }
 
-// --- Printing Logic ---
+
+/* --- ANSI Color Parser --- */
+
+void apply_ansi_color(int code) {
+    if (code == 0) { current_color = 0x0F; return; } // Reset to White on Black
+    
+    // Map basic ANSI foreground codes to VGA colors
+    switch (code) {
+        case 30: current_color = (current_color & 0xF0) | 0x00; break; // Black
+        case 31: current_color = (current_color & 0xF0) | 0x04; break; // Red
+        case 32: current_color = (current_color & 0xF0) | 0x02; break; // Green
+        case 33: current_color = (current_color & 0xF0) | 0x0E; break; // Yellow
+        case 34: current_color = (current_color & 0xF0) | 0x01; break; // Blue
+        case 35: current_color = (current_color & 0xF0) | 0x05; break; // Magenta
+        case 36: current_color = (current_color & 0xF0) | 0x03; break; // Cyan
+        case 37: current_color = (current_color & 0xF0) | 0x07; break; // Gray
+        
+        case 90: current_color = (current_color & 0xF0) | 0x08; break; // Dark Gray
+        case 91: current_color = (current_color & 0xF0) | 0x0C; break; // Light Red
+        case 92: current_color = (current_color & 0xF0) | 0x0A; break; // Light Green
+        case 93: current_color = (current_color & 0xF0) | 0x0E; break; // Light Yellow
+        case 94: current_color = (current_color & 0xF0) | 0x09; break; // Light Blue
+        case 95: current_color = (current_color & 0xF0) | 0x0D; break; // Light Magenta
+        case 96: current_color = (current_color & 0xF0) | 0x0B; break; // Light Cyan
+        case 97: current_color = (current_color & 0xF0) | 0x0F; break; // White
+    }
+}
+
+
+/* --- Printing Logic --- */
 
 void print_char(char character) {
-    if (character == '\n') {
-        write_col = 0;
-        write_row++;
+    static int ansi_state = 0;
+    static int ansi_code = 0;
+
+    // ANSI Escape Sequence State Machine
+    if (ansi_state == 0) {
+        if (character == '\033') { ansi_state = 1; return; }
+    } else if (ansi_state == 1) {
+        if (character == '[') { ansi_state = 2; ansi_code = 0; return; }
+        ansi_state = 0; 
+    } else if (ansi_state == 2) {
+        if (character >= '0' && character <= '9') {
+            ansi_code = ansi_code * 10 + (character - '0');
+            return;
+        }
+        if (character == 'm') {
+            apply_ansi_color(ansi_code);
+            ansi_state = 0;
+            return;
+        }
+        ansi_state = 0; 
     }
-    else if (character == '\b') { // Backspace
+
+    // Normal Character Processing
+    uint32_t current_buffer_idx = absolute_write_row % max_history_rows;
+    uint16_t blank_cell = (uint16_t)' ' | ((uint16_t)current_color << 8);
+
+    if (character == '\n') {
+        line_lengths[current_buffer_idx] = write_col; // Save line length
+        write_col = 0;
+        absolute_write_row++;
+        
+        // Wipe the newly acquired row in the ring buffer ahead of us
+        memsetw(line_buffer[absolute_write_row % max_history_rows], blank_cell, MAX_COL);
+
+    } else if (character == '\b') {
         if (write_col > 0) {
             write_col--;
-            line_buffer[write_row][write_col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
+            line_buffer[current_buffer_idx][write_col] = blank_cell;
+        } else if (absolute_write_row > 0) {
+            // Jump back to the end of the previous line using our tracking array
+            absolute_write_row--;
+            current_buffer_idx = absolute_write_row % max_history_rows;
+            write_col = line_lengths[current_buffer_idx];
+            
+            // Safety bound check
+            if (write_col >= MAX_COL) write_col = MAX_COL - 1;
+            line_buffer[current_buffer_idx][write_col] = blank_cell;
         }
-        else if (write_row > 0) {
-            write_row--;
-            write_col = MAX_COL - 1;
-            line_buffer[write_row][write_col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
-        }
-    }
-    else {
-        if (write_row < max_history_rows) {
-            // THE MAGIC MATH: Combine the letter and the color!
-            line_buffer[write_row][write_col] = (uint16_t)((uint8_t)character) | ((uint16_t)current_color << 8);
-        }
+
+    } else {
+        line_buffer[current_buffer_idx][write_col] = (uint16_t)((uint8_t)character) | ((uint16_t)current_color << 8);
         write_col++;
 
         if (write_col >= MAX_COL) {
+            line_lengths[current_buffer_idx] = MAX_COL;
             write_col = 0;
-            write_row++;
+            absolute_write_row++;
+            memsetw(line_buffer[absolute_write_row % max_history_rows], blank_cell, MAX_COL);
         }
     }
 
-    // Scrolling Logic
-    if (write_row >= max_history_rows) {
-        for (int r = 1; r < max_history_rows; r++) {
-            for (int col = 0; col < MAX_COL; col++) {
-                line_buffer[r - 1][col] = line_buffer[r][col];
-            }
-        }
-        for (int col = 0; col < MAX_COL; col++) {
-            line_buffer[max_history_rows - 1][col] = (uint16_t)' ' | ((uint16_t)current_color << 8);
-        }
-        write_row = max_history_rows - 1;
-    }
-
-    if (write_row >= view_start_row + MAX_ROW) {
-        view_start_row = write_row - MAX_ROW + 1;
+    // Auto-scroll screen lock
+    if (absolute_write_row >= view_start_row + MAX_ROW) {
+        view_start_row = absolute_write_row - MAX_ROW + 1;
     }
 
     update_screen();
@@ -143,35 +213,93 @@ void print(char *str) {
     }
 }
 
-// --- Scrolling Logic (Just moving the camera!) ---
+
+/* --- Custom printf Implementation --- */
+
+void printf(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    
+    int i = 0;
+    while (format[i] != '\0') {
+        if (format[i] == '%') {
+            i++;
+            switch (format[i]) {
+                case 'd':
+                case 'i':
+                    print_int(va_arg(args, int));
+                    break;
+                case 'x':
+                case 'X':
+                    print_hex(va_arg(args, int));
+                    break;
+                case 's': {
+                    char *str = va_arg(args, char *);
+                    if (str == NULL) {
+                        print("(null)");
+                    } else {
+                        print(str);
+                    }
+                    break;
+                }
+                case 'c':
+                    print_char((char)va_arg(args, int));
+                    break;
+                case '%':
+                    print_char('%');
+                    break;
+                default:
+                    print_char('%');
+                    print_char(format[i]);
+                    break;
+            }
+        } else {
+            print_char(format[i]);
+        }
+        i++;
+    }
+    
+    va_end(args);
+}
+
+
+/* --- Scrolling Logic --- */
 
 void scroll_history_up(int lines) {
-    if (view_start_row > 0) {
+    if (view_start_row >= (uint32_t)lines) {
         view_start_row -= lines;
-        if (view_start_row < 0) view_start_row = 0;
-        update_screen();
+    } else {
+        view_start_row = 0;
     }
+    
+    // Prevent scrolling into forgotten history
+    uint32_t oldest_row = 0;
+    if (absolute_write_row >= max_history_rows) {
+        oldest_row = absolute_write_row - max_history_rows + 1;
+    }
+    if (view_start_row < oldest_row) {
+        view_start_row = oldest_row;
+    }
+    
+    update_screen();
 }
 
 void scroll_history_down(int lines) {
-    int max_view_start = write_row - MAX_ROW + 1;
-
-    if (max_view_start < 0) {
-        max_view_start = 0;
+    uint32_t max_view_start = 0;
+    if (absolute_write_row >= MAX_ROW - 1) {
+        max_view_start = absolute_write_row - MAX_ROW + 1;
     }
 
-    // Don't scroll past the text we have written
-    if (view_start_row < max_view_start) {
-        view_start_row += lines; // Look "down" (higher index)
-        if (view_start_row > max_view_start) {
-            view_start_row = max_view_start;
-        }
-        update_screen();
+    view_start_row += lines;
+    if (view_start_row > max_view_start) {
+        view_start_row = max_view_start;
     }
+    
+    update_screen();
 }
 
-// --- Helpers (itoa / reverse) ---
-// (Keep your existing reverse and itoa functions here, they were perfect!)
+
+/* --- Helpers --- */
 
 void reverse(char s[]) {
     int i, j;
@@ -202,57 +330,48 @@ void print_int(int n) {
 }
 
 void print_hex(int n) {
-	char buffer[9];
-	for (int i = 0; i < 8; i++) {
-		int digit = (n >> ((7 - i) * 4)) & 0xF;
-		if (digit < 10) {
-			buffer[i] = '0' + digit;
-		}
-		else {
-			buffer[i] = 'A' + (digit - 10);
-		}
-	}
-	buffer[8] = '\0';
-	print(buffer);
-}
-
-void print_float(float f) {
-    int int_part = (int)f;
-    float frac_part = f - int_part;
-
-    print_int(int_part);
-    print(".");
-
-    // Print 6 decimal places
-    for (int i = 0; i < 6; i++) {
-        frac_part *= 10;
-        int digit = (int)frac_part;
-        print_int(digit);
-        frac_part -= digit;
+    char buffer[9];
+    for (int i = 0; i < 8; i++) {
+        int digit = (n >> ((7 - i) * 4)) & 0xF;
+        if (digit < 10) {
+            buffer[i] = '0' + digit;
+        } else {
+            buffer[i] = 'A' + (digit - 10);
+        }
     }
+    buffer[8] = '\0';
+    
+    // Trim leading zeros for a cleaner look
+    int start = 0;
+    while (buffer[start] == '0' && start < 7) start++;
+    
+    print("0x");
+    print(&buffer[start]);
 }
 
 void set_print_color(uint16_t color) {
-	current_color = color;
+    current_color = color;
 }
 
 void enable_dynamic_history(int total_rows) {
-    // Stage 2: Ask the heap for a massive chunk of RAM
+    // Allocate the large ring buffer
     uint16_t(*new_buffer)[MAX_COL] = (uint16_t(*)[MAX_COL])malloc(total_rows * MAX_COL * sizeof(uint16_t));
+    
+    // Allocate the parallel line length tracking array
+    uint8_t *new_lengths = (uint8_t*)malloc(total_rows * sizeof(uint8_t));
 
-    if (new_buffer != NULL) {
-        // Swap the master pointer to the massive heap memory
+    if (new_buffer != NULL && new_lengths != NULL) {
         line_buffer = new_buffer;
+        line_lengths = new_lengths;
         max_history_rows = total_rows;
-
-        // Wipe the new memory clean so we don't print random garbage
+        
+        // Reset state for the new memory location
         screen_clear();
     }
-    // If malloc fails, we silently keep using the safe boot_buffer
 }
 
 void print_scancode(uint8_t scancode) {
-    print("SC:0x");
+    print("SC:");
     print_hex(scancode);
     print(" ");
 }

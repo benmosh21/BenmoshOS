@@ -19,7 +19,7 @@ void heap_init() {
 }
 
 void* malloc(uint32_t requested_size) {
-// Align requested_size up to the nearest multiple of 4
+    // Align requested_size up to the nearest multiple of 4
     // This ensures the bottom bits (including our flag bit) are always 0
     if (requested_size % 4 != 0) {
         requested_size += 4 - (requested_size % 4);

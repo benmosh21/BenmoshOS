@@ -115,8 +115,7 @@ void execute_command(char* command) {
         print("  Syscall gate : int 0x80\n");
 
     }
-    else if (!strcmp(argv[0], "stupid")) {
-        /* stupid: show help */
+    else if (!strcmp(argv[0], "help")) {
         set_print_color(0x0E);
         print("=== BenmoshOS Help ===\n");
         set_print_color(0x0F);
@@ -144,6 +143,17 @@ void execute_command(char* command) {
             print("\n");
             print("(No programs loaded yet — use 'wipe' to create files)\n");
         }
+    }
+    else if (!strcmp(argv[0], "leakheap")) {
+        char* a = malloc(16);
+        ((char*)a)[0] = 't';
+        ((char*)a)[1] = 'e';
+        ((char*)a)[2] = 's';
+        ((char*)a)[3] = 't';
+        ((char*)a)[4] = '\0';
+        int* b = malloc(32);
+        print("Test blocks allocated on the heap.\n");
+        free(a);
     }
     else {
         print("Unknown command: '");

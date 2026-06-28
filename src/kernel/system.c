@@ -1,9 +1,6 @@
 /*
  * system.c - System functions for BenmoshOS
  *
- * FIXES:
- *  - init_tss(): TSS access byte changed 0xE9 -> 0x89
- *    (0xE9 = DPL3 call gate, wrong; 0x89 = 32-bit TSS, present, DPL0, correct)
  *  - syscall_dispatcher: added syscall 2 (print string from ring3 EBX pointer)
  *    and syscall 3 (yield stub for future scheduler)
  */
@@ -64,63 +61,6 @@ void outportw(uint16_t _port, uint16_t _data) {
     __asm__ volatile ("outw %0, %1" : : "a" (_data), "Nd" (_port));
 }
 
-/* ---- TSS ---- */
-tss_entry_t tss_entry;
-
-void flush_tss() {
-    /* 0x28 = GDT offset of the TSS descriptor (6th descriptor * 8 bytes = 48 = 0x30)
-     * With RPL=0 in LTR, selector = 0x28 maps to the 6th 8-byte entry.
-     * GDT layout: [0]=null [1]=kcode(0x08) [2]=kdata(0x10)
-     *             [3]=ucode(0x18) [4]=udata(0x20) [5]=tss(0x28) */
-    __asm__ volatile ("ltr %%ax" : : "a" (0x28));
-}
-
-struct gdt_ptr {
-    uint16_t limit;
-    uint32_t base;
-} __attribute__((packed));
-
-void init_tss() {
-    struct gdt_ptr current_gdt;
-    __asm__ volatile ("sgdt %0" : "=m" (current_gdt));
-
-    uint8_t* gdt_start = (uint8_t*)current_gdt.base;
-
-    uint32_t base  = (uint32_t)&tss_entry;
-    uint32_t limit = sizeof(tss_entry_t) - 1;  /* limit is inclusive */
-
-    /* GDT[5] starts at byte offset 40 (5 * 8) */
-    /* Byte layout of an 8-byte GDT descriptor:
-     *  [0..1] limit[0..15]
-     *  [2..4] base[0..23]
-     *  [5]    access byte
-     *  [6]    flags | limit[16..19]
-     *  [7]    base[24..31] */
-
-    gdt_start[40 + 0] =  limit        & 0xFF;
-    gdt_start[40 + 1] = (limit >> 8)  & 0xFF;
-
-    gdt_start[40 + 2] =  base         & 0xFF;
-    gdt_start[40 + 3] = (base  >> 8)  & 0xFF;
-    gdt_start[40 + 4] = (base  >> 16) & 0xFF;
-    gdt_start[40 + 7] = (base  >> 24) & 0xFF;
-
-    /* FIX: was 0xE9 (wrong — that encodes DPL=3 and a call-gate-like type).
-     *      Must be 0x89 = Present(1) | DPL=00 | Type=1001 (32-bit TSS available) */
-    gdt_start[40 + 5] = 0x89;
-    gdt_start[40 + 6] = 0x00;
-
-    /* Zero the TSS struct */
-    uint8_t* p = (uint8_t*)&tss_entry;
-    for (uint32_t i = 0; i < sizeof(tss_entry_t); i++) p[i] = 0;
-
-    /* Ring0 stack: used when the CPU switches from ring3 -> ring0 on a syscall/IRQ */
-    tss_entry.ss0  = 0x10;       /* Kernel data segment */
-    tss_entry.esp0 = 0x90000;    /* Top of a safe 4KB ring0 stack */
-    tss_entry.iomap_base = sizeof(tss_entry_t);
-
-    flush_tss();
-}
 
 /* ---- Syscall dispatcher ----
  *

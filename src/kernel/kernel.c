@@ -18,6 +18,7 @@
 #include "../memory/vmm/vmm.h"
 #include "../memory/heap/heap.h"
 #include "../shell/shell.h"
+#include "tss.h"
 
 /* External: assembly trampoline that IRET-jumps into ring3 */
 extern void jump_usermode(void* function_pointer);
@@ -50,20 +51,27 @@ void my_user_program() {
 
 __attribute__((section(".text.main")))
 void main() {
-    /* 1. CPU infrastructure */
+    /* CPU infrastructure */
     load_idt();
     pic_remap();
 
-    /* 2. Memory (MUST come before any malloc/print-history calls) */
+    /* Memory (MUST come before any malloc/print-history calls) */
     pmm_init();
     vmm_init();
     heap_init();
 
-    /* 3. Print subsystem — enable_dynamic_history calls malloc */
+    /* Activete the TSS - hardware Task State Segment gate */
+    init_tss();
+
+    uint32_t user_stack_phys = pmm_alloc_block();
+
+    vmm_map_page(user_stack_phys, 0x009FF000, 7);
+
+    /* Print subsystem — enable_dynamic_history calls malloc */
     enable_dynamic_history(1000);
     screen_clear();
 
-    /* 4. Welcome banner */
+    /* Welcome banner */
     set_print_color(0x0A);
     print("  ____                                 _      ___  ____\n");
     print(" | __ )  ___ _ __  _ __ ___   ___  ___| |__  / _ \\/ ___|\n");
@@ -73,7 +81,7 @@ void main() {
     set_print_color(0x0B);
     print("\n  BenmoshOS v0.2  |  x86 bare-metal  |  Ring0 + Ring3\n");
     set_print_color(0x07);
-    print("  Type 'stupid' for help\n\n");
+    print("  Type 'help' for help\n\n");
 
     /* 5. TSS — must be done before ring3 jump */
     init_tss();
