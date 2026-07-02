@@ -67,17 +67,16 @@ puts:
 ; =============================================================================
 BootloaderMain:
 
-	mov [boot_drive], dl
 
     xor ax, ax          
     mov ds, ax          
-    mov es, ax          
+	mov [boot_drive], dl
     
-    cld                 ; Clear Direction Flag (ensures string functions increment)
-
+    mov es, ax          
     mov ss, ax          ; Set Stack Segment to 0x0000
     mov sp, 0x7c00      ; Stack grows downward from 0x7C00 (safe memory)
-    
+    cld                 ; Clear Direction Flag (ensures string functions increment)
+ 
     mov si, msg_hello
     call puts
     
@@ -87,7 +86,6 @@ BootloaderMain:
 	mov dl, [boot_drive]
     mov si, dap         ; Provide pointer to Disk Address Packet
     int 0x13            ; Call BIOS disk interrupt
-    
 
     jc disk_error       ; If Carry Flag is set, an error occurred
     jmp 0x7E00          ; Jump directly to where Stage 2 was loaded
