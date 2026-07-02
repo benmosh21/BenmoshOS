@@ -3,7 +3,7 @@
 [bits 32]
 section .text.entry
 
-[extern main]       
+[extern KernelMain]       
 [extern __bss_start]
 [extern __bss_end]  
 
@@ -46,9 +46,9 @@ _start:
     mov byte [0xb8003], 0x2F
 
     ; 3. Hand control to C
-    call main
+    call KernelMain
 
-    ; 4. Hang if main returns
+    ; 4. Hang if KernelMain returns
     jmp $
 
 

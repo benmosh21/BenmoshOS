@@ -38,19 +38,20 @@ extern void jump_usermode(void* function_pointer);
  */
 void my_user_program() {
     __asm__ volatile(
-        "mov $2,  %%eax\n"
-        "lea msg, %%ebx\n"
-        "int $0x80\n"
+        ".intel_syntax noprefix\n"
+        "mov eax,2 \n"
+        "mov ebx, offset msg\n"
+        "int 0x80\n"
         "jmp done\n"
-        "msg: .asciz \"[Ring3] Hello from user space!\\n\"\n"
+        "msg: .asciz \"[Ring3] Hello from the first program to run in BenMoshOS!\\n\"\n"
         "done:\n"
         ::: "eax", "ebx"
     );
-    while (1) { __asm__ volatile("hlt"); }
+    while (1) {  }
 }
 
 __attribute__((section(".text.main")))
-void main() {
+void KernelMain() {
     /* CPU infrastructure */
     load_idt();
     pic_remap();
@@ -93,7 +94,7 @@ void main() {
     print("BenmoshOS> ");
     set_print_color(0x0F);
 
-    //jump_usermode(my_user_program);
+    jump_usermode(my_user_program);
 
     /* Never reached — all further work done in IRQ handlers */
     while (1) { __asm__ volatile("hlt"); }

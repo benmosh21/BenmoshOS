@@ -43,24 +43,23 @@ int strcmp(char* s1, char* s2) {
 /* ---- I/O port ---- */
 uint8_t inportb(uint16_t _port) {
     unsigned char rv;
-    __asm__ volatile ("inb %1, %0" : "=a" (rv) : "Nd" (_port));
+    __asm__ volatile ("{inb %1, %0 | in %0, %1}" : "=a" (rv) : "Nd" (_port));
     return rv;
 }
 
 uint16_t inportw(uint16_t _port) {
     uint16_t rv;
-    __asm__ volatile ("inw %1, %0" : "=a" (rv) : "Nd" (_port));
+    __asm__ volatile ("{inw %1, %0 | in %0, %1}" : "=a" (rv) : "Nd" (_port));
     return rv;
 }
 
 void outportb(uint16_t _port, unsigned char _data) {
-    __asm__ volatile ("outb %0, %1" : : "a" (_data), "Nd" (_port));
+    __asm__ volatile ("{outb %0, %1 | out %1, %0}" : : "a" (_data), "Nd" (_port));
 }
 
 void outportw(uint16_t _port, uint16_t _data) {
-    __asm__ volatile ("outw %0, %1" : : "a" (_data), "Nd" (_port));
+    __asm__ volatile ("{outw %0, %1 | out %1, %0}" : : "a" (_data), "Nd" (_port));
 }
-
 
 /* ---- Syscall dispatcher ----
  *
