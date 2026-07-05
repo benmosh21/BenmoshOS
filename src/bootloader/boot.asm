@@ -1,7 +1,7 @@
 ; =============================================================================
 ; boot.asm: Two-Stage Bootloader & Hardware Initialization Environment
 ; Target Architecture: x86 (IA-32) Protected Mode
-; Target Boot Interface: Legacy BIOS
+; Target Boot Interface: Legacy BIOS (Compatible with Raw Disk & ISO Emulation)
 ; =============================================================================
 
 [org 0x7c00]          ; BIOS loads MBR sector into RAM address 0x0000:0x7C00
@@ -13,12 +13,11 @@ start:
 
 ; =============================================================================
 ; FAT16 BIOS Parameter Block (BPB) & Extended Boot Record (EBR)
-; Required so operating systems (like Windows/Linux) don't think the disk is corrupted.
 ; =============================================================================
 oem_name:             db 'BMOS    '       ; 8-byte OEM Identifier string
 bytes_per_sector:    dw 512              ; Standard sector size
 sectors_per_cluster: db 1                ; Sectors per allocation unit
-reserved_sectors:    dw 50               ; Sectors reserved for Stage 1, Stage 2, and Kernel
+reserved_sectors:    dw 128              ; Reserved tracks (128 sectors) to prevent kernel overwrites
 fat_count:           db 2                ; Number of File Allocation Tables (Main + Backup)
 root_dir_entries:    dw 512              ; Max entries in root directory
 total_sectors_16:    dw 0                ; 0 means use the 32-bit count below instead
@@ -39,7 +38,6 @@ file_system_type:    db 'FAT16   '       ; 8-byte filesystem type identifier str
 
 ; =============================================================================
 ; Real Mode String Printing Utility
-; Input: SI = Pointer to null-terminated string
 ; =============================================================================
 puts:
     push si
@@ -63,32 +61,86 @@ puts:
 
 ; =============================================================================
 ; Stage 1 Execution Entry Point
-; Sets up stack/segments and loads Stage 2 from disk.
 ; =============================================================================
 BootloaderMain:
-
+    mov [boot_drive], dl
 
     xor ax, ax          
     mov ds, ax          
-	mov [boot_drive], dl
-    
     mov es, ax          
+    
+    cld                 ; Clear Direction Flag
+
     mov ss, ax          ; Set Stack Segment to 0x0000
     mov sp, 0x7c00      ; Stack grows downward from 0x7C00 (safe memory)
-    cld                 ; Clear Direction Flag (ensures string functions increment)
- 
+    
     mov si, msg_hello
     call puts
     
-    ; --- Disk I/O: Load Stage 2 via LBA ---
-    mov ah, 0x42        ; BIOS function: Extended Read Sectors from Drive
-    ;mov dl, 0x80        ; Drive number (0x80 = hard drive)
-	mov dl, [boot_drive]
-    mov si, dap         ; Provide pointer to Disk Address Packet
-    int 0x13            ; Call BIOS disk interrupt
+    ; --- Smart Dual-Mode Disk Loader ---
+    ; Check if the boot drive is a hard disk (Bit 7 set, e.g., 0x80)
+    test dl, 0x80
+    jnz .lba_mode       ; If it's a hard drive, use modern LBA directly
 
-    jc disk_error       ; If Carry Flag is set, an error occurred
-    jmp 0x7E00          ; Jump directly to where Stage 2 was loaded
+    ; Otherwise, it's an emulated floppy drive (0x00 from ISO). Fall back to safe CHS.
+    mov word [sectors_left], 127
+    mov ax, 0x07E0
+    mov es, ax
+    xor bx, bx          ; Destination ES:BX = 0x07E0:0x0000
+
+    mov ch, 0           ; Cylinder 0
+    mov dh, 0           ; Head 0
+    mov cl, 2           ; Sector 2 (Sector 1 is our boot sector)
+
+.chs_loop:
+    mov ax, 0x0201      ; AH = 0x02 (Read sectors), AL = 1 sector
+    mov dl, [boot_drive]
+    int 0x13
+    jc disk_error
+    
+    ; Advance target segment address by 512 bytes (0x20 paragraphs)
+    mov ax, es
+    add ax, 0x0020
+    mov es, ax
+
+    dec word [sectors_left]
+    jz .done_loading
+
+    inc cl              ; Shift target to next physical sector
+    cmp cl, 37          ; A standard 2.88MB floppy template has 36 sectors per track
+    jl .chs_loop
+
+    mov cl, 1           ; Reset track boundary index back to sector 1
+    inc dh              ; Move down to next drive head
+    cmp dh, 2           ; A standard floppy template has exactly 2 heads (0 and 1)
+    jl .chs_loop
+
+    xor dh, dh          ; Reset head tracking back to 0
+    inc ch              ; Advance disk mechanisms onward to next cylinder
+    jmp .chs_loop
+
+.lba_mode:
+    mov cx, 127         ; Total sectors to read via LBA loop
+
+.lba_loop:
+    push cx
+    
+    mov ah, 0x42        ; BIOS Extended Read function
+    mov dl, [boot_drive]
+    mov si, dap
+    int 0x13
+    jc disk_error
+    
+    inc dword [dap_lba]           ; Increment LBA block address index
+    add word [dap_segment], 0x20  ; Advance target segment address by 512 bytes
+    
+    pop cx
+    loop .lba_loop
+
+.done_loading:
+    xor ax, ax
+    mov es, ax
+    jmp 0x7E00          ; Jump directly to the loaded Stage 2 entry space
 
 disk_error:
     mov si, disk_error_msg
@@ -98,37 +150,27 @@ disk_error:
 
 ; =============================================================================
 ; Disk Address Packet (DAP)
-; Memory structure containing the instructions for the BIOS LBA read command.
 ; =============================================================================
 align 4
 dap:
-    db 0x10             ; Size of the DAP structure (always 16 bytes / 0x10)
-    db 0                ; Always 0 (reserved)
-    dw 127              ; Number of sectors to read (~63.5KB)
-    dw 0x7E00           ; Destination offset memory pointer
-    dw 0                ; Destination segment memory pointer (0x0000:0x7E00)
-    dq 1                ; Starting sector number in Logical Block Addressing (LBA 1)
+    db 0x10             ; Size of the DAP structure (16 bytes)
+    db 0                ; Reserved (always 0)
+    dw 1                ; Number of sectors to read per single call
+dap_offset:
+    dw 0x0000           ; Destination offset pointer
+dap_segment:
+    dw 0x07E0           ; Destination segment pointer (maps physically to 0x7E00)
+dap_lba:
+    dq 1                ; Starting sector number (LBA 1)
 
-msg_hello:       db 'hello, world! from first section', 10, 13, 0
+msg_hello:       db 'hello, world!', 10, 13, 0
 disk_error_msg:  db 'Error: Disk Read Failed!', 10, 13, 0
-boot_drive: db 0
+boot_drive:      db 0
+sectors_left:    dw 0
 
-; Pad out exactly to 446 bytes (the beginning of the standard MBR Partition Table)
-times 446 - ($ - $$) db 0
-
-; --- Dummy MBR Partition Table (Required to pass mkisofs/genisoimage hard disk detection) ---
-db 0x80                 ; Partition Status (0x80 = Active / Bootable)
-db 0x01, 0x01, 0x00     ; Starting CHS values
-db 0x06                 ; Partition type (FAT16)
-db 0x0F, 0x3F, 0x09     ; Ending CHS values
-dd 1                    ; Starting LBA sector
-dd 20480                ; Total sectors matching your total_sectors_32 description (10MB)
-
-; Remaining 3 partition table entries left empty (3 entries * 16 bytes = 48 bytes)
-times 48 db 0
-
-; Standard MBR boot signature (2 bytes) brings us to exactly 512 bytes
-dw 0xAA55
+; Pad out exactly to 510 bytes, then append standard MBR boot signature
+times 510 -($ - $$) db 0 
+dw 0xAA55 
 
 ; =============================================================================
 ; SECTION 2 (Stage 2 Environment Initialization)
@@ -150,10 +192,9 @@ sect2_start:
     
     ; Far Jump to Protected Mode segment. Clears out any prefetched 16-bit real mode instructions.
     jmp 0x08:init_pm
-    
+        
 ; =============================================================================
 ; Physical Memory Mapping Engine (E820 BIOS map)
-; Maps out usable RAM blocks vs reserved system hardware zones.
 ; =============================================================================
 load_pmm:
     mov eax, 0xE820     ; Magic function code for advanced memory detection
@@ -254,9 +295,7 @@ msg_hello_asm:    db 'this is from assembly', 0
 
 ; =============================================================================
 ; Global Descriptor Table (GDT) Specifications
-; Configures flattening segments that give the CPU access to a full 4GB memory range.
 ; =============================================================================
-
 
 gdt_start: 
     dq 0                ; Null Descriptor: Required hardware safety buffer (Selector 0x00)
