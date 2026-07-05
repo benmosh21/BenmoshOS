@@ -1,2 +1,2 @@
 this is a test file
-i connected it to
+i connected it to a normal file

@@ -48,7 +48,8 @@ FAT16_OBJ = $(BUILD_DIR)/fat16.o
 PMM_OBJ = $(BUILD_DIR)/pmm.o
 VMM_OBJ = $(BUILD_DIR)/vmm.o
 HEAP_OBJ = $(BUILD_DIR)/heap.o
-OS_IMAGE = os-image.bin
+OS_IMAGE = BenmoshOS.bin
+ISO_IMAGE = BenmoshOS.iso
 
 # --- Targets ---
 
@@ -121,6 +122,9 @@ $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 run: all
 	qemu-system-x86_64 -drive format=raw,file=$(OS_IMAGE)
 
+run_iso: iso
+	qemu-system-x86_64 -cdrom $(ISO_IMAGE)
+
 qemu_debug: all
 	qemu-system-i386 -drive format=raw,file=$(OS_IMAGE) -s -S
 
@@ -132,5 +136,14 @@ vdi: $(OS_IMAGE)
 	qemu-img convert -f raw -O vdi $(OS_IMAGE) BenmoshOS.vdi
 	@echo "VirtualBox image created: BenmoshOS.vdi"
 
+iso: all
+	rm -rf $(BUILD_DIR)/iso
+	mkdir -p $(BUILD_DIR)/iso/boot
+	@# Stage your working 10MB raw hard disk image directly into the ISO build folder
+	cp $(OS_IMAGE) $(BUILD_DIR)/iso/boot/
+	@# Build the ISO using El Torito Hard Disk Emulation flags
+	mkisofs -input-charset utf-8 -R -b boot/$(OS_IMAGE) -c boot/boot.cat -hard-disk-boot -o $(ISO_IMAGE) $(BUILD_DIR)/iso
+	@echo "ISO image created successfully: $(ISO_IMAGE)"
+						
 clean:
-	rm -rf $(BUILD_DIR) $(OS_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi
+	rm -rf $(BUILD_DIR) $(OS_IMAGE) $(ISO_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi

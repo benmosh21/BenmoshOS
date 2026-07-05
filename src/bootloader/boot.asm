@@ -109,13 +109,26 @@ dap:
     dw 0                ; Destination segment memory pointer (0x0000:0x7E00)
     dq 1                ; Starting sector number in Logical Block Addressing (LBA 1)
 
-msg_hello:       db 'hello, world!', 10, 13, 0
+msg_hello:       db 'hello, world! from first section', 10, 13, 0
 disk_error_msg:  db 'Error: Disk Read Failed!', 10, 13, 0
 boot_drive: db 0
 
-; Pad out exactly to 510 bytes, then append standard MBR boot signature
-times 510 -($ - $$) db 0 
-dw 0xAA55 
+; Pad out exactly to 446 bytes (the beginning of the standard MBR Partition Table)
+times 446 - ($ - $$) db 0
+
+; --- Dummy MBR Partition Table (Required to pass mkisofs/genisoimage hard disk detection) ---
+db 0x80                 ; Partition Status (0x80 = Active / Bootable)
+db 0x01, 0x01, 0x00     ; Starting CHS values
+db 0x06                 ; Partition type (FAT16)
+db 0x0F, 0x3F, 0x09     ; Ending CHS values
+dd 1                    ; Starting LBA sector
+dd 20480                ; Total sectors matching your total_sectors_32 description (10MB)
+
+; Remaining 3 partition table entries left empty (3 entries * 16 bytes = 48 bytes)
+times 48 db 0
+
+; Standard MBR boot signature (2 bytes) brings us to exactly 512 bytes
+dw 0xAA55
 
 ; =============================================================================
 ; SECTION 2 (Stage 2 Environment Initialization)
