@@ -1,9 +1,19 @@
 #include "shell.h"
 #include "../memory/heap/heap.h"
 #include "../kernel/system.h"
+#include "../drivers/print/print.h"
 
 /* Forward declaration */
 static void print_shell_prompt();
+
+void shell_exit() {
+    // Replace print_string with your actual OS print/puts function name
+    print("\nShutting down BenmoshOS... Goodbye!\n");
+    
+    // Disable hardware interrupts and halt the CPU core
+    __asm__ __volatile__("cli\n\t"
+                         "hlt");
+}
 
 void execute_command(char* command) {
     char** argv = (char**)malloc(32 * sizeof(char*));
@@ -154,6 +164,9 @@ void execute_command(char* command) {
         int* b = malloc(32);
         print("Test blocks allocated on the heap.\n");
         free(a);
+    }
+    else if (!strcmp(argv[0], "exit")) {
+        shell_exit();
     }
     else {
         print("Unknown command: '");
