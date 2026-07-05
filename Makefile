@@ -1,3 +1,7 @@
+# =============================================================================
+# BenmoshOS Core Makefile
+# =============================================================================
+
 # --- Variables ---
 ASM = nasm
 CC = gcc
@@ -48,8 +52,7 @@ FAT16_OBJ = $(BUILD_DIR)/fat16.o
 PMM_OBJ = $(BUILD_DIR)/pmm.o
 VMM_OBJ = $(BUILD_DIR)/vmm.o
 HEAP_OBJ = $(BUILD_DIR)/heap.o
-OS_IMAGE = BenmoshOS.bin
-ISO_IMAGE = BenmoshOS.iso
+OS_IMAGE = os-image.bin
 
 # --- Targets ---
 
@@ -59,51 +62,67 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 $(BOOT_BIN): $(BOOT_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(ASM) -f bin $(BOOT_SRC) -o $(BOOT_BIN)
 
 $(ENTRY_OBJ): $(ENTRY_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(ASM) -f elf32 $(ENTRY_SRC) -o $(ENTRY_OBJ)
 
 $(INTERRUPTS_OBJ): $(INTERRUPTS_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(ASM) -f elf32 $(INTERRUPTS_SRC) -o $(INTERRUPTS_OBJ)
 
 $(KERNEL_OBJ): $(KERNEL_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(KERNEL_SRC) -o $(KERNEL_OBJ)
 
 $(SYSTEM_OBJ): $(SYSTEM_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(SYSTEM_SRC) -o $(SYSTEM_OBJ)
 
 $(IDT_OBJ): $(IDT_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(IDT_SRC) -o $(IDT_OBJ)
 
 $(PIC_OBJ): $(PIC_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(PIC_SRC) -o $(PIC_OBJ)
 
 $(ATA_OBJ): $(ATA_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(ATA_SRC) -o $(ATA_OBJ)
 
 $(PRINT_OBJ): $(PRINT_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(PRINT_SRC) -o $(PRINT_OBJ)
 
 $(KEYBOARD_OBJ): $(KEYBOARD_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(KEYBOARD_SRC) -o $(KEYBOARD_OBJ)
 
 $(FAT16_OBJ): $(FAT16_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(FAT16_SRC) -o $(FAT16_OBJ)
 
 $(SHELL_OBJ): $(SHELL_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(SHELL_SRC) -o $(SHELL_OBJ)
 
 $(PMM_OBJ): $(PMM_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(PMM_SRC) -o $(PMM_OBJ)
 
 $(VMM_OBJ): $(VMM_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(VMM_SRC) -o $(VMM_OBJ)
 
 $(HEAP_OBJ): $(HEAP_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(HEAP_SRC) -o $(HEAP_OBJ)
 
 $(TSS_OBJ): $(TSS_SRC)
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(TSS_SRC) -o $(TSS_OBJ)
 
 $(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ)
@@ -112,7 +131,7 @@ $(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(
 
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=/dev/zero of=$(OS_IMAGE) bs=1M count=10
-	mkfs.fat -F 16 -R 50 $(OS_IMAGE)
+	mkfs.fat -F 16 -R 128 $(OS_IMAGE)
 	dd if=$(BOOT_BIN) of=$(OS_IMAGE) bs=1 count=3 conv=notrunc
 	dd if=$(BOOT_BIN) of=$(OS_IMAGE) bs=1 skip=62 seek=62 count=450 conv=notrunc
 	dd if=$(BOOT_BIN) of=$(OS_IMAGE) bs=512 skip=1 seek=1 count=1 conv=notrunc
@@ -121,9 +140,6 @@ $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 	
 run: all
 	qemu-system-x86_64 -drive format=raw,file=$(OS_IMAGE)
-
-run_iso: iso
-	qemu-system-x86_64 -cdrom $(ISO_IMAGE)
 
 qemu_debug: all
 	qemu-system-i386 -drive format=raw,file=$(OS_IMAGE) -s -S
@@ -136,12 +152,20 @@ vdi: $(OS_IMAGE)
 	qemu-img convert -f raw -O vdi $(OS_IMAGE) BenmoshOS.vdi
 	@echo "VirtualBox image created: BenmoshOS.vdi"
 
-iso: all
-	rm -rf $(BUILD_DIR)/iso
+# --- ISO Compilation Targets ---
+iso: $(BOOT_BIN) $(KERNEL_BIN)
 	mkdir -p $(BUILD_DIR)/iso/boot
-	cp $(OS_IMAGE) $(BUILD_DIR)/iso/boot/
-	mkisofs -input-charset utf-8 -R -b boot/$(OS_IMAGE) -c boot/boot.cat -hard-disk-boot -o $(ISO_IMAGE) $(BUILD_DIR)/iso
-	@echo "ISO image created successfully: $(ISO_IMAGE)"
+	dd if=/dev/zero of=$(BUILD_DIR)/iso/boot/floppy.img bs=1024 count=2880
+	mkfs.fat -F 16 -s 1 -R 128 $(BUILD_DIR)/iso/boot/floppy.img
+	dd if=$(BOOT_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=1 count=3 conv=notrunc
+	dd if=$(BOOT_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=1 skip=62 seek=62 count=450 conv=notrunc
+	dd if=$(BOOT_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=512 skip=1 seek=1 count=1 conv=notrunc
+	dd if=$(KERNEL_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=512 seek=2 conv=notrunc
+	mcopy -i $(BUILD_DIR)/iso/boot/floppy.img test.txt ::my_super_long_test_file.txt
+	genisoimage -R -J -c boot/bootcat -b boot/floppy.img -o build/os.iso $(BUILD_DIR)/iso
+
+run_iso: iso
+	qemu-system-x86_64 -cdrom build/os.iso
 
 clean:
-	rm -rf $(BUILD_DIR) $(OS_IMAGE) $(ISO_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi
+	rm -rf $(BUILD_DIR) $(OS_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi

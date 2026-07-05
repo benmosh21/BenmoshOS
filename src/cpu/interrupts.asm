@@ -151,6 +151,7 @@ isr128:
     
     ; Restore stack and registers
     add esp, 16         ; Clean up the 4 pushed arguments
+    mov [esp + 28], eax ; Overwrite the saved EAX slot inside pusha block with return pointer
     popa
     iret                ; Return back to Ring 3
 

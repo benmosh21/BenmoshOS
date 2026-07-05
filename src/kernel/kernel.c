@@ -37,15 +37,46 @@ extern void jump_usermode(void* function_pointer);
  *   3 = yield (future use)
  */
 void my_user_program() {
-    __asm__ volatile(
+__asm__ volatile(
         ".intel_syntax noprefix\n"
-        "mov eax,2 \n"
-        "mov ebx, offset msg\n"
+        
+        "loop_program:\n"
+        // 1. Prompt the user for input
+        "mov eax, 2\n"
+        "mov ebx, offset prompt_msg\n"
         "int 0x80\n"
-        "jmp done\n"
-        "msg: .asciz \"[Ring3] Hello from the first program to run in BenMoshOS!\\n\"\n"
-        "done:\n"
-        ::: "eax", "ebx"
+        
+        // 2. Execute Syscall 4 to safely wait for keyboard input
+        // Pass maximum string length limit of 64 bytes into ECX
+        "mov eax, 4\n"
+        "mov ebx, 64\n"
+        "int 0x80\n"
+        
+        // Save the returned input buffer string memory address (EAX) onto the stack
+        "push eax\n"
+        
+        // 3. Print the decorative prefix header layout
+        "mov eax, 2\n"
+        "mov ebx, offset echo_msg\n"
+        "int 0x80\n"
+        
+        // 4. Pop the saved input string pointer back out into EBX and print it
+        "pop ebx\n"
+        "mov eax, 2\n"
+        "int 0x80\n"
+        
+        // 5. Append a closing newline character for formatting cleanliness
+        "mov eax, 2\n"
+        "mov ebx, offset newline_msg\n"
+        "int 0x80\n"
+        
+        "jmp loop_program\n"
+        
+        // String constants declared locally inside user execution space
+        "prompt_msg:  .asciz \"Enter text: \"\n"
+        "echo_msg:    .asciz \"[Echo back]: \"\n"
+        "newline_msg: .asciz \"\\n\"\n"
+        ::: "eax", "ebx", "ecx", "edx"
     );
     while (1) {  }
 }

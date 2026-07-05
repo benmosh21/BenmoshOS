@@ -73,7 +73,7 @@ void outportw(uint16_t _port, uint16_t _data) {
  * Since we use an identity-mapped flat 4GB model (kernel + user share the same
  * page directory), the pointer is valid in ring0 as well.
  */
-void syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
+uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     (void)ecx; (void)edx;
 
     switch (eax) {
@@ -94,6 +94,60 @@ void syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) 
         case 3:
             /* Syscall 3: yield — placeholder for future scheduler */
             break;
+        case 4: {
+            /* Syscall 4: Input string from keyboard with max limit configuration */
+            static char input_buffer[256];
+            uint32_t max_len = ebx;
+
+            if (max_len == 0) return 0;
+            if (max_len > 255) max_len = 255; // Hardware safety cap bounds
+
+            uint32_t index = 0;
+
+            // Replicate normal lowercase/symbol layout scancodes matching driver specification
+            static const char scancode_ascii_map[128] = {
+                0, 27, '1','2','3','4','5','6','7','8','9','0','-','=','\b',
+                '\t','q','w','e','r','t','y','u','i','o','p','[',']','\n',
+                0,'a','s','d','f','g','h','j','k','l',';','\'','`',0,'\\',
+                'z','x','c','v','b','n','m',',','.','/',0,'*',0,' '
+            };
+
+            // Synchronous polling loop reading inputs safely until limit is achieved
+            while (index < (max_len - 1)) {
+                // Poll the PS/2 Keyboard Status Register (Port 0x64), bit 0 indicates data ready
+                if ((inportb(0x64) & 1) != 0) {
+                    uint8_t scancode = inportb(0x60);
+
+                    // Skip break codes (key release events have bit 7 active)
+                    if (scancode & 0x80) continue;
+
+                    char c = (scancode < 128) ? scancode_ascii_map[scancode] : 0;
+
+                    if (c == '\n') {
+                        char nl_str[2] = {'\n', 0};
+                        print(nl_str);
+                        break;
+                    } 
+                    else if (c == '\b') {
+                        if (index > 0) {
+                            index--;
+                            char bs_str[4] = {'\b', ' ', '\b', 0};
+                            print(bs_str);
+                        }
+                    } 
+                    else if (c != 0) {
+                        input_buffer[index++] = c;
+                        char echo_str[2] = {c, 0};
+                        print(echo_str);
+                    }
+                }
+            }
+            
+            input_buffer[index] = '\0';
+            
+            // Return address memory pointer targeting the completed kernel buffer inside EAX
+            return (uint32_t)input_buffer;
+        }
 
         default:
             set_print_color(0x0C);
@@ -103,4 +157,5 @@ void syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) 
             set_print_color(0x0F);
             break;
     }
+    return 0;
 }

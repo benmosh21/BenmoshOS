@@ -164,6 +164,7 @@ sect2_start:
     mov es, ax
     mov di, 0x5000      ; Destination memory address for the E820 memory map storage
     mov ebx, 0          ; Continuation value for E820 map loop (must start at 0)
+    xor bp, bp
     call load_pmm
     
     cli                 ; Clear Interrupts (disable hardware interrupts before PMODE)

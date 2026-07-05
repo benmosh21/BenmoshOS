@@ -28,6 +28,6 @@ void     outportw(uint16_t _port, uint16_t _data);
  *   ebx = arg1 (string pointer for syscall 2)
  *   ecx = arg2
  *   edx = arg3 */
-void syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
+uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 
 #endif
