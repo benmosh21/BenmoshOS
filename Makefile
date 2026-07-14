@@ -52,7 +52,7 @@ FAT16_OBJ = $(BUILD_DIR)/fat16.o
 PMM_OBJ = $(BUILD_DIR)/pmm.o
 VMM_OBJ = $(BUILD_DIR)/vmm.o
 HEAP_OBJ = $(BUILD_DIR)/heap.o
-OS_IMAGE = os-image.bin
+OS_IMAGE = BenmoshOS.bin
 
 # --- Targets ---
 

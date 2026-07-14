@@ -1,5 +1,5 @@
 build/*
 .vs/*
-os-image.bin
-.vscode/c_cpp_properties.json
+BenmoshOS.bin
+.vscode/*
 roadmap.md

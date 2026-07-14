@@ -21,7 +21,7 @@ SECTIONS
         *(.data.*)      
     }
 
-    /* 5. Define uninitialized data (BSS) */
+    /* Define uninitialized data (BSS) */
     .bss : ALIGN(4) {
         __bss_start = .;    
         *(.bss)

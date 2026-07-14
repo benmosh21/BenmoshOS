@@ -281,30 +281,48 @@ msg_hello_asm:    db 'this is from assembly', 0
 ; Global Descriptor Table (GDT) Specifications
 ; Configures flattening segments that give the CPU access to a full 4GB memory range.
 ; =============================================================================
-gdt_start: 
-    dq 0                ; Null Descriptor: Required hardware safety buffer (Selector 0x00)
-    
-gdt_kernel_code:        ; Code Segment Descriptor (Selector 0x08)
-    dw 0xFFFF           ; Segment Limit bits 0-15 (0xFFFF means max size)
-    dw 0x0000           ; Base Address bits 0-15 (Starts at memory address 0)
-    db 0x00             ; Base Address bits 16-23
-    db 10011010b        ; Access Byte
-    db 11001111b        ; Flags/Limit
-    db 0x00             ; Base Address bits 24-31
+gdt_start:
 
-gdt_kernel_data:        ; Data Segment Descriptor (Selector 0x10)
-    dw 0xFFFF           ; Segment Limit bits 0-15
-    dw 0x0000           ; Base Address bits 0-15
-    db 0x00             ; Base Address bits 16-23
-    db 10010010b        ; Access Byte
-    db 11001111b        ; Flags/Limit
-    db 0x00             ; Base Address bits 24-31
-    
+gdt_null: 
+    dq 0 ; Descriptor 0 - must be zero
+
+gdt_kernel_code: 
+    dw 0xFFFF             ; Limit (15:0)
+    dw 0x0000             ; Base (15:0)
+    db 0x00               ; Base (23:16)
+    db 10011010b          ; Access Byte: Code, Readable, Present, DPL=0
+    db 11001111b          ; Flags: 4KB granularity, 32-bit segment
+    db 0x00               ; Base (31:24)
+
+gdt_kernel_data: 
+    dw 0xFFFF             ; Limit (15:0)
+    dw 0x0000             ; Base (15:0)
+    db 0x00               ; Base (23:16)
+    db 10010010b          ; Access Byte: Data, Writable, Present, DPL=0
+    db 11001111b          ; Flags
+    db 0x00               ; Base (31:24)
+
+gdt_user_code: 
+    dw 0xFFFF             ; Limit (15:0)
+    dw 0x0000             ; Base (15:0)
+    db 0x00               ; Base (23:16)
+    db 11111010b          ; Access Byte: Code, Readable, Present, DPL=3
+    db 11001111b          ; Flags
+    db 0x00               ; Base (31:24)
+
+gdt_user_data: 
+    dw 0xFFFF             ; Limit (15:0)
+    dw 0x0000             ; Base (15:0)
+    db 0x00               ; Base (23:16)
+    db 11110010b          ; Access Byte: Data, Writable, Present, DPL=3
+    db 11001111b          ; Flags
+    db 0x00               ; Base (31:24)
+
 gdt_end:
-    
-gdt_descriptor:
-    dw gdt_end - gdt_start - 1 ; Total size of the GDT array minus 1 byte
-    dd gdt_start        ; Linear, physical pointer to the absolute start address of the GDT
 
+gdt_descriptor:
+    dw gdt_end - gdt_start - 1      ; Limit
+    dd gdt_start                    ; Base
+    
 ; Pad Stage 2 file layout to ensure strict multi-sector alignment matching
 times 512+ 512 -($ - $$) db 0

@@ -87,7 +87,7 @@ void KernelMain() {
     load_idt();
     pic_remap();
 
-    /* Memory (MUST come before any malloc/print-history calls) */
+    /* Memory  */
     pmm_init();
     vmm_init();
     heap_init();
@@ -99,11 +99,11 @@ void KernelMain() {
 
     vmm_map_page(user_stack_phys, 0x009FF000, 7);
 
-    /* Print subsystem — enable_dynamic_history calls malloc */
+    /* Print subsystem — enable_dynamic_history */
     enable_dynamic_history(1000);
     screen_clear();
 
-    /* Welcome banner */
+    
     set_print_color(0x0A);
     print("  ____                                 _      ___  ____\n");
     print(" | __ )  ___ _ __  _ __ ___   ___  ___| |__  / _ \\/ ___|\n");

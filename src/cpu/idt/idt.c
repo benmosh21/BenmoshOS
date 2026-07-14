@@ -1,10 +1,6 @@
 /*
  * idt.c - Interrupt Descriptor Table setup and dispatch
  *
- * FIXES:
- *  - Timer IRQ (case 0x20) no longer prints "test" every tick (caused screen flood)
- *  - Page fault handler prints CR2 address correctly
- *  - GPF (#13) prints error code for easier debugging
  */
 
 #include "idt.h"
