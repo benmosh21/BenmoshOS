@@ -11,30 +11,32 @@ start:
     jmp BootloaderMain
     nop
 
+
 ; =============================================================================
 ; FAT16 BIOS Parameter Block (BPB) & Extended Boot Record (EBR)
 ; =============================================================================
 oem_name:             db 'BMOS    '       ; 8-byte OEM Identifier string
-bytes_per_sector:     dw 512              ; Standard sector size
-sectors_per_cluster: db 1                ; Sectors per allocation unit
-reserved_sectors:    dw 50               ; Sectors reserved for Stage 1, Stage 2, and Kernel
-fat_count:           db 2                ; Number of File Allocation Tables (Main + Backup)
-root_dir_entries:    dw 512              ; Max entries in root directory
-total_sectors_16:    dw 0                ; 0 means use the 32-bit count below instead
-media_descriptor:    db 0xF8             ; 0xF8 = Hard Disk
-sectors_per_fat:     dw 256              ; Size of each FAT structure in sectors
-sectors_per_track:   dw 63               ; Disk geometry: Sectors per track
-head_count:          dw 16               ; Disk geometry: Number of heads
-hidden_sectors:      dd 0                ; Number of sectors preceding this partition
-total_sectors_32:    dd 20480            ; Total volume size (20480 * 512 bytes = 10MB)
+bytes_per_sector:     dw 512              ; Sector size
+sectors_per_cluster:  db 1                ; Sectors per allocation unit
+reserved_sectors:     dw 50               ; Sectors reserved for Stage 1, Stage 2, and Kernel
+fat_count:            db 2                ; Number of File Allocation Tables (Main + Backup)
+root_dir_entries:     dw 512              ; Max entries in root directory
+total_sectors_16:     dw 0                ; 0 means use the 32-bit count below instead
+media_descriptor:     db 0xF8             ; 0xF8 = Hard Disk
+sectors_per_fat:      dw 256              ; Size of each FAT structure in sectors
+sectors_per_track:    dw 63               ; Disk geometry: Sectors per track
+head_count:           dw 16               ; Disk geometry: Number of heads
+hidden_sectors:       dd 0                ; Number of sectors preceding this partition
+total_sectors_32:     dd 20480            ; Total volume size (20480 * 512 bytes = 10MB)
 
 ; --- Extended Boot Record Metadata ---
 drive_number:        db 0x80             ; 0x80 = First hard drive
 reserved:            db 0                ; Reserved byte (must be 0)
 boot_signature:      db 0x29             ; 0x29 indicates the next three fields are present
-volume_id:           dd 0x67676767       ; Random volume serial number
+volume_id:           dd 0x67676767       ; The volume serial number
 volume_label:        db 'BenmoshOS  '    ; 11-byte volume string label
 file_system_type:    db 'FAT16   '       ; 8-byte filesystem type identifier string
+
 
 ; =============================================================================
 ; Real Mode String Printing Utility

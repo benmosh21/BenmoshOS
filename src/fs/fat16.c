@@ -557,7 +557,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
     uint32_t target_dir_sector = 0;
     int target_dir_index = 0;
 
-    // 1. FIND THE FILE IN THE ROOT DIRECTORY
+    // FIND THE FILE IN THE ROOT DIRECTORY
     for (uint32_t s = 0; s < root_dir_size; s++) {
         ata_read_sector(root_dir_sector + s, buffer);
         dir_entry_t* directory = (dir_entry_t*)buffer;

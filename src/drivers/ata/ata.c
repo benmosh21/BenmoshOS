@@ -1,6 +1,5 @@
 #include "ata.h"
 
-// Add this helper function at the top
 int ata_wait_ready() {
 	int timeout = 1000000; // Arbitrary large timeout to prevent infinite loops
     // Wait while the BSY bit (bit 7, 0x80) is 1
@@ -41,35 +40,35 @@ void ata_read_sector(uint32_t lba, uint8_t *buffer) {
 }
 
 void ata_write_sector(uint32_t lba, const uint8_t* buffer) {
-    // 1. WAIT FIRST! 
+    // WAIT FIRST! 
     if (!ata_wait_ready()) {
 		// Handle timeout error
         print("Error: ATA drive is not responding or is busy.\n");
 		return;
     }
 
-    // 2. Select Drive and LBA
+    // Select Drive and LBA
     outportb(0x1F6, 0xE0 | ((lba >> 24) & 0x0F));
     outportb(0x1F2, 1);
     outportb(0x1F3, (uint8_t)(lba & 0xFF));
     outportb(0x1F4, (uint8_t)((lba >> 8) & 0xFF));
     outportb(0x1F5, (uint8_t)((lba >> 16) & 0xFF));
 
-    // 3. Send Write Command
+    // Send Write Command
     outportb(0x1F7, 0x30);
 
-    // 4. Wait for the drive to say "Ready for Data" (DRQ bit 3)
+    // Wait for the drive to say "Ready for Data" (DRQ bit 3)
     while ((inportb(0x1F7) & 0x88) != 0x08);
 
-    // 5. Send the data
+    // Send the data
     const uint16_t* source = (const uint16_t*)buffer;
     for (int i = 0; i < 256; i++) {
         outportw(0x1F0, source[i]);
     }
 
-    // 6. Flush cache to metal
+    // Flush cache to metal
     outportb(0x1F7, 0xE7);
 
-    // 7. Wait for the flush to finish so we don't leave the drive busy!
+    // Wait for the flush to finish so we don't leave the drive busy!
     ata_wait_ready();
 }
