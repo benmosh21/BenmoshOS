@@ -597,8 +597,8 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
         return;
     }
 
-    // 2. CHECK IF WE NEED TO ALLOCATE A CLUSTER
-        // Get the file's current stats directly from the directory entry
+    
+    // Get the file's current stats directly from the directory entry
     dir_entry_t* target_entry = (dir_entry_t*)(buffer + (target_dir_index * 32));
     uint16_t file_cluster = target_entry->starting_cluster;
     uint32_t file_size = target_entry->file_size;
@@ -619,7 +619,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
         file_size = 0; // It's a fresh cluster
     }
 
-    // 3. READ, MODIFY, AND WRITE THE DATA
+    // READ, MODIFY, AND WRITE THE DATA
     uint32_t cluster_offset = file_cluster - 2;
     uint32_t file_lba = data_sector + (cluster_offset * clusters_size);
 
@@ -643,7 +643,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
         if (write_offset + data_len >= 512) {
             // Multi-Sector APPENDING
 
-            // 1. Fill the rest of the current sector and write it to the disk immediately
+            // Fill the rest of the current sector and write it to the disk immediately
             int first_chunk_size = 512 - write_offset;
             // Quick memcpy implementation
             for (int i = 0; i < first_chunk_size; i++) {
@@ -651,7 +651,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
             }
             ata_write_sector(file_lba, buffer); // Save it before we reuse the buffer
 
-            // 2. Read the FAT table to allocate a new cluster
+            // Read the FAT table to allocate a new cluster
             ata_read_sector(fat_start_sector, buffer);
             uint16_t* fat_table = (uint16_t*)buffer;
             int next_cluster = 0;
@@ -671,7 +671,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
                 return;
             }
 
-            // 3. Write the remaining text to the new cluster
+            // Write the remaining text to the new cluster
             uint32_t new_cluster_offset = next_cluster - 2;
             uint32_t new_file_lba = data_sector + (new_cluster_offset * clusters_size);
 
@@ -702,7 +702,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
     }
 
 
-    // 4. UPDATE ROOT DIRECTORY
+    // UPDATE ROOT DIRECTORY
     ata_read_sector(target_dir_sector, buffer);
     dir_entry_t* dir = (dir_entry_t*)buffer;
 

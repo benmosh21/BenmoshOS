@@ -29,8 +29,7 @@ int strlen(const char *str) {
     return len;
 }
 
-/* strcmp: returns 1 if strings match, 0 if not.
- * NOTE: this is the OS-internal convention used throughout shell.c */
+
 int strcmp(char* s1, char* s2) {
     int i = 0;
     while (s1[i] == s2[i]) {
@@ -38,6 +37,15 @@ int strcmp(char* s1, char* s2) {
         i++;
     }
     return 1;
+}
+
+int memcmp(char* s1, char* s2, int count) {
+    for (int i = 0; i < count; i++) {
+        if (s1[i] != s2[i]) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* ---- I/O port ---- */

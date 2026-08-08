@@ -33,7 +33,7 @@ typedef struct {
 } dir_entry_t;
 #pragma pack(pop)
 
-// Tell the compiler NOT to add secret padding bytes to this struct
+
 struct lfn_entry {
     uint8_t  sequence_number; // Order of this entry (1, 2, 3...)
     uint16_t name1[5];        // First 5 characters (UTF-16)
@@ -51,5 +51,3 @@ uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size);
 void fat16_list_files();
 void fat16_create_file(char* target_name);
 void fat16_write_file(char* target_file, char* data, int rewriting);
-
-#endif
