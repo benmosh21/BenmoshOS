@@ -51,3 +51,5 @@ uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size);
 void fat16_list_files();
 void fat16_create_file(char* target_name);
 void fat16_write_file(char* target_file, char* data, int rewriting);
+
+#endif
