@@ -56,6 +56,9 @@ void execute_command(char* command) {
             print("Usage: cat <filename>   (one file at a time)\n");
         } else {
             fat16_print_file(argv[1]);
+            printf("TEST:\n");
+            char buffer[2048];
+            fat_read_fileT(argv[1], )
         }
     }
     else if (!strcmp(argv[0], "touch")) {
