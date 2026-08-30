@@ -1,7 +1,5 @@
 ; =============================================================================
-; boot.asm: Two-Stage Bootloader & Hardware Initialization Environment
-; Target Architecture: x86 (IA-32) Protected Mode
-; Target Boot Interface: Legacy BIOS
+; boot.asm: Two-Stage Bootloader, move to protected mode and set the GDT
 ; =============================================================================
 
 [org 0x7c00]          ; BIOS loads MBR sector into RAM address 0x0000:0x7C00
@@ -88,6 +86,7 @@ BootloaderMain:
     mov byte [current_sector], 2
     mov word [sectors_left], 127   ; Read 127 sectors (~63.5KB) into memory
 
+; read 127 sectors for the kernel to be in
 .read_loop:
     mov ah, 0x02        ; BIOS Function: Read Sectors From Drive
     mov al, 1           ; Read exactly 1 sector at a time
@@ -95,12 +94,12 @@ BootloaderMain:
     mov dh, [current_head]
     mov cl, [current_sector]
     mov dl, [boot_drive]
-    int 0x13            ; Call BIOS disk services
+    int 0x13            ; Call BIOS disk services to read the es:bx sector (the bx is 0 so it just 16*es)
     jc disk_error       ; If carry flag is set, handle system read failure
     
     ; Advance target buffer destination by 512 bytes via segment arithmetic
     mov ax, es
-    add ax, 0x0020      ; 0x0020 paragraphs * 16 bytes = 512 bytes
+    add ax, 0x0020      ; 0x0020 paragraphs * 16 bytes = 512 bytes for the size of a segment
     mov es, ax
     
     ; Decrement remaining sectors loop counter
@@ -288,11 +287,19 @@ gdt_start:
 gdt_null: 
     dq 0 ; Descriptor 0 - must be zero
 
+
+; the following GDT entries are 8 bytes each, defining the base, limit, access rights, and flags for each segment:
+; The base is split into three parts: Base (15:0), Base (23:16), and Base (31:24). The limit is also split into two parts: Limit (15:0) and the upper 4 bits of the limit in the flags byte.
+; The limit of 0xFFFF and base of 0x00000000, so it will give as limit * 4KB = 4GB of addressable space, which is the maximum for a 32-bit segment.
+; The access byte, the bits are MSB to LSB: Present (1), DPL (2 bits), Descriptor Type (1 for code/data), Executable (1 for code),
+;      Direction/Conforming (1 for data segments, 0 for code segments), Readable/Writable (1 for readable code or writable data), Accessed (0 initially).
+; The flags byte, the bits are MSB to LSB: Granularity (1 for 4KB), Size (1 for 32-bit), Long Mode (0 for 32-bit), Available (0), and the upper 4 bits of the limit.
+
 gdt_kernel_code: 
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 10011010b          ; Access Byte: Code, Readable, Present, DPL=0
+    db 10011010b          ; Access Byte: Code, present, DPL=0 (kernel mode), Readable,Executable, Accessed=0
     db 11001111b          ; Flags: 4KB granularity, 32-bit segment
     db 0x00               ; Base (31:24)
 
@@ -300,7 +307,7 @@ gdt_kernel_data:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 10010010b          ; Access Byte: Data, Writable, Present, DPL=0
+    db 10010010b          ; Access Byte: Data, DPL=0 (kernel mode), Writable, Present, Accessed=0
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
 
@@ -308,7 +315,7 @@ gdt_user_code:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 11111010b          ; Access Byte: Code, Readable, Present, DPL=3
+    db 11111010b          ; Access Byte: Code, DPL=3 (user mode), Readable, Present, Executable, Accessed=0
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
 
@@ -316,7 +323,7 @@ gdt_user_data:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 11110010b          ; Access Byte: Data, Writable, Present, DPL=3
+    db 11110010b          ; Access Byte: Data, DPL=3 (user mode), Writable, Present, Accessed=0
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
 

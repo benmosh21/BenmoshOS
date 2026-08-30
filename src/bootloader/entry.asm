@@ -31,12 +31,12 @@ _start:
     mov byte [0xb8000], 'E'
     mov byte [0xb8001], 0x1F
 
-    ; 1. Calculate the size of the BSS
+    ; Calculate the size of the BSS
     mov edi, __bss_start  
     mov ecx, __bss_end    
     sub ecx, edi          
     
-    ; 2. Fill it with zeros Safely
+    ; Fill it with zeros Safely
     cld                   
     mov al, 0             
     rep stosb             
@@ -45,10 +45,10 @@ _start:
     mov byte [0xb8002], 'B'
     mov byte [0xb8003], 0x2F
 
-    ; 3. Hand control to C
+    ; Hand control to C
     call KernelMain
 
-    ; 4. Hang if KernelMain returns
+    ; Hang if KernelMain returns
     jmp $
 
 

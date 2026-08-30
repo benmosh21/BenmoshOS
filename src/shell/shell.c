@@ -4,7 +4,7 @@
 #include "../drivers/print/print.h"
 
 /* Forward declaration */
-static void print_shell_prompt();
+//static void print_shell_prompt();
 
 void shell_exit() {
     // Replace print_string with your actual OS print/puts function name
@@ -56,9 +56,6 @@ void execute_command(char* command) {
             print("Usage: cat <filename>   (one file at a time)\n");
         } else {
             fat16_print_file(argv[1]);
-            printf("TEST:\n");
-            char buffer[2048];
-            fat_read_fileT(argv[1], )
         }
     }
     else if (!strcmp(argv[0], "touch")) {
@@ -156,17 +153,6 @@ void execute_command(char* command) {
             print("\n");
             print("(No programs loaded yet — use 'wipe' to create files)\n");
         }
-    }
-    else if (!strcmp(argv[0], "leakheap")) {
-        char* a = malloc(16);
-        ((char*)a)[0] = 't';
-        ((char*)a)[1] = 'e';
-        ((char*)a)[2] = 's';
-        ((char*)a)[3] = 't';
-        ((char*)a)[4] = '\0';
-        int* b = malloc(32);
-        print("Test blocks allocated on the heap.\n");
-        free(a);
     }
     else if (!strcmp(argv[0], "exit")) {
         shell_exit();

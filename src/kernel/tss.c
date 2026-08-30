@@ -1,5 +1,4 @@
 #include "tss.h"
-#include <string.h>
 
 // Define the global instance declared in the header file
 tss_entry_t g_tss;
@@ -35,4 +34,47 @@ void init_tss(void) {
 
     // Safely update the Task Register (TR) via our assembly call instruction
     flush_tss();
+}
+
+
+void fillSpiral(Spiral* S, int n) {
+    S->n = n;
+    S->M = allocateSpiral(n);
+    int rowLocation = 0, colomLocation = 0, direction = 0;
+
+    for (int i = 1; i <= n*n; i++) {
+        S->M[rowLocation][colomLocation] = i;
+        if (direction % 4 == 0) {
+            if (colomLocation + 1 >= n || S->M[rowLocation][colomLocation+1] != 0) {
+                direction++;
+                rowLocation++;
+                continue;
+            }
+            colomLocation++;
+        }
+        else if (direction % 4 == 1) {
+            if (rowLocation + 1 >= n || S->M[rowLocation+1][colomLocation] != 0) {
+                direction++;
+                colomLocation--;
+                continue;
+            }
+            rowLocation++;
+        }
+        else if (direction % 4 == 2) {
+            if (colomLocation - 1 < 0 || S->M[rowLocation][colomLocation-1] != 0) {
+                direction++;
+                rowLocation--;
+                continue;
+            }
+            colomLocation--;
+        }
+        else if (direction % 4 == 3) {
+            if (rowLocation - 1 < 0 || S->M[rowLocation-1][colomLocation] != 0) {
+                direction++;
+                colomLocation++;
+                continue;
+            }
+            rowLocation--;
+        }
+    }
 }

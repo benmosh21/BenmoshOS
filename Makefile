@@ -31,7 +31,7 @@ HEAP_SRC = $(SRC_DIR)/memory/heap/heap.c
 # --- Flags ---
 INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell -I$(SRC_DIR)/memory
 CFLAGS = -ffreestanding -m32 -g -O0 -Wall -fno-pie -masm=intel $(INCLUDE_FLAGS)
-LDFLAGS = -T linker.ld -m elf_i386 --oformat binary -Map=$(BUILD_DIR)/kernel.map
+LDFLAGS = -T linker.ld -m elf_i386 --no-warn-rwx-segments --oformat binary -Map=$(BUILD_DIR)/kernel.map
 
 # --- Output Files (placed in build dir) ---
 BOOT_BIN = $(BUILD_DIR)/boot.bin

@@ -125,7 +125,7 @@ void KernelMain() {
     print("BenmoshOS> ");
     set_print_color(0x0F);
 
-    jump_usermode(my_user_program);
+    //jump_usermode(my_user_program);
 
     /* Never reached — all further work done in IRQ handlers */
     while (1) { __asm__ volatile("hlt"); }

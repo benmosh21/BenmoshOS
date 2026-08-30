@@ -2,6 +2,7 @@
 #define TSS_H
 
 #include <stdint.h>
+#include "system.h"
 
 // The 32-bit hardware Task State Segment structure matching x86 specifications
 struct tss_entry_struct {

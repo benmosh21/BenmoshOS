@@ -2,16 +2,15 @@
   "ExpandedNodes": [
     "",
     "\\src",
-    "\\src\\cpu",
-    "\\src\\cpu\\pic",
     "\\src\\drivers",
     "\\src\\drivers\\keyboard",
     "\\src\\drivers\\print",
     "\\src\\fs",
     "\\src\\kernel",
     "\\src\\memory",
-    "\\src\\shell"
+    "\\src\\shell",
+    "\\test"
   ],
-  "SelectedNode": "\\README.md",
+  "SelectedNode": "\\test\\fat16.c",
   "PreviewInSolutionExplorer": false
 }
