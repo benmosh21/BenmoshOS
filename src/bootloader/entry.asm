@@ -61,7 +61,7 @@ gdt_kernel_code:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 10011010b          ; Access Byte: Code, Readable, Present, DPL=0
+    db 10011010b          ; Access: Present(1), DPL(00), S-bit(1), Exec(1), Conforming(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags: 4KB granularity, 32-bit segment
     db 0x00               ; Base (31:24)
 
@@ -69,7 +69,7 @@ gdt_kernel_data:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 10010010b          ; Access Byte: Data, Writable, Present, DPL=0
+    db 10010010b          ; Access: Present(1), DPL(00), S-bit(1), Exec(0), ExpandDown(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
 
@@ -77,7 +77,7 @@ gdt_user_code:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 11111010b          ; Access Byte: Code, Readable, Present, DPL=3
+    db 11111010b          ; Access: Present(1), DPL(11), S-bit(1), Exec(1), Conforming(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
 
@@ -85,17 +85,17 @@ gdt_user_data:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 11110010b          ; Access Byte: Data, Writable, Present, DPL=3
+    db 11110010b          ; Access: Present(1), DPL(11), S-bit(1), Exec(0), ExpandDown(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
     
 gdt_tss:
-    dw 0x0067             ; Limit (15:0) - 104 bytes (Size - 1)
-    dw 0x0000             ; Base (15:0) - Dynamic placeholder (initialized in C)
-    db 0x00               ; Base (23:16) - Dynamic placeholder (initialized in C)
-    db 10001001b          ; Access Byte: 32-bit TSS (Available), Present, DPL=0
-    db 00000000b          ; Flags (Byte granularity, Limit 19:16)
-    db 0x00               ; Base (31:24) - Dynamic placeholder (initialized in C)
+    dw 0x0067             ; Limit (15:0) - 104 bytes for TSS
+    dw 0x0000             ; Base (15:0)
+    db 0x00               ; Base (23:16)
+    db 10001001b          ; Access: Present(1), DPL(00), S-bit(0), Exec(0), ExpandDown(0), Read/Write(1), Accessed(1)
+    db 00000000b          ; Flags: 4KB granularity, 32-bit segment
+    db 0x00               ; Base (31:24)
     
 gdt_end:
     

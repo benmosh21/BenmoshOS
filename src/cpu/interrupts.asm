@@ -2,6 +2,7 @@
 ; interrupts.asm - The assembly code for our Interrupt Service Routines (ISRs)
 ; This file defines the ISRs for CPU exceptions and a common stub to handle them.
 ; 
+
 %macro ISR_NOERRCODE 1
     global isr%1            ; Make the label accessible to C
     isr%1:                  ; Define the label (e.g., isr0, isr1)

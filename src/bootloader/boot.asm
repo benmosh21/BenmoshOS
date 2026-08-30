@@ -299,7 +299,7 @@ gdt_kernel_code:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 10011010b          ; Access Byte: Code, present, DPL=0 (kernel mode), Readable,Executable, Accessed=0
+    db 10011010b          ; Access: Present(1), DPL(00), S-bit(1), Exec(1), Conforming(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags: 4KB granularity, 32-bit segment
     db 0x00               ; Base (31:24)
 
@@ -307,7 +307,7 @@ gdt_kernel_data:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 10010010b          ; Access Byte: Data, DPL=0 (kernel mode), Writable, Present, Accessed=0
+    db 10010010b          ; Access: Present(1), DPL(00), S-bit(1), Exec(0), ExpandDown(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
 
@@ -315,7 +315,7 @@ gdt_user_code:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 11111010b          ; Access Byte: Code, DPL=3 (user mode), Readable, Present, Executable, Accessed=0
+    db 11111010b          ; Access: Present(1), DPL(11), S-bit(1), Exec(1), Conforming(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
 
@@ -323,10 +323,10 @@ gdt_user_data:
     dw 0xFFFF             ; Limit (15:0)
     dw 0x0000             ; Base (15:0)
     db 0x00               ; Base (23:16)
-    db 11110010b          ; Access Byte: Data, DPL=3 (user mode), Writable, Present, Accessed=0
+    db 11110010b          ; Access: Present(1), DPL(11), S-bit(1), Exec(0), ExpandDown(0), Read/Write(1), Accessed(0)
     db 11001111b          ; Flags
     db 0x00               ; Base (31:24)
-
+    
 gdt_end:
 
 gdt_descriptor:

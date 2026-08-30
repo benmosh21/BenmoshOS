@@ -126,6 +126,7 @@ void KernelMain() {
     set_print_color(0x0F);
 
     //jump_usermode(my_user_program);
+    uint8_t x = *(volatile uint8_t*)0x5555555;
 
     /* Never reached — all further work done in IRQ handlers */
     while (1) { __asm__ volatile("hlt"); }

@@ -10,15 +10,16 @@
 #include "../../drivers/print/print.h"
 #include "../../drivers/keyboard/keyboard.h"
 #include "../pic/pic.h" // For sending EOI to PICs after handling interrupts
-
+#include "../../memory/pmm/pmm.h"
+#include "../../memory/vmm/vmm.h"
 
 // IDT (Interrupt Descriptor Table) definitions
 struct idt_entry {
-    uint16_t offset_low; // lower 16 bits of handler function address
-    uint16_t selector;   // code segment selector in GDT
-    uint8_t zero;        // always zero
-    uint8_t type_attr;   // type and attributes
-    uint16_t offset_high; // higher 16 bits of handler function address
+    uint16_t offset_low;    // lower 16 bits of handler function address
+    uint16_t selector;      // code segment selector in GDT
+    uint8_t zero;           // always zero
+    uint8_t type_attr;      // type and attributes
+    uint16_t offset_high;   // higher 16 bits of handler function address
 } __attribute__((packed));
 
 struct idt_ptr {
@@ -34,9 +35,7 @@ struct interrupt_registers {
    uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the CPU automatically
 };
 
-// IDT (Interrupt Descriptor Table) definitions
-extern struct idt_entry idt[256];
-extern struct idt_ptr idt_ptr;
+
 
 // ISR (Interrupt Service Routine) declarations
 extern void isr0(); 

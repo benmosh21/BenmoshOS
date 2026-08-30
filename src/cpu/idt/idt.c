@@ -35,7 +35,7 @@ void load_idt() {
     }
 
     /* int 0x80 syscall gate: DPL=3 (0xEE) so ring3 code can trigger it */
-    set_idt_gate(128, (uint32_t)isr128, 0x08, 0xEE);
+    set_idt_gate(0x80, (uint32_t)isr128, 0x08, 0xEE);
     __asm__ volatile ("{lidt (%0) | lidt [%0]}" : : "r" (&idt_ptr));
 }
 
@@ -75,10 +75,11 @@ void isr_handler(struct interrupt_registers regs) {
             __asm__ volatile("{mov %%cr2, %0 | mov %0, cr2}" : "=r" (faulting_address));
              print("\n[EXCEPTION] #PF Page Fault at 0x");
             print_hex(faulting_address);
-            print("  err=0x");
-            print_hex(regs.err_code);
             print("\n");
-            for (;;) __asm__ volatile("hlt");
+            uint32_t mem = pmm_alloc_block();
+            vmm_map_page(mem, faulting_address & 0xFFFFF000, 0b011);
+            
+            break;
         }
 
         /* ---- Hardware IRQs ---- */

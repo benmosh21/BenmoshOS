@@ -16,6 +16,9 @@ extern unsigned short *memsetw(unsigned short *dest, uint16_t val, uint32_t coun
 int strlen(const char *str);
 int strcmp(char* s1, char* s2);
 
+extern uint32_t gdt_start;
+void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
+
 /* I/O ports */
 uint8_t  inportb(uint16_t _port);
 uint16_t inportw(uint16_t _port);
