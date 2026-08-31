@@ -7,36 +7,19 @@
 
 #include "system.h"
 
-/* ---- Memory utilities ---- */
-unsigned char *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count) {
-    for (uint32_t i = 0; i < count; i++) dest[i] = src[i];
-    return dest;
-}
 
-unsigned char *memset(unsigned char *dest, uint8_t val, uint32_t count) {
-    for (uint32_t i = 0; i < count; i++) dest[i] = val;
-    return dest;
-}
-
-unsigned short *memsetw(unsigned short *dest, uint16_t val, uint32_t count) {
-    for (uint32_t i = 0; i < count; i++) dest[i] = val;
-    return dest;
-}
-
-int strlen(const char *str) {
-    int len = 0;
-    while (str[len] != '\0') len++;
-    return len;
-}
-
-
-int strcmp(char* s1, char* s2) {
-    int i = 0;
-    while (s1[i] == s2[i]) {
-        if (s1[i] == '\0') return 0;
-        i++;
+int strtoi(const char* s) {
+    int n = 0;
+    int len = strlen(s);
+    for (int i = 0; i < len; i++) {
+        if (s[i] <= '0' || s[i] >= '9') {
+            return -1;
+        }
+        else {
+            n += ((int)s[i] - 48) * i;
+        }
     }
-    return 1;
+    return 0;
 }
 
 void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
@@ -55,14 +38,6 @@ void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_
 
 }
 
-int memcmp(char* s1, char* s2, int count) {
-    for (int i = 0; i < count; i++) {
-        if (s1[i] != s2[i]) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 /* ---- I/O port ---- */
 uint8_t inportb(uint16_t _port) {
@@ -104,14 +79,14 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
         case 1:
             /* Syscall 1: kernel ping — just proves ring3 -> ring0 transition works */
             set_print_color(0x0D);
-            print("[Kernel] Syscall 1 received from Ring3\n");
+            puts("[Kernel] Syscall 1 received from Ring3\n");
             set_print_color(0x0F);
             break;
 
         case 2:
             /* Syscall 2: print null-terminated string at EBX */
             if (ebx != 0) {
-                print((char*)ebx);
+                puts((char*)ebx);
             }
             break;
 
@@ -149,20 +124,20 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
 
                     if (c == '\n') {
                         char nl_str[2] = {'\n', 0};
-                        print(nl_str);
+                        puts(nl_str);
                         break;
                     } 
                     else if (c == '\b') {
                         if (index > 0) {
                             index--;
                             char bs_str[4] = {'\b', ' ', '\b', 0};
-                            print(bs_str);
+                            puts(bs_str);
                         }
                     } 
                     else if (c != 0) {
                         input_buffer[index++] = c;
                         char echo_str[2] = {c, 0};
-                        print(echo_str);
+                        puts(echo_str);
                     }
                 }
             }
@@ -175,9 +150,9 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
 
         default:
             set_print_color(0x0C);
-            print("[Kernel] Unknown syscall: ");
+            puts("[Kernel] Unknown syscall: ");
             print_int((int)eax);
-            print("\n");
+            puts("\n");
             set_print_color(0x0F);
             break;
     }

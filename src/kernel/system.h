@@ -2,19 +2,9 @@
 #define __SYSTEM_H
 
 #include <stdint.h>
-
-/* Forward declarations from print.h to break circular include */
-void print(char *str);
-void print_int(int n);
-void print_hex(int n);
-void set_print_color(uint16_t color);
-
-/* Memory utilities */
-extern unsigned char  *memcpy(unsigned char *dest, const uint8_t *src, uint32_t count);
-extern unsigned char  *memset(unsigned char *dest, uint8_t val, uint32_t count);
-extern unsigned short *memsetw(unsigned short *dest, uint16_t val, uint32_t count);
-int strlen(const char *str);
-int strcmp(char* s1, char* s2);
+#include "../drivers/print/print.h"
+#include "../libc/stdlib.h"
+#include "../libc/strings.h"
 
 extern uint32_t gdt_start;
 void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);

@@ -44,38 +44,38 @@ void isr_handler(struct interrupt_registers regs) {
 
         /* ---- CPU Exceptions ---- */
         case 0x00:
-            print("\n[EXCEPTION] #DE Divide by Zero\n");
+            puts("\n[EXCEPTION] #DE Divide by Zero\n");
             for (;;) __asm__ volatile("hlt");
 
         case 0x01:
-            print("\n[EXCEPTION] #DB Debug\n");
+            puts("\n[EXCEPTION] #DB Debug\n");
             for (;;) __asm__ volatile("hlt");
 
         case 0x06:
-            print("\n[EXCEPTION] #UD Invalid Opcode\n");
+            puts("\n[EXCEPTION] #UD Invalid Opcode\n");
             for (;;) __asm__ volatile("hlt");
 
         case 0x08:
-            print("\n[EXCEPTION] #DF Double Fault\n");
+            puts("\n[EXCEPTION] #DF Double Fault\n");
             for (;;) __asm__ volatile("hlt");
 
         case 0x0D: {
-            print("\n[EXCEPTION] #GP General Protection Fault  err=0x");
+            puts("\n[EXCEPTION] #GP General Protection Fault  err=0x");
             print_hex(regs.err_code);
-            print("  EIP=0x");
+            puts("  EIP=0x");
             print_hex(regs.eip);
-            print("  CS=0x");
+            puts("  CS=0x");
             print_hex(regs.cs);
-            print("\n");
+            puts("\n");
             for (;;) __asm__ volatile("hlt");
         }
 
         case 0x0E: {
             uint32_t faulting_address;
             __asm__ volatile("{mov %%cr2, %0 | mov %0, cr2}" : "=r" (faulting_address));
-             print("\n[EXCEPTION] #PF Page Fault at 0x");
+             puts("\n[EXCEPTION] #PF Page Fault at 0x");
             print_hex(faulting_address);
-            print("\n");
+            puts("\n");
             uint32_t mem = pmm_alloc_block();
             vmm_map_page(mem, faulting_address & 0xFFFFF000, 0b011);
             
@@ -101,9 +101,9 @@ void isr_handler(struct interrupt_registers regs) {
         default:
             /* Silently ignore unknown IRQs (many are spurious) */
             if (regs.int_no < 32) {
-                print("\n[EXCEPTION] Unhandled #");
+                puts("\n[EXCEPTION] Unhandled #");
                 print_int(regs.int_no);
-                print("\n");
+                puts("\n");
             }
             break;
     }

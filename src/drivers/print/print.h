@@ -9,7 +9,7 @@ void outportb(uint16_t _port, unsigned char _data);
 
 /* Core print functions */
 void print_char(char c);
-void print(char *str);
+void puts(char *str);
 void print_int(int n);
 void print_hex(int n);
 //void print_float(float f); - removed untile i implement FPU
@@ -27,10 +27,6 @@ void enable_dynamic_history(int total_rows);
 void enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
 void disable_cursor();
 void update_cursor(int x, int y);
-
-/* Helpers */
-void reverse(char s[]);
-void itoa(int n, char str[]);
 
 /* Color constants */
 typedef enum {

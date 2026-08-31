@@ -8,7 +8,7 @@
 
 void shell_exit() {
     // Replace print_string with your actual OS print/puts function name
-    print("\nShutting down BenmoshOS... Goodbye!\n");
+    puts("\nShutting down BenmoshOS... Goodbye!\n");
     
     // Disable hardware interrupts and halt the CPU core
     __asm__ __volatile__("cli\n\t"
@@ -18,7 +18,7 @@ void shell_exit() {
 void execute_command(char* command) {
     char** argv = (char**)malloc(32 * sizeof(char*));
     if (argv == NULL) {
-        print("shell: out of memory\n");
+        puts("shell: out of memory\n");
         return;
     }
 
@@ -43,44 +43,44 @@ void execute_command(char* command) {
 
     if (!strcmp(argv[0], "ls")) {
         if (argc > 1) {
-            print("Usage: ls      (no arguments)\n");
+            puts("Usage: ls      (no arguments)\n");
         } else {
-            print("Files on disk:\n");
+            puts("Files on disk:\n");
             fat16_list_files();
         }
     }
     else if (!strcmp(argv[0], "cat")) {
         if (argc < 2) {
-            print("Usage: cat <filename>\n");
+            puts("Usage: cat <filename>\n");
         } else if (argc > 2) {
-            print("Usage: cat <filename>   (one file at a time)\n");
+            puts("Usage: cat <filename>   (one file at a time)\n");
         } else {
             fat16_print_file(argv[1]);
         }
     }
     else if (!strcmp(argv[0], "touch")) {
         if (argc < 2) {
-            print("Usage: wipe <filename>\n");
+            puts("Usage: wipe <filename>\n");
         } else if (argc > 2) {
-            print("Usage: wipe <filename>   (one file at a time)\n");
+            puts("Usage: wipe <filename>   (one file at a time)\n");
         } else {
             fat16_create_file(argv[1]);
         }
     }
     else if (!strcmp(argv[0], "write")) {
         if (argc < 3) {
-            print("Usage: write <word> <filename>\n");
+            puts("Usage: write <word> <filename>\n");
         } else {
             fat16_write_file(argv[2], argv[1], 0);
-            print("Written.\n");
+            puts("Written.\n");
         }
     }
     else if (!strcmp(argv[0], "echo")) {
         for (int i = 1; i < argc; i++) {
-            print(argv[i]);
-            if (i < argc - 1) print(" ");
+            puts(argv[i]);
+            if (i < argc - 1) puts(" ");
         }
-        print("\n");
+        puts("\n");
     }
     else if (!strcmp(argv[0], "clear")) {
         screen_clear();
@@ -88,10 +88,10 @@ void execute_command(char* command) {
     else if (!strcmp(argv[0], "color")) {
         
         if (argc < 2) {
-            print("Usage: color <0-15>\n");
-            print("  0=black 1=blue 2=green 3=cyan 4=red 5=magenta\n");
-            print("  6=brown 7=gray 8=dk-gray 9=lt-blue 10=lt-green\n");
-            print("  11=lt-cyan 12=lt-red 13=pink 14=yellow 15=white\n");
+            puts("Usage: color <0-15>\n");
+            puts("  0=black 1=blue 2=green 3=cyan 4=red 5=magenta\n");
+            puts("  6=brown 7=gray 8=dk-gray 9=lt-blue 10=lt-green\n");
+            puts("  11=lt-cyan 12=lt-red 13=pink 14=yellow 15=white\n");
         } else {
             
             int col = 0;
@@ -102,65 +102,79 @@ void execute_command(char* command) {
             }
             if (col < 0 || col > 15) col = 15;
             set_print_color((uint16_t)col);
-            print("Color changed.\n");
+            puts("Color changed.\n");
 
         }
     }
     else if (!strcmp(argv[0], "sysinfo")) {
 
         set_print_color(0x0B);
-        print("=== BenmoshOS System Info ===\n");
+        puts("=== BenmoshOS System Info ===\n");
         set_print_color(0x0F);
-        print("  Architecture : x86 (32-bit protected mode)\n");
-        print("  Privilege    : Ring0 kernel + Ring3 user tasks\n");
-        print("  Memory model : Identity-mapped paging (0-8MB)\n");
-        print("    0x000000 - 0x3FFFFF : Kernel + stack space\n");
-        print("    0x400000 - 0x7FFFFF : Heap (4MB)\n");
-        print("    0x080000            : Ring3 user stack top\n");
-        print("  GDT segments :\n");
-        print("    0x08 kernel code  0x10 kernel data\n");
-        print("    0x1B user code    0x23 user data\n");
-        print("    0x28 TSS\n");
-        print("  Filesystem   : FAT16\n");
-        print("  Syscall gate : int 0x80\n");
+        puts("  Architecture : x86 (32-bit protected mode)\n");
+        puts("  Privilege    : Ring0 kernel + Ring3 user tasks\n");
+        puts("  Memory model : Identity-mapped paging (0-8MB)\n");
+        puts("    0x000000 - 0x3FFFFF : Kernel + stack space\n");
+        puts("    0x400000 - 0x7FFFFF : Heap (4MB)\n");
+        puts("    0x080000            : Ring3 user stack top\n");
+        puts("  GDT segments :\n");
+        puts("    0x08 kernel code  0x10 kernel data\n");
+        puts("    0x1B user code    0x23 user data\n");
+        puts("    0x28 TSS\n");
+        puts("  Filesystem   : FAT16\n");
+        puts("  Syscall gate : int 0x80\n");
 
     }
     else if (!strcmp(argv[0], "help")) {
         set_print_color(0x0E);
-        print("=== BenmoshOS Help ===\n");
+        puts("=== BenmoshOS Help ===\n");
         set_print_color(0x0F);
-        print("  help                - Show this help\n");
-        print("  ls                  - List files on disk\n");
-        print("  cat <file>          - Print file contents\n");
-        print("  touch <file>        - Create empty file\n");
-        print("  write <text> <file> - Write text to file\n");
-        print("  echo [text...]      - Print text\n");
-        print("  clear               - Clear the screen\n");
-        print("  color <0-15>        - Change text color\n");
-        print("  sysinfo             - Show system information\n");
-        print("  activate [program]  - Launch a program\n");
+        puts("  help                - Show this help\n");
+        puts("  ls                  - List files on disk\n");
+        puts("  cat <file>          - print file contents\n");
+        puts("  touch <file>        - Create empty file\n");
+        puts("  write <text> <file> - Write text to file\n");
+        puts("  echo [text...]      - print text\n");
+        puts("  clear               - Clear the screen\n");
+        puts("  color <0-15>        - Change text color\n");
+        puts("  sysinfo             - Show system information\n");
+        puts("  activate [program]  - Launch a program\n");
     }
     else if (!strcmp(argv[0], "activate")) {
         if (argc == 1) {
             set_print_color(0x0C);
-            print("ACTIVATING SELF DESTRUCT... just kidding :P\n");
+            puts("ACTIVATING SELF DESTRUCT... just kidding :P\n");
             set_print_color(0x0F);
         } else if (argc > 2) {
-            print("Usage: activate <program>\n");
+            puts("Usage: activate <program>\n");
         } else {
-            print("Activating: ");
-            print(argv[1]);
-            print("\n");
-            print("(No programs loaded yet — use 'wipe' to create files)\n");
+            puts("Activating: ");
+            puts(argv[1]);
+            puts("\n");
+            puts("(No programs loaded yet — use 'wipe' to create files)\n");
         }
     }
     else if (!strcmp(argv[0], "exit")) {
         shell_exit();
+        }
+    else if (!strcmp(argv[0], "vaddr_decode")) {
+            uint32_t virtual_address = (uint32_t)argv[1];
+
+            uint32_t pdi    = virtual_address >> 22;
+            uint32_t pti    = (virtual_address >> 12) & 0x3FF;
+            uint32_t offset = virtual_address & 0xFFF;
+
+            print_hex(pdi);
+            puts("\n");
+            print_hex(pti);
+            puts("\n");
+            print_hex(offset);
+            puts("\n");
     }
     else {
-        print("Unknown command: '");
-        print(argv[0]);
-        print("'  (use command 'help' for help)\n");
+        puts("Unknown command: '");
+        puts(argv[0]);
+        puts("'  (use command 'help' for help)\n");
     }
 
     free(argv);

@@ -3,32 +3,108 @@
   "WorkspaceRootPath": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\cpu\\idt\\idt.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\cpu\\idt\\idt.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\keyboard\\keyboard.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\drivers\\keyboard\\keyboard.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\cpu\\idt\\idt.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\cpu\\idt\\idt.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\kernel.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\kernel\\kernel.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\ata\\ata.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\drivers\\ata\\ata.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\test\\fat16.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:test\\fat16.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\cpu\\idt\\idt.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\cpu\\idt\\idt.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\shell\\shell.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\shell\\shell.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\fs\\fat16.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\fs\\fat16.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\fs\\fat16.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\fs\\fat16.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\system.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\kernel\\system.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\linker.ld||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:linker.ld||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\system.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\kernel\\system.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdlib.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\libc\\stdlib.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\print\\print.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\drivers\\print\\print.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\kernel.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\kernel\\kernel.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdlib.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\libc\\stdlib.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\print\\print.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\drivers\\print\\print.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdio.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\libc\\stdio.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdio.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\libc\\stdio.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\strings.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\libc\\strings.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\strings.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\libc\\strings.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\heap\\heap.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\pmm\\pmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\vmm\\vmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\vmm\\vmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\heap\\heap.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\pmm\\pmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\test\\fat16.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:test\\fat16.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\linker.ld||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:linker.ld||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\bootloader\\entry.asm||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -39,10 +115,6 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\kernel\\tss.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\keyboard\\keyboard.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\drivers\\keyboard\\keyboard.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\shell\\shell.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\shell\\shell.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
@@ -51,36 +123,8 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\bootloader\\boot.asm||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\shell\\shell.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\shell\\shell.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\test\\fat16.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:test\\fat16.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\vmm\\vmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\vmm\\vmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\pmm\\pmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\pmm\\pmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\heap\\heap.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\print\\print.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\drivers\\print\\print.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\README.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
@@ -93,10 +137,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\ata\\ata.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\drivers\\ata\\ata.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -106,8 +146,138 @@
       "DocumentGroups": [
         {
           "DockedWidth": 295,
-          "SelectedChildIndex": 21,
+          "SelectedChildIndex": 15,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "fat16.h",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\fs\\fat16.h",
+              "RelativeDocumentMoniker": "src\\fs\\fat16.h",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\fs\\fat16.h",
+              "RelativeToolTip": "src\\fs\\fat16.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-08-31T11:18:30.118Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "fat16.c",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\fs\\fat16.c",
+              "RelativeDocumentMoniker": "src\\fs\\fat16.c",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\fs\\fat16.c",
+              "RelativeToolTip": "src\\fs\\fat16.c",
+              "ViewState": "AgIAAC8BAAAAAAAAAAAMwD4BAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-08-31T11:17:53.471Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "print.h",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\print\\print.h",
+              "RelativeDocumentMoniker": "src\\drivers\\print\\print.h",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\print\\print.h",
+              "RelativeToolTip": "src\\drivers\\print\\print.h",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-08-31T11:15:59.56Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "stdio.h",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdio.h",
+              "RelativeDocumentMoniker": "src\\libc\\stdio.h",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdio.h",
+              "RelativeToolTip": "src\\libc\\stdio.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-08-31T11:08:27.697Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "stdio.c",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdio.c",
+              "RelativeDocumentMoniker": "src\\libc\\stdio.c",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdio.c",
+              "RelativeToolTip": "src\\libc\\stdio.c",
+              "ViewState": "AgIAAB4AAAAAAAAAAAAMwC0AAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-08-31T11:08:18.681Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "stdlib.h",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdlib.h",
+              "RelativeDocumentMoniker": "src\\libc\\stdlib.h",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdlib.h",
+              "RelativeToolTip": "src\\libc\\stdlib.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-08-31T11:04:20.004Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "stdlib.c",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdlib.c",
+              "RelativeDocumentMoniker": "src\\libc\\stdlib.c",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\stdlib.c",
+              "RelativeToolTip": "src\\libc\\stdlib.c",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-08-31T11:04:13.157Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "strings.h",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\strings.h",
+              "RelativeDocumentMoniker": "src\\libc\\strings.h",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\strings.h",
+              "RelativeToolTip": "src\\libc\\strings.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-08-31T11:04:03.766Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "strings.c",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\strings.c",
+              "RelativeDocumentMoniker": "src\\libc\\strings.c",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\libc\\strings.c",
+              "RelativeToolTip": "src\\libc\\strings.c",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-08-31T11:03:56.9Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "heap.h",
+              "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.h",
+              "RelativeDocumentMoniker": "src\\memory\\heap\\heap.h",
+              "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.h",
+              "RelativeToolTip": "src\\memory\\heap\\heap.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-08-31T10:44:14.531Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Document",
               "DocumentIndex": 1,
@@ -116,14 +286,14 @@
               "RelativeDocumentMoniker": "src\\cpu\\idt\\idt.h",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\cpu\\idt\\idt.h",
               "RelativeToolTip": "src\\cpu\\idt\\idt.h",
-              "ViewState": "AgIAAAEAAAAAAAAAAAAAAA0AAAAYAAAAAAAAAA==",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAAAAkAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2026-08-30T12:54:24.199Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 25,
               "Title": "linker.ld",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\linker.ld",
               "RelativeDocumentMoniker": "linker.ld",
@@ -136,20 +306,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 7,
               "Title": "system.h",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\system.h",
               "RelativeDocumentMoniker": "src\\kernel\\system.h",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\system.h",
               "RelativeToolTip": "src\\kernel\\system.h",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAARAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2026-08-30T07:52:26.45Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 26,
               "Title": "entry.asm",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\bootloader\\entry.asm",
               "RelativeDocumentMoniker": "src\\bootloader\\entry.asm",
@@ -162,7 +332,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 27,
               "Title": "tss.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\tss.c",
               "RelativeDocumentMoniker": "src\\kernel\\tss.c",
@@ -175,20 +345,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 0,
               "Title": "keyboard.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\keyboard\\keyboard.c",
               "RelativeDocumentMoniker": "src\\drivers\\keyboard\\keyboard.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\keyboard\\keyboard.c",
               "RelativeToolTip": "src\\drivers\\keyboard\\keyboard.c",
-              "ViewState": "AgIAADkAAAAAAAAAAAAAAE4AAAAVAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-26T21:48:53.89Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 29,
               "Title": "boot.asm",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\bootloader\\boot.asm",
               "RelativeDocumentMoniker": "src\\bootloader\\boot.asm",
@@ -201,7 +371,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 28,
               "Title": "shell.h",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\shell\\shell.h",
               "RelativeDocumentMoniker": "src\\shell\\shell.h",
@@ -214,33 +384,33 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 22,
               "Title": "heap.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.c",
               "RelativeDocumentMoniker": "src\\memory\\heap\\heap.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.c",
               "RelativeToolTip": "src\\memory\\heap\\heap.c",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-25T16:00:32.589Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 23,
               "Title": "pmm.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.c",
               "RelativeDocumentMoniker": "src\\memory\\pmm\\pmm.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.c",
               "RelativeToolTip": "src\\memory\\pmm\\pmm.c",
-              "ViewState": "AgIAACEAAAAAAAAAAAAAABMAAAAXAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACcAAABNAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-25T15:59:14.645Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 19,
               "Title": "pmm.h",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.h",
               "RelativeDocumentMoniker": "src\\memory\\pmm\\pmm.h",
@@ -253,20 +423,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 20,
               "Title": "vmm.h",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.h",
               "RelativeDocumentMoniker": "src\\memory\\vmm\\vmm.h",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.h",
               "RelativeToolTip": "src\\memory\\vmm\\vmm.h",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAABYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2026-08-25T15:59:04.721Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 21,
               "Title": "vmm.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.c",
               "RelativeDocumentMoniker": "src\\memory\\vmm\\vmm.c",
@@ -279,7 +449,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 30,
               "Title": "fat16.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\test\\fat16.c",
               "RelativeDocumentMoniker": "test\\fat16.c",
@@ -292,32 +462,33 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 31,
               "Title": "README.md",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\README.md",
               "RelativeDocumentMoniker": "README.md",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\README.md",
               "RelativeToolTip": "README.md",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-08-22T19:02:05.55Z"
+              "WhenOpened": "2026-08-22T19:02:05.55Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 10,
               "Title": "print.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\print\\print.c",
               "RelativeDocumentMoniker": "src\\drivers\\print\\print.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\print\\print.c",
               "RelativeToolTip": "src\\drivers\\print\\print.c",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAPMAAAAAAAAAAAAMwP8AAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-22T19:02:00.337Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 33,
               "Title": ".gitignore",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\.gitignore",
               "RelativeDocumentMoniker": ".gitignore",
@@ -325,24 +496,25 @@
               "RelativeToolTip": ".gitignore",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-08-21T08:50:11.537Z"
+              "WhenOpened": "2026-08-21T08:50:11.537Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "system.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\system.c",
               "RelativeDocumentMoniker": "src\\kernel\\system.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\system.c",
               "RelativeToolTip": "src\\kernel\\system.c",
-              "ViewState": "AgIAABkAAAAAAAAAAAAswCwAAAAmAAAAAAAAAA==",
+              "ViewState": "AgIAAIcAAAAAAAAAAAAAAJgAAAAQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-21T08:38:12.777Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 32,
               "Title": "Makefile",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\Makefile",
               "RelativeDocumentMoniker": "Makefile",
@@ -350,62 +522,64 @@
               "RelativeToolTip": "Makefile",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-08-20T22:44:44.843Z"
+              "WhenOpened": "2026-08-20T22:44:44.843Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 11,
               "Title": "kernel.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\kernel.c",
               "RelativeDocumentMoniker": "src\\kernel\\kernel.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\kernel.c",
               "RelativeToolTip": "src\\kernel\\kernel.c",
-              "ViewState": "AgIAAG8AAAAAAAAAAAAAAIEAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAA4AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-17T12:18:18.167Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 4,
               "Title": "shell.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\shell\\shell.c",
               "RelativeDocumentMoniker": "src\\shell\\shell.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\shell\\shell.c",
               "RelativeToolTip": "src\\shell\\shell.c",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAPAAAAAAAAAA==",
+              "ViewState": "AgIAAJcAAAAAAAAAAAAMwKYAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-17T12:08:25.717Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "idt.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\cpu\\idt\\idt.c",
               "RelativeDocumentMoniker": "src\\cpu\\idt\\idt.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\cpu\\idt\\idt.c",
               "RelativeToolTip": "src\\cpu\\idt\\idt.c",
-              "ViewState": "AgIAAC0AAAAAAAAAAAAcwEQAAAAYAAAAAAAAAA==",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAcwEQAAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
               "WhenOpened": "2026-08-30T22:15:26.485Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 23,
+              "DocumentIndex": 2,
               "Title": "ata.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\ata\\ata.c",
               "RelativeDocumentMoniker": "src\\drivers\\ata\\ata.c",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\drivers\\ata\\ata.c",
               "RelativeToolTip": "src\\drivers\\ata\\ata.c",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAMwGAAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-17T12:08:21.745Z"
+              "WhenOpened": "2026-08-17T12:08:21.745Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 24,
               "Title": "fat16.h",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\test\\fat16.h",
               "RelativeDocumentMoniker": "test\\fat16.h",

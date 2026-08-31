@@ -27,9 +27,12 @@ FAT16_SRC = $(SRC_DIR)/fs/fat16.c
 PMM_SRC = $(SRC_DIR)/memory/pmm/pmm.c
 VMM_SRC = $(SRC_DIR)/memory/vmm/vmm.c
 HEAP_SRC = $(SRC_DIR)/memory/heap/heap.c
+STRING_SRC = $(SRC_DIR)/libc/strings.c
+STDIO_SRC = $(SRC_DIR)/libc/stdio.c
+STDLIB_SRC = $(SRC_DIR)/libc/stdlib.c
 
 # --- Flags ---
-INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell -I$(SRC_DIR)/memory
+INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell -I$(SRC_DIR)/memory -I$(SRC_DIR)/libc
 CFLAGS = -ffreestanding -m32 -g -O0 -Wall -fno-pie -masm=intel $(INCLUDE_FLAGS)
 LDFLAGS = -T linker.ld -m elf_i386 --no-warn-rwx-segments --oformat binary -Map=$(BUILD_DIR)/kernel.map
 
@@ -52,6 +55,9 @@ FAT16_OBJ = $(BUILD_DIR)/fat16.o
 PMM_OBJ = $(BUILD_DIR)/pmm.o
 VMM_OBJ = $(BUILD_DIR)/vmm.o
 HEAP_OBJ = $(BUILD_DIR)/heap.o
+STRING_OBJ = $(BUILD_DIR)/string.o
+STDIO_OBJ = $(BUILD_DIR)/stdio.o
+STDLIB_OBJ = $(BUILD_DIR)/stdlib.o
 OS_IMAGE = BenmoshOS.bin
 
 # --- Targets ---
@@ -125,9 +131,21 @@ $(TSS_OBJ): $(TSS_SRC)
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(TSS_SRC) -o $(TSS_OBJ)
 
-$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ)
-	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ)
-	$(LD) -T linker.ld -m elf_i386 -o $(KERNEL_ELF) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ)
+$(STRING_OBJ): $(STRING_SRC)
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(STRING_SRC) -o $(STRING_OBJ)
+
+$(STDIO_OBJ): $(STDIO_SRC)
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(STDIO_SRC) -o $(STDIO_OBJ)
+
+$(STDLIB_OBJ): $(STDLIB_SRC)
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(STDLIB_SRC) -o $(STDLIB_OBJ)
+
+$(KERNEL_BIN): $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ) $(STDIO_OBJ) $(STRING_OBJ) $(STDLIB_OBJ)
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ) $(STDIO_OBJ) $(STRING_OBJ) $(STDLIB_OBJ)
+	$(LD) -T linker.ld -m elf_i386 -o $(KERNEL_ELF) $(ENTRY_OBJ) $(KERNEL_OBJ) $(SYSTEM_OBJ) $(TSS_OBJ) $(IDT_OBJ) $(INTERRUPTS_OBJ) $(PIC_OBJ) $(ATA_OBJ) $(PRINT_OBJ) $(KEYBOARD_OBJ) $(FAT16_OBJ) $(SHELL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(HEAP_OBJ) $(STDIO_OBJ) $(STRING_OBJ) $(STDLIB_OBJ)
 
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=/dev/zero of=$(OS_IMAGE) bs=1M count=10

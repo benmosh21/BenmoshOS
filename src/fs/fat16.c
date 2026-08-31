@@ -1,23 +1,10 @@
 #include "fat16.h"
-#include "../drivers/ata/ata.h"      // Needed for ata_read_sector
-#include "../drivers/print/print.h"  // Needed for your print function
-#include "../memory/heap/heap.h"
+
 
 // ==========================================
 // --- HELPER FUNCTIONS ---
 // ==========================================
 
-// Compares two standard C strings. Returns 1 if they match perfectly, 0 if not.
-int string_match(char* s1, char* s2) {
-    int i = 0;
-    while (s1[i] == s2[i]) {
-        if (s1[i] == '\0') {
-            return 1; // Match found
-        }
-        i++;
-    }
-    return 0; // Not a match
-}
 
 // Calculates the Microsoft-mandated 1-byte checksum of the 11-byte 8.3 short name.
 // This checksum is required in every LFN ghost entry to bind it to the real file.
@@ -165,7 +152,7 @@ void fat16_print_file(char* target_file) {
 
                 // If we successfully collected a long name, check if it matches target_file
                 if (lfn_buffer[0] != '\0') {
-                    if (string_match(lfn_buffer, target_file) == 1) {
+                    if (strcmp(lfn_buffer, target_file) == 1) {
                         target_cluster = directory[i].starting_cluster;
                         directory_entry_file_size = directory[i].file_size;
                         file_found = 1;
@@ -205,7 +192,7 @@ void fat16_print_file(char* target_file) {
                 char temp_string[2];
                 temp_string[0] = buffer[j];
                 temp_string[1] = '\0';
-                print(temp_string);
+                puts(temp_string);
 
                 bytes_remaining--;
             }
@@ -218,10 +205,10 @@ void fat16_print_file(char* target_file) {
             uint16_t* fat_table = (uint16_t*)buffer;
             current_cluster = fat_table[fat_byte_offset / 2];
         }
-        print("\n");
+        puts("\n");
     }
     else {
-        print("File not found!\n");
+        puts("File not found!\n");
     }
 }
 
@@ -269,7 +256,7 @@ uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size) {
             }
             else if (directory[i].attributes != 0x08) {
                 if (lfn_buffer[0] != '\0') {
-                    if (string_match(lfn_buffer, target_file) == 1) {
+                    if (strcmp(lfn_buffer, target_file) == 1) {
                         target_cluster = directory[i].starting_cluster;
                         directory_entry_file_size = directory[i].file_size;
                         file_found = 1;
@@ -286,7 +273,7 @@ uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size) {
 		uint8_t* file_ram_buffer= (uint8_t*)malloc(directory_entry_file_size);
 
         if (file_ram_buffer == NULL) {
-			print("Memory allocation failed for file buffer.\n");
+			puts("Memory allocation failed for file buffer.\n");
 			return NULL;
 
         }
@@ -372,29 +359,29 @@ void fat16_list_files() {
             else if (directory[i].attributes != 0x08) {
                 if (lfn_buffer[0] != '\0') {
                     // Print the beautifully constructed Long File Name
-                    print(lfn_buffer);
+                    puts(lfn_buffer);
                 }
                 else {
                     // Fallback: No ghost entries found, print the strict 8.3 name
                     for (int j = 0; j < 8; j++) {
                         if (directory[i].filename[j] != ' ') {
                             char temp[2] = { directory[i].filename[j], '\0' };
-                            print(temp);
+                            puts(temp);
                         }
                     }
                     if (directory[i].extension[0] != ' ') {
-                        print(".");
+                        puts(".");
                         for (int j = 0; j < 3; j++) {
                             if (directory[i].extension[j] != ' ') {
                                 char temp[2] = { directory[i].extension[j], '\0' };
-                                print(temp);
+                                puts(temp);
                             }
                         }
                     }
                 }
 
                 // Drop a line for the next file and reset the buffer
-                print("\n");
+                puts("\n");
                 for (int reset = 0; reset < 256; reset++) {
                     lfn_buffer[reset] = '\0';
                 }
@@ -477,7 +464,7 @@ void fat16_create_file(char* target_name) {
     }
 
     if (found_index == -1) {
-        print("Error: Root directory is completely full or fragmented!\n");
+        puts("Error: Root directory is completely full or fragmented!\n");
         return;
     }
 
@@ -533,7 +520,7 @@ void fat16_create_file(char* target_name) {
         ata_write_sector(sec, buffer); // Save the modifications to the hard drive!
     }
 
-    print("Long File created successfully!\n");
+    puts("Long File created successfully!\n");
 }
 
 
@@ -580,7 +567,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
                 }
             }
             else if (directory[i].attributes != 0x08) {
-                if (lfn_buffer[0] != '\0' && string_match(lfn_buffer, target_file) == 1) {
+                if (lfn_buffer[0] != '\0' && strcmp(lfn_buffer, target_file) == 1) {
                     target_dir_sector = root_dir_sector + s;
                     target_dir_index = i;
                     file_found = 1;
@@ -593,7 +580,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
     }
 
     if (!file_found) {
-        print("Error: File not found. Use 'wipe' to create it first.\n");
+        puts("Error: File not found. Use 'wipe' to create it first.\n");
         return;
     }
 
@@ -615,7 +602,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
                 break;
             }
         }
-        if (file_cluster == 0) { print("Error: Disk is full!\n"); return; }
+        if (file_cluster == 0) { puts("Error: Disk is full!\n"); return; }
         file_size = 0; // It's a fresh cluster
     }
 
@@ -667,7 +654,7 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
             }
 
             if (next_cluster == 0) {
-                print("Error: Disk is full, cannot append!\n");
+                puts("Error: Disk is full, cannot append!\n");
                 return;
             }
 
@@ -710,5 +697,5 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
     dir[target_dir_index].file_size = write_offset + data_len;
 
     ata_write_sector(target_dir_sector, buffer);
-    print("Data written successfully!\n");
+    puts("Data written successfully!\n");
 }

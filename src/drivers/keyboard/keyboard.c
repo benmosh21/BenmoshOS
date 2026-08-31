@@ -93,12 +93,12 @@ void keyboard_handler() {
 
     /* Ctrl+C — abort line */
     if (ctrl_pressed && scancode == 0x2E) {
-        print("^C\n");
+        puts("^C\n");
         buffer_index = 0;
         history_pos  = -1;
         live_line_backup_index = 0;
         set_print_color(0x0E);
-        print("BenmoshOS> ");
+        puts("BenmoshOS> ");
         set_print_color(0x0F);
         return;
     }
@@ -150,7 +150,7 @@ void keyboard_handler() {
 
     /* ENTER — execute command */
     if (scancode == ENTER) {
-        print("\n");
+        puts("\n");
         key_buffer[buffer_index] = '\0';
         history_save(key_buffer);
         history_pos = -1;
@@ -160,7 +160,7 @@ void keyboard_handler() {
 
         buffer_index = 0;
         set_print_color(0x0E);
-        print("BenmoshOS> ");
+        puts("BenmoshOS> ");
         set_print_color(0x0F);
         return;
     }

@@ -205,61 +205,12 @@ void print_char(char character) {
     update_screen();
 }
 
-void print(char *str) {
+void puts(char *str) {
     int i = 0;
     while (str[i] != 0) {
         print_char(str[i]);
         i++;
     }
-}
-
-
-/* --- Custom printf Implementation --- */
-
-void printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    
-    int i = 0;
-    while (format[i] != '\0') {
-        if (format[i] == '%') {
-            i++;
-            switch (format[i]) {
-                case 'd':
-                case 'i':
-                    print_int(va_arg(args, int));
-                    break;
-                case 'x':
-                case 'X':
-                    print_hex(va_arg(args, int));
-                    break;
-                case 's': {
-                    char *str = va_arg(args, char *);
-                    if (str == NULL) {
-                        print("(null)");
-                    } else {
-                        print(str);
-                    }
-                    break;
-                }
-                case 'c':
-                    print_char((char)va_arg(args, int));
-                    break;
-                case '%':
-                    print_char('%');
-                    break;
-                default:
-                    print_char('%');
-                    print_char(format[i]);
-                    break;
-            }
-        } else {
-            print_char(format[i]);
-        }
-        i++;
-    }
-    
-    va_end(args);
 }
 
 
@@ -299,34 +250,11 @@ void scroll_history_down(int lines) {
 }
 
 
-/* --- Helpers --- */
-
-void reverse(char s[]) {
-    int i, j;
-    char c;
-    for (i = 0, j = 0; s[j] != 0; j++);
-    j--;
-    for (; i < j; i++, j--) {
-        c = s[i]; s[i] = s[j]; s[j] = c;
-    }
-}
-
-void itoa(int n, char str[]) {
-    int i, sign;
-    if ((sign = n) < 0) n = -n;
-    i = 0;
-    do {
-        str[i++] = n % 10 + '0';
-    } while ((n /= 10) > 0);
-    if (sign < 0) str[i++] = '-';
-    str[i] = '\0';
-    reverse(str);
-}
 
 void print_int(int n) {
     char buffer[12];
     itoa(n, buffer);
-    print(buffer);
+    puts(buffer);
 }
 
 void print_hex(int n) {
@@ -345,8 +273,8 @@ void print_hex(int n) {
     int start = 0;
     while (buffer[start] == '0' && start < 7) start++;
     
-    print("0x");
-    print(&buffer[start]);
+    puts("0x");
+    puts(&buffer[start]);
 }
 
 void set_print_color(uint16_t color) {
@@ -371,7 +299,7 @@ void enable_dynamic_history(int total_rows) {
 }
 
 void print_scancode(uint8_t scancode) {
-    print("SC:");
+    puts("SC:");
     print_hex(scancode);
-    print(" ");
+    puts(" ");
 }

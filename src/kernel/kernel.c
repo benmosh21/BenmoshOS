@@ -19,6 +19,9 @@
 #include "../memory/heap/heap.h"
 #include "../shell/shell.h"
 #include "tss.h"
+#include "../libc/stdio.h"
+#include "../libc/strings.h"
+#include "../libc/stdlib.h"
 
 /* External: assembly trampoline that IRET-jumps into ring3 */
 extern void jump_usermode(void* function_pointer);
@@ -105,15 +108,15 @@ void KernelMain() {
 
     
     set_print_color(0x0A);
-    print("  ____                                 _      ___  ____\n");
-    print(" | __ )  ___ _ __  _ __ ___   ___  ___| |__  / _ \\/ ___|\n");
-    print(" |  _ \\ / _ \\ '_ \\| '_ ` _ \\ / _ \\/ __| '_ \\| | | \\___ \\\n");
-    print(" | |_) |  __/ | | | | | | | | (_) \\__ \\ | | | |_| |___) |\n");
-    print(" |____/ \\___|_| |_|_| |_| |_|\\___/|___/_| |_|\\___/|____/\n");
+    puts("  ____                                 _      ___  ____\n");
+    puts(" | __ )  ___ _ __  _ __ ___   ___  ___| |__  / _ \\/ ___|\n");
+    puts(" |  _ \\ / _ \\ '_ \\| '_ ` _ \\ / _ \\/ __| '_ \\| | | \\___ \\\n");
+    puts(" | |_) |  __/ | | | | | | | | (_) \\__ \\ | | | |_| |___) |\n");
+    puts(" |____/ \\___|_| |_|_| |_| |_|\\___/|___/_| |_|\\___/|____/\n");
     set_print_color(0x0B);
-    print("\n  BenmoshOS v0.2  |  x86 bare-metal  |  Ring0 + Ring3\n");
+    puts("\n  BenmoshOS v0.2  |  x86 bare-metal  |  Ring0 + Ring3\n");
     set_print_color(0x07);
-    print("  Type 'help' for help\n\n");
+    puts("  Type 'help' for help\n\n");
 
 
     /* Enable hardware interrupts BEFORE ring3 jump
@@ -122,7 +125,7 @@ void KernelMain() {
 
     /* Print prompt then drop to ring3 */
     set_print_color(0x0E);
-    print("BenmoshOS> ");
+    puts("BenmoshOS> ");
     set_print_color(0x0F);
 
     //jump_usermode(my_user_program);

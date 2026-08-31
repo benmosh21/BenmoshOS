@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../drivers/print/print.h"
+#include "../libc/strings.h"
+#include "../drivers/ata/ata.h"      // Needed for ata_read_sector
+#include "../memory/heap/heap.h"
 
 #pragma pack(push, 1)
 // Maps the first 36 bytes of Sector 0

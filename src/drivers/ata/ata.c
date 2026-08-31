@@ -33,7 +33,7 @@ int ata_wait_drq() {
 int ata_read_sector(uint32_t lba, uint8_t *buffer) {
     // Wait for the driver to be ready
     if (!ata_wait_ready()) {
-        print("Error: ATA drive is not responding, busy, or error state.\n");
+        puts("Error: ATA drive is not responding, busy, or error state.\n");
         return 1; // Failure
     }
    
@@ -49,7 +49,7 @@ int ata_read_sector(uint32_t lba, uint8_t *buffer) {
     outportb(0x1F7, 0x20);
 
     if (!ata_wait_drq()) {
-        print("Error: ATA read DRQ timeout or error.\n");
+        puts("Error: ATA read DRQ timeout or error.\n");
         return 1;
     }
 
@@ -65,7 +65,7 @@ int ata_read_sector(uint32_t lba, uint8_t *buffer) {
 int ata_write_sector(uint32_t lba, const uint8_t* buffer) {
     // Wait for the driver to be ready
     if (!ata_wait_ready()) {
-        print("Error: ATA drive is not responding, busy, or error state.\n");
+        puts("Error: ATA drive is not responding, busy, or error state.\n");
         return 1;
     }
 
@@ -80,7 +80,7 @@ int ata_write_sector(uint32_t lba, const uint8_t* buffer) {
     outportb(0x1F7, 0x30);
 
     if (!ata_wait_drq()) {
-        print("Error: ATA write DRQ timeout or error.\n");
+        puts("Error: ATA write DRQ timeout or error.\n");
         return 1;
     }
 
@@ -94,7 +94,7 @@ int ata_write_sector(uint32_t lba, const uint8_t* buffer) {
     outportb(0x1F7, 0xE7);
 
     if (!ata_wait_ready()) {
-        print("Error: ATA cache flush failed.\n");
+        puts("Error: ATA cache flush failed.\n");
         return 1;
     }
 
