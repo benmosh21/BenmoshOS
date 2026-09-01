@@ -9,13 +9,13 @@ struct block_header {
 
 // We pre-mapped 4MB to 8MB in the VMM. 4MB in hex is 0x400000.
 // This pointer will always remember where the heap starts.
-struct block_header* first_header = (struct block_header*)0x400000;
+struct block_header* heap_start = (struct block_header*)0x400000;
 
 void heap_init() {
     // The heap is 4MB long (0x400000 bytes)
     // Subtract 8 bytes for the header itself
-    first_header->size_and_free = (0x400000 - 8) | 1; // | 1 marks it as free
-    first_header->next = (uint32_t)NULL;
+    heap_start->size_and_free = (0x400000 - 8) | 1; // | 1 marks it as free
+    heap_start->next = (uint32_t)NULL;
 }
 
 void* malloc(uint32_t requested_size) {
@@ -25,7 +25,7 @@ void* malloc(uint32_t requested_size) {
         requested_size += 4 - (requested_size % 4);
     }
 
-    struct block_header* current = first_header;
+    struct block_header* current = heap_start;
 
     while (current != NULL) {
         // Calculate current_size by masking out the flag bit
@@ -75,7 +75,7 @@ void free(void* ptr) {
     // Step 3: Coalesce (Defragment) the heap.
     // Because we only have a "next" pointer (a singly linked list), we start from the beginning 
     // and scan the entire heap to merge any neighboring free blocks.
-    struct block_header* current = first_header;
+    struct block_header* current = heap_start;
 
     while (current != NULL && current->next != 0) {
         struct block_header* next_block = (struct block_header*)current->next;

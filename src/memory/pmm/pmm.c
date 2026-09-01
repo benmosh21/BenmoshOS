@@ -2,6 +2,12 @@
 
 uint32_t bitmap[32768];
 
+int pmm_is_frame_free(uint32_t frame) {
+	uint32_t word = frame / 32;
+	uint32_t bit = frame % 32;
+	return !(bitmap[word] & (1 << bit));
+}
+
 void pmm_init() {
 
 	// 1. Set defult values for bitmap (fill bitmap with 1s)
@@ -101,4 +107,38 @@ void pmm_reserve_block(uint32_t physical_address, uint32_t size) {
 
 		bitmap[bucket] |= (1U << bit_position); // Set the bit to 1 (Allocated)
 	}
+}
+
+uint32_t pmm_alloc_contiguous(uint32_t count) {
+	if (count == 0) return 0;
+
+	uint32_t max_frames = 32768 * 32;
+
+	// Loop through physical frames, stopping early enough so we don't read out of bounds
+	for (uint32_t i = 0; i <= max_frames - count; i++) {
+		int found = 1;
+
+		// Check if 'count' consecutive frames are free
+		for (uint32_t j = 0; j < count; j++) {
+			if (!pmm_is_frame_free(i + j)) {
+				found = 0;
+				i += j; // Optimization: skip ahead past the used frame
+				break;
+			}
+		}
+
+		// If we found an unbroken sequence, allocate and return
+		if (found) {
+			for (uint32_t j = 0; j < count; j++) {
+				uint32_t current_frame = i + j;
+				uint32_t word = current_frame / 32;
+				uint32_t bit = current_frame % 32;
+
+				bitmap[word] |= (1U << bit);
+			}
+			return i * 4096;
+		}
+	}
+
+	return 0; // Out of contiguous memory
 }

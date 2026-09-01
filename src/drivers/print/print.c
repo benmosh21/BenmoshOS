@@ -205,7 +205,7 @@ void print_char(char character) {
     update_screen();
 }
 
-void puts(char *str) {
+void puts(const char *str) {
     int i = 0;
     while (str[i] != 0) {
         print_char(str[i]);

@@ -5,6 +5,7 @@
 
 void reverse(char s[]);
 void itoa(int n, char str[]);
+int atoi(const char* str);
 
 /* Memory allocation exposed from heap.c */
 void* malloc(uint32_t size);

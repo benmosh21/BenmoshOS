@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 
+int pmm_is_frame_free(uint32_t frame);
+
 // Initialize the Physical Memory Manager (PMM)
 void pmm_init();
 

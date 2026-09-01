@@ -8,20 +8,6 @@
 #include "system.h"
 
 
-int strtoi(const char* s) {
-    int n = 0;
-    int len = strlen(s);
-    for (int i = 0; i < len; i++) {
-        if (s[i] <= '0' || s[i] >= '9') {
-            return -1;
-        }
-        else {
-            n += ((int)s[i] - 48) * i;
-        }
-    }
-    return 0;
-}
-
 void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
 
     // Get the location of gdt_start so i can set the bits in the location for the GDT entry

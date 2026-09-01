@@ -21,3 +21,23 @@ void itoa(int n, char str[]) {
     str[i] = '\0';
     reverse(str);
 }
+
+int atoi(const char* str) {
+    int res = 0;
+    int sign = 1;
+    int idx = 0;
+
+    if (str[0] == '-') {
+        sign = -1;
+        idx++;
+    }
+    for (; str[idx] != '\0'; ++idx) {
+        if (str[idx] < '0' || str[idx] > '9') {
+            break;
+        }
+
+        res = res * 10 + (str[idx] - '0');
+    }
+
+    return sign * res;
+}

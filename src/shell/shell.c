@@ -1,7 +1,5 @@
 #include "shell.h"
-#include "../memory/heap/heap.h"
-#include "../kernel/system.h"
-#include "../drivers/print/print.h"
+
 
 /* Forward declaration */
 //static void print_shell_prompt();
@@ -158,18 +156,21 @@ void execute_command(char* command) {
         shell_exit();
         }
     else if (!strcmp(argv[0], "vaddr_decode")) {
-            uint32_t virtual_address = (uint32_t)argv[1];
-
+            print_int(atoi(argv[1]));
+            uint32_t virtual_address = atoi(argv[1]);
+            printf("virtual address: %d\n", virtual_address);
             uint32_t pdi    = virtual_address >> 22;
             uint32_t pti    = (virtual_address >> 12) & 0x3FF;
             uint32_t offset = virtual_address & 0xFFF;
 
-            print_hex(pdi);
-            puts("\n");
-            print_hex(pti);
-            puts("\n");
-            print_hex(offset);
-            puts("\n");
+            printf("pdi: %x\n", pdi);
+            printf("pti: %x\n", pti);
+            printf("offset: %x\n", offset);
+    }
+    else if (!strcmp(argv[0], "heapdump")) {
+        extern uint32_t* heap_start;
+        uint32_t* block = heap_start;
+        while(block < heap_start + )
     }
     else {
         puts("Unknown command: '");

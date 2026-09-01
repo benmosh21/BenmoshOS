@@ -9,7 +9,7 @@ void outportb(uint16_t _port, unsigned char _data);
 
 /* Core print functions */
 void print_char(char c);
-void puts(char *str);
+void puts(const char *str);
 void print_int(int n);
 void print_hex(int n);
 //void print_float(float f); - removed untile i implement FPU
