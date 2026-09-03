@@ -2,15 +2,16 @@
   "ExpandedNodes": [
     "",
     "\\src",
+    "\\src\\bootloader",
+    "\\src\\cpu",
+    "\\src\\cpu\\idt",
     "\\src\\drivers",
-    "\\src\\drivers\\keyboard",
+    "\\src\\drivers\\ata",
     "\\src\\drivers\\print",
-    "\\src\\fs",
-    "\\src\\kernel",
+    "\\src\\libc",
     "\\src\\memory",
-    "\\src\\shell",
-    "\\test"
+    "\\src\\memory\\heap"
   ],
-  "SelectedNode": "\\test\\fat16.c",
+  "SelectedNode": "\\src\\memory\\pmm\\pmm.c",
   "PreviewInSolutionExplorer": false
 }

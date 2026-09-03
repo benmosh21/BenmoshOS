@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+// define all important data
+#define HEAP_START 0x400000
+#define HEAP_SIZE 0x400000
+#define HEAP_END 0x800000
+
+
 // Initialize the heap
 void heap_init();
 

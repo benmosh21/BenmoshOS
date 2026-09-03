@@ -170,7 +170,16 @@ void execute_command(char* command) {
     else if (!strcmp(argv[0], "heapdump")) {
         extern uint32_t* heap_start;
         uint32_t* block = heap_start;
-        while(block < heap_start + )
+        int count;
+        while (block < heap_start + HEAP_SIZE) {
+            uint32_t hdr = *(uint32_t*)block;
+            uint32_t size = hdr & ~1U;
+            uint32_t free = hdr & 1U;
+            if (size == 0) break;
+            printf("[%d] @0x%x size=%d %s\n",
+                count++, block, size, free ? "FREE" : "USED");
+            block += size;
+        }
     }
     else {
         puts("Unknown command: '");
