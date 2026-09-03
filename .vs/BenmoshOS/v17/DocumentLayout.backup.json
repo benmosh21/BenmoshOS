@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\Makefile||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Makefile||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\pmm\\pmm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
@@ -33,10 +37,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\memory\\heap\\heap.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\Makefile||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Makefile||{3B902123-F8A7-4915-9F01-361F908088D0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -154,11 +154,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 295,
-          "SelectedChildIndex": 20,
+          "SelectedChildIndex": 29,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "interrupts.asm",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\cpu\\interrupts.asm",
               "RelativeDocumentMoniker": "src\\cpu\\interrupts.asm",
@@ -166,8 +166,7 @@
               "RelativeToolTip": "src\\cpu\\interrupts.asm",
               "ViewState": "AgIAAGcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-09-02T04:57:31.182Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-02T04:57:31.182Z"
             },
             {
               "$type": "Document",
@@ -179,8 +178,7 @@
               "RelativeToolTip": "src\\kernel\\test.c",
               "ViewState": "AgIAABMAAAAAAAAAAAAMwCIAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-31T16:50:56.371Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T16:50:56.371Z"
             },
             {
               "$type": "Document",
@@ -192,8 +190,7 @@
               "RelativeToolTip": "src\\fs\\fat16.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-31T11:18:30.118Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:18:30.118Z"
             },
             {
               "$type": "Document",
@@ -205,8 +202,7 @@
               "RelativeToolTip": "src\\fs\\fat16.c",
               "ViewState": "AgIAAC8BAAAAAAAAAAAMwD4BAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-31T11:17:53.471Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:17:53.471Z"
             },
             {
               "$type": "Document",
@@ -218,8 +214,7 @@
               "RelativeToolTip": "src\\drivers\\print\\print.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-31T11:15:59.56Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:15:59.56Z"
             },
             {
               "$type": "Document",
@@ -231,8 +226,7 @@
               "RelativeToolTip": "src\\libc\\stdio.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-31T11:08:27.697Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:08:27.697Z"
             },
             {
               "$type": "Document",
@@ -244,8 +238,7 @@
               "RelativeToolTip": "src\\libc\\stdio.c",
               "ViewState": "AgIAAA8AAAAAAAAAAAAAAA0AAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-31T11:08:18.681Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:08:18.681Z"
             },
             {
               "$type": "Document",
@@ -257,8 +250,7 @@
               "RelativeToolTip": "src\\libc\\stdlib.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-31T11:04:20.004Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:04:20.004Z"
             },
             {
               "$type": "Document",
@@ -270,8 +262,7 @@
               "RelativeToolTip": "src\\libc\\stdlib.c",
               "ViewState": "AgIAAAkAAAAAAAAAAAAMwBgAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-31T11:04:13.157Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:04:13.157Z"
             },
             {
               "$type": "Document",
@@ -283,8 +274,7 @@
               "RelativeToolTip": "src\\libc\\strings.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-31T11:04:03.766Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:04:03.766Z"
             },
             {
               "$type": "Document",
@@ -296,12 +286,11 @@
               "RelativeToolTip": "src\\libc\\strings.c",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACcAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-31T11:03:56.9Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T11:03:56.9Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "heap.h",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.h",
               "RelativeDocumentMoniker": "src\\memory\\heap\\heap.h",
@@ -309,8 +298,7 @@
               "RelativeToolTip": "src\\memory\\heap\\heap.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-31T10:44:14.531Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-31T10:44:14.531Z"
             },
             {
               "$type": "Document",
@@ -322,8 +310,7 @@
               "RelativeToolTip": "src\\cpu\\idt\\idt.h",
               "ViewState": "AgIAAAEAAAAAAAAAAAAAAAkAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-30T12:54:24.199Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-30T12:54:24.199Z"
             },
             {
               "$type": "Document",
@@ -335,8 +322,7 @@
               "RelativeToolTip": "linker.ld",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-08-30T11:04:30.219Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-30T11:04:30.219Z"
             },
             {
               "$type": "Document",
@@ -348,8 +334,7 @@
               "RelativeToolTip": "src\\kernel\\system.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-30T07:52:26.45Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-30T07:52:26.45Z"
             },
             {
               "$type": "Document",
@@ -361,8 +346,7 @@
               "RelativeToolTip": "src\\bootloader\\entry.asm",
               "ViewState": "AgIAAEUAAAAAAAAAAAAAACMAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-08-27T11:28:55.789Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-27T11:28:55.789Z"
             },
             {
               "$type": "Document",
@@ -374,8 +358,7 @@
               "RelativeToolTip": "src\\kernel\\tss.c",
               "ViewState": "AgIAAAMAAAAAAAAAAAAAABgAAAALAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-20T22:42:29.292Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-20T22:42:29.292Z"
             },
             {
               "$type": "Document",
@@ -387,12 +370,11 @@
               "RelativeToolTip": "src\\drivers\\keyboard\\keyboard.c",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-26T21:48:53.89Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-26T21:48:53.89Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "boot.asm",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\bootloader\\boot.asm",
               "RelativeDocumentMoniker": "src\\bootloader\\boot.asm",
@@ -400,8 +382,7 @@
               "RelativeToolTip": "src\\bootloader\\boot.asm",
               "ViewState": "AgIAAC8BAAAAAAAAAAAAAEUBAAB1AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-08-26T19:04:51.916Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-26T19:04:51.916Z"
             },
             {
               "$type": "Document",
@@ -413,12 +394,11 @@
               "RelativeToolTip": "src\\shell\\shell.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-26T10:48:09.012Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-26T10:48:09.012Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "pmm.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\pmm\\pmm.c",
               "RelativeDocumentMoniker": "src\\memory\\pmm\\pmm.c",
@@ -439,8 +419,7 @@
               "RelativeToolTip": "src\\memory\\pmm\\pmm.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-25T15:59:09.924Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-25T15:59:09.924Z"
             },
             {
               "$type": "Document",
@@ -452,12 +431,11 @@
               "RelativeToolTip": "src\\memory\\vmm\\vmm.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAABYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-25T15:59:04.721Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-25T15:59:04.721Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "vmm.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\vmm\\vmm.c",
               "RelativeDocumentMoniker": "src\\memory\\vmm\\vmm.c",
@@ -465,8 +443,7 @@
               "RelativeToolTip": "src\\memory\\vmm\\vmm.c",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-25T15:59:02.27Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-25T15:59:02.27Z"
             },
             {
               "$type": "Document",
@@ -478,8 +455,7 @@
               "RelativeToolTip": "test\\fat16.c",
               "ViewState": "AgIAADAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-24T05:20:20.944Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-24T05:20:20.944Z"
             },
             {
               "$type": "Document",
@@ -491,8 +467,7 @@
               "RelativeToolTip": "README.md",
               "ViewState": "AgIAAAMAAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-08-22T19:02:05.55Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-22T19:02:05.55Z"
             },
             {
               "$type": "Document",
@@ -504,8 +479,7 @@
               "RelativeToolTip": "src\\drivers\\print\\print.c",
               "ViewState": "AgIAAMAAAAAAAAAAAAAMwM8AAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-22T19:02:00.337Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-22T19:02:00.337Z"
             },
             {
               "$type": "Document",
@@ -517,8 +491,7 @@
               "RelativeToolTip": ".gitignore",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-08-21T08:50:11.537Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-21T08:50:11.537Z"
             },
             {
               "$type": "Document",
@@ -530,25 +503,24 @@
               "RelativeToolTip": "src\\kernel\\system.c",
               "ViewState": "AgIAAAYAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-21T08:38:12.777Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-21T08:38:12.777Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 0,
               "Title": "Makefile",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\Makefile",
               "RelativeDocumentMoniker": "Makefile",
               "ToolTip": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\Makefile",
               "RelativeToolTip": "Makefile",
-              "ViewState": "AgIAAJgAAAAAAAAAAAAAAA0AAAApAAAAAAAAAA==",
+              "ViewState": "AgIAAJ4AAAAAAAAAAAAAAA0AAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
               "WhenOpened": "2026-08-20T22:44:44.843Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "kernel.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\kernel\\kernel.c",
               "RelativeDocumentMoniker": "src\\kernel\\kernel.c",
@@ -556,12 +528,11 @@
               "RelativeToolTip": "src\\kernel\\kernel.c",
               "ViewState": "AgIAAFQAAAAAAAAAAAAAAGYAAAAQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-17T12:18:18.167Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-17T12:18:18.167Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "shell.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\shell\\shell.c",
               "RelativeDocumentMoniker": "src\\shell\\shell.c",
@@ -569,8 +540,7 @@
               "RelativeToolTip": "src\\shell\\shell.c",
               "ViewState": "AgIAAF8AAAAAAAAAAAAAABAAAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-17T12:08:25.717Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-17T12:08:25.717Z"
             },
             {
               "$type": "Document",
@@ -582,8 +552,7 @@
               "RelativeToolTip": "src\\cpu\\idt\\idt.c",
               "ViewState": "AgIAADwAAAAAAAAAAAAcwE8AAAAYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-30T22:15:26.485Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-30T22:15:26.485Z"
             },
             {
               "$type": "Document",
@@ -595,8 +564,7 @@
               "RelativeToolTip": "src\\drivers\\ata\\ata.c",
               "ViewState": "AgIAAFEAAAAAAAAAAAAMwGAAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2026-08-17T12:08:21.745Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-17T12:08:21.745Z"
             },
             {
               "$type": "Document",
@@ -608,8 +576,7 @@
               "RelativeToolTip": "test\\fat16.h",
               "ViewState": "AgIAANUAAAAAAAAAAAAAAOAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2026-08-13T13:50:34.84Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-13T13:50:34.84Z"
             }
           ]
         }
@@ -621,10 +588,10 @@
       "FloatingWindowState": {
         "Id": "1a24f98b-0da3-49dd-a241-d169e3bf40fd",
         "Display": 0,
-        "X": 227,
-        "Y": 163,
-        "Width": 1483,
-        "Height": 580,
+        "X": 414,
+        "Y": 184,
+        "Width": 1482,
+        "Height": 579,
         "WindowState": 0
       },
       "DocumentGroups": [
@@ -634,7 +601,7 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "heap.c",
               "DocumentMoniker": "D:\\GUY\\school\\cyber\\asm\\BenmoshOS\\src\\memory\\heap\\heap.c",
               "RelativeDocumentMoniker": "src\\memory\\heap\\heap.c",
