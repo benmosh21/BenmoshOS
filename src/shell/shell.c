@@ -28,6 +28,11 @@ void execute_command(char* command) {
             in_word    = 0;
             command[i] = '\0';
         } else if (in_word == 0) {
+            if (argc >= 32) {
+                puts("shell: too many arguments\n");
+                free(argv);
+                return;
+            }
             in_word       = 1;
             argv[argc++]  = &command[i];
         }

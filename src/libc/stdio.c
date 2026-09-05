@@ -11,6 +11,9 @@ void printf(const char* format, ...) {
     while (format[i] != '\0') {
         if (format[i] == '%') {
             i++;
+            if (format[i] == '\0') {
+                break; // Handle case where '%' is at the end of the string
+            }
             switch (format[i]) {
             case 'd':
             case 'i':

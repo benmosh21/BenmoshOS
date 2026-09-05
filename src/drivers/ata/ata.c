@@ -90,6 +90,12 @@ int ata_write_sector(uint32_t lba, const uint8_t* buffer) {
         outportw(0x1F0, source[i]);
     }
 
+    // Wait for the write to complete
+    if (!ata_wait_ready()) {
+        puts("Error: ATA write completion timeout or error.\n");
+        return 1;
+    }
+
     // Flush cache to metal
     outportb(0x1F7, 0xE7);
 

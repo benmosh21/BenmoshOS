@@ -19,7 +19,7 @@ void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_
     gdt_entry[3] = (base >> 8) & 0xFF;                          // Base (15:8)
     gdt_entry[4] = (base >> 16) & 0xFF;                         // Base (23:16)
     gdt_entry[5] = access;                                      // Accsess Byte
-    gdt_entry[6] = (gran & 0xF << 4) | (limit >> 16) & 0xF;     // Flags
+    gdt_entry[6] = (gran & 0x0F << 4) | ((limit >> 16) & 0x0F);     // Flags
     gdt_entry[7] = (base >> 24) & 0xFF;                         // Base (31:24)
 
 }
@@ -88,46 +88,39 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
             if (max_len > 255) max_len = 255; // Hardware safety cap bounds
 
             uint32_t index = 0;
-
-            // Replicate normal lowercase/symbol layout scancodes matching driver specification
-            static const char scancode_ascii_map[128] = {
-                0, 27, '1','2','3','4','5','6','7','8','9','0','-','=','\b',
-                '\t','q','w','e','r','t','y','u','i','o','p','[',']','\n',
-                0,'a','s','d','f','g','h','j','k','l',';','\'','`',0,'\\',
-                'z','x','c','v','b','n','m',',','.','/',0,'*',0,' '
-            };
+            
+            // Signal to keyboard ISR that we are waiting for input
+            syscall_input_active = 1; 
 
             // Synchronous polling loop reading inputs safely until limit is achieved
             while (index < (max_len - 1)) {
-                // Poll the PS/2 Keyboard Status Register (Port 0x64), bit 0 indicates data ready
-                if ((inportb(0x64) & 1) != 0) {
-                    uint8_t scancode = inportb(0x60);
+                // Halt CPU until next interrupt (keyboard) and re-enable interrupts for ISR handling
+                __asm__ volatile ("sti\n\thlt\n\tcli");
 
-                    // Skip break codes (key release events have bit 7 active)
-                    if (scancode & 0x80) continue;
+                char c = keyboard_pop_char();
+                if (c == 0) continue; // No input available yet
 
-                    char c = (scancode < 128) ? scancode_ascii_map[scancode] : 0;
-
-                    if (c == '\n') {
-                        char nl_str[2] = {'\n', 0};
-                        puts(nl_str);
-                        break;
-                    } 
-                    else if (c == '\b') {
-                        if (index > 0) {
-                            index--;
-                            char bs_str[4] = {'\b', ' ', '\b', 0};
-                            puts(bs_str);
-                        }
-                    } 
-                    else if (c != 0) {
-                        input_buffer[index++] = c;
-                        char echo_str[2] = {c, 0};
-                        puts(echo_str);
+                if (c == '\n') {
+                    input_buffer[index++] = '\n';
+                    puts("\n");
+                    break;
+                } 
+                else if (c == '\b') {
+                    if (index > 0) {
+                        index--;
+                        char bs_str[4] = {'\b', ' ', '\b', 0};
+                        puts(bs_str);
                     }
+                } 
+                else {
+                    input_buffer[index++] = c;
+                    char echo_str[2] = {c, 0};
+                    puts(echo_str);
                 }
             }
             
+            // Release the keyboard back to the kernel shell
+            syscall_input_active = 0;
             input_buffer[index] = '\0';
             
             // Return address memory pointer targeting the completed kernel buffer inside EAX

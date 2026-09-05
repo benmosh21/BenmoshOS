@@ -10,4 +10,7 @@ void execute_command(char* command);
 
 void keyboard_handler();
 
+extern volatile int syscall_input_active;
+char keyboard_pop_char();
+
 #endif

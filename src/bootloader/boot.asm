@@ -168,12 +168,17 @@ sect2_start:
     xor bp, bp
     call load_pmm
     
+    ; Enable A20 line to access memory above 1MB
+    in al, 0x92         ; Read current value of port 0x92
+    or al, 0x02         ; Set bit 1 of port 0x92 to enable A20 line
+    out 0x92, al        ; Write back to port 0x92 to enable A20 line
+
     cli                 ; Clear Interrupts (disable hardware interrupts before PMODE)
     lgdt [gdt_descriptor] ; Load the address and size of the GDT into the CPU register
 
-    mov eax, cr0        ; Read current Control Register 0
+    mov eax, cr0        ; Save current Control Register 0 to eax
     or eax, 0x1         ; Set Bit 0 (Protection Enable bit)
-    mov cr0, eax        ; Write back to CR0. We are now technically in Protected Mode.
+    mov cr0, eax        ; Write back to CR0. We are now technically in Protected Mode. (we still need to jump to a 32-bit code segment to fully enable it)
     
     ; Far Jump to Protected Mode segment. Clears out any prefetched 16-bit real mode instructions.
     jmp 0x08:init_pm

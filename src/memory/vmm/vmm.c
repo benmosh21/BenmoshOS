@@ -31,11 +31,22 @@ void vmm_init() {
 }
 
 void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t flags) {
-    // 1. Calculate the indices for the Page Directory and Page Table
+
+    if (virtual_address & 0xFFF) {
+        puts("[VMM] Error: Virtual address is not page-aligned.\n");
+        return;
+    }
+
+    if (pmm_is_frame_free(physical_address >> 12)) {
+        puts("[VMM] Error: Physical address is not allocated.\n");
+        return;
+    }
+
+    // Calculate the indices for the Page Directory and Page Table
     uint32_t pdi = virtual_address >> 22;
     uint32_t pti = (virtual_address >> 12) & 0x03FF;
 
-    // 2. Check if the Page Table exists in the Directory
+    // Check if the Page Table exists in the Directory
     if ((page_directory[pdi] & 1) == 0) {
 
         // The table does not exist. Ask the PMM for a raw 4KB hardware frame.
@@ -79,4 +90,17 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
 
     // Flush the TLB for the requested virtual address
     __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (virtual_address) : "memory");
+}
+
+vmm_unmap_page(uint32_t virtual_address) {
+    uint32_t pdi = virtual_address >> 22;
+    uint32_t pti = (virtual_address >> 12) & 0x03FF;
+    uint32_t offset = virtual_address & 0xFFF;
+
+    if ((page_directory[pdi] & 1) == 0) {
+        // The page table does not exist; nothing to unmap
+        return;
+    }
+
+    
 }

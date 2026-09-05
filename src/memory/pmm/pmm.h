@@ -3,26 +3,21 @@
 
 #include <stdint.h>
 
-
-int pmm_is_frame_free(uint32_t frame);
-
-// Initialize the Physical Memory Manager (PMM)
-void pmm_init();
-
-// Allocate a single 4KB block of physical memory and return its physical address
-uint32_t pmm_alloc_block();
-
-// Free a previously allocated block of physical memory
-void pmm_free_block(uint32_t physical_address, uint32_t num_frames);
-
-// Reserve a block of physical memory (mark it as allocated without returning it)
-void pmm_reserve_block(uint32_t physical_address, uint32_t size);
-
 struct memorymap_entry {
     uint64_t base;
     uint64_t length;
     uint32_t type;
     uint32_t acpi_ext;
 } __attribute__((packed));
+
+int pmm_is_frame_free(uint32_t frame);
+void pmm_init();
+int pmm_is_frame_free(uint32_t frame);
+uint32_t pmm_alloc_block();
+void pmm_free_block(uint32_t physical_address, uint32_t num_frames);
+void pmm_reserve_block(uint32_t physical_address, uint32_t size);
+
+void pmm_get_stats(uint32_t* out_total, uint32_t* out_free, uint32_t* out_used);
+
 
 #endif

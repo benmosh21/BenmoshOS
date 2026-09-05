@@ -13,20 +13,27 @@
 #define BACKSPACE 0x0E
 #define ENTER     0x1C
 
-
+// State of modifier keys
 static int shift_pressed = 0;
 static int ctrl_pressed  = 0;
 
-
+// Keyboard input buffer
 char key_buffer[256];
 int  buffer_index = 0;
 
+// Keyboard input queue for syscalls
+volatile int syscall_input_active = 0;
+volatile char kbd_queue[256];
+volatile uint8_t kbd_q_head = 0;
+volatile uint8_t kbd_q_tail = 0;
 
+// Keyboard history management
 #define HISTORY_SIZE 16
 static char history[HISTORY_SIZE][256];
 static int  history_count = 0;      
 static int  history_pos   = -1;
 
+// Backup of the current line when navigating history
 static char live_line_backup[256];
 static int  live_line_backup_index = 0;
 
@@ -76,8 +83,49 @@ static const char scancode_map_shifted[128] = {
     'Z','X','C','V','B','N','M','<','>','?',0,'*',0,' '
 };
 
+/*
+ * @brief
+ * Pops a character from the keyboard input queue.
+ *
+ * @return The next character from the queue, or 0 if the queue is empty.
+*/
+char keyboard_pop_char() {
+    if (kbd_q_head == kbd_q_tail) return 0; // Queue empty
+    return kbd_queue[kbd_q_tail++];
+}
+
+
+/*
+ * @brief
+ * Keyboard interrupt handler for PS/2 keyboard.
+ *
+ * This function is called on every keyboard interrupt. It handles key presses,
+ * releases, and special keys like Ctrl+C, Up/Down arrows for history navigation,
+ * and Enter for command execution.
+*/
 void keyboard_handler() {
     unsigned char scancode = inportb(0x60);
+
+    if (scancode & 0x80) { return; } // Ignore break codes for now
+    if (scancode == 0x2A || scancode == 0x36)   { shift_pressed = 1; return; }
+    if (scancode == 0x1D)                       { ctrl_pressed = 1; return; }
+
+    if (syscall_input_active) {
+        // If a syscall is waiting for input, enqueue the character
+        char c = 0;
+        if (scancode == ENTER) c = '\n';
+        else if (scancode == BACKSPACE) c = '\b';
+        else if (scancode < 128) {
+            c = shift_pressed ? scancode_map_shifted[scancode]
+                              : scancode_map_normal[scancode];
+        }
+        
+        if (c != 0) {
+            kbd_queue[kbd_q_head++] = c;
+            if (kbd_q_head >= 256) kbd_q_head = 0; // Wrap around
+        }
+        return;
+    }
 
     /* Key releases (break codes have bit7 set) */
     if (scancode & 0x80) {
