@@ -26,22 +26,26 @@ void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_
 
 
 /* ---- I/O port ---- */
+// Read byte from port
 uint8_t inportb(uint16_t _port) {
     unsigned char rv;
     __asm__ volatile ("{inb %1, %0 | in %0, %1}" : "=a" (rv) : "Nd" (_port));
     return rv;
 }
 
+// Read word from port
 uint16_t inportw(uint16_t _port) {
     uint16_t rv;
     __asm__ volatile ("{inw %1, %0 | in %0, %1}" : "=a" (rv) : "Nd" (_port));
     return rv;
 }
 
+// Write byte from port
 void outportb(uint16_t _port, unsigned char _data) {
     __asm__ volatile ("{outb %0, %1 | out %1, %0}" : : "a" (_data), "Nd" (_port));
 }
 
+// Read word from port
 void outportw(uint16_t _port, uint16_t _data) {
     __asm__ volatile ("{outw %0, %1 | out %1, %0}" : : "a" (_data), "Nd" (_port));
 }
@@ -54,9 +58,9 @@ void outportw(uint16_t _port, uint16_t _data) {
  *   ecx = arg2
  *   edx = arg3
  *
- * IMPORTANT: The string pointer in EBX comes from ring3 virtual address space.
- * Since we use an identity-mapped flat 4GB model (kernel + user share the same
- * page directory), the pointer is valid in ring0 as well.
+ * Some syscalls use pointers as input, the poiters come from ring3.
+ * Because the OS use and identyty-mapped flat 4GB model that put the kernel and user
+ * in the same page directory, the pointer will be valid in ring0
  */
 uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     (void)ecx; (void)edx;

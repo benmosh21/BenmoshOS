@@ -12,6 +12,7 @@
 #include "../pic/pic.h" // For sending EOI to PICs after handling interrupts
 #include "../../memory/pmm/pmm.h"
 #include "../../memory/vmm/vmm.h"
+#include "../libc/stdio.h"
 
 // IDT (Interrupt Descriptor Table) definitions
 struct idt_entry {

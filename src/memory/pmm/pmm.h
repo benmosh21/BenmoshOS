@@ -10,10 +10,10 @@ struct memorymap_entry {
     uint32_t acpi_ext;
 } __attribute__((packed));
 
-int pmm_is_frame_free(uint32_t frame);
+
 void pmm_init();
 int pmm_is_frame_free(uint32_t frame);
-uint32_t pmm_alloc_block();
+uint32_t pmm_alloc_frame();
 void pmm_free_block(uint32_t physical_address, uint32_t num_frames);
 void pmm_reserve_block(uint32_t physical_address, uint32_t size);
 

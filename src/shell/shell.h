@@ -6,6 +6,7 @@
 #include "../fs/fat16.h"
 #include "../kernel/system.h"
 #include "../memory/heap/heap.h"
+#include "../memory/pmm/pmm.h"
 #include "../libc/stdio.h"
 #include "../libc/strings.h"
 #include "../libc/stdlib.h"

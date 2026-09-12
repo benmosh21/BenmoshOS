@@ -24,7 +24,7 @@ void vmm_init() {
     __asm__ volatile("{mov %0, %%cr3 | mov cr3, %0}" : : "r"(page_directory));
 
     // Enable Paging
-    uint32_t cr0; // Fixed: Moved out of the comment
+    uint32_t cr0;
     __asm__ volatile ("{mov %%cr0, %0 | mov %0, cr0}" : "=r"(cr0));
     cr0 |= 0x80000000;
     __asm__ volatile ("{mov %0, %%cr0 | mov cr0, %0}" : : "r"(cr0));
@@ -50,7 +50,7 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
     if ((page_directory[pdi] & 1) == 0) {
 
         // The table does not exist. Ask the PMM for a raw 4KB hardware frame.
-        uint32_t new_table_physical = pmm_alloc_block();
+        uint32_t new_table_physical = pmm_alloc_frame();
 
         // Link the physical frame into the directory (Set Present + Read/Write)
         page_directory[pdi] = new_table_physical | 7;
@@ -92,15 +92,62 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
     __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (virtual_address) : "memory");
 }
 
-vmm_unmap_page(uint32_t virtual_address) {
+void vmm_unmap_page(uint32_t virtual_address) {
     uint32_t pdi = virtual_address >> 22;
     uint32_t pti = (virtual_address >> 12) & 0x03FF;
     uint32_t offset = virtual_address & 0xFFF;
 
     if ((page_directory[pdi] & 1) == 0) {
         // The page table does not exist; nothing to unmap
-        return;
+        return ;
     }
 
+    // Temporarily map the target page table to the scratchpad virtual address
+    extern uint32_t first_page_table[];
+    first_page_table[1023] = (page_directory[pdi] & ~0xFFF) | 3;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
     
+    // Access the page table via the virtual scratchpad address
+    uint32_t* page_table = (uint32_t*)0x003FF000;
+    page_table[pti] = 0; // Clear the entry to unmap
+
+    // Unmap the scratchpad
+    first_page_table[1023] = 0;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
+
+    // Flush the TLB for the requested virtual address
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (virtual_address) : "memory");
+}
+
+uint32_t vmm_get_physical(uint32_t virtual_address) {
+    uint32_t pdi = virtual_address >> 22;
+    uint32_t pti = (virtual_address >> 12) & 0x03FF;
+    uint32_t offset = virtual_address & 0xFFF;
+
+    if ((page_directory[pdi] & 1) == 0) {
+        // The page table does not exist; return 0 to indicate no mapping
+        return 0;
+    }
+
+    // Temporarily map the target page table to the scratchpad virtual address
+    extern uint32_t first_page_table[];
+    first_page_table[1023] = (page_directory[pdi] & ~0xFFF) | 3;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
+
+    // Access the page table via the virtual scratchpad address
+    uint32_t* page_table = (uint32_t*)0x003FF000;
+    
+    uint32_t pte = page_table[pti];
+    uint32_t physical = 0;
+
+    // Check if the page is present and retrieve the physical address
+    if (pte & 1) {
+        physical = (pte & ~0xFFF) | offset; // Mask out the flags to get the physical address
+    }
+
+    // Unmap the scratchpad
+    first_page_table[1023] = 0;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
+
+    return physical;
 }

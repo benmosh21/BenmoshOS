@@ -98,7 +98,7 @@ void KernelMain() {
     /* Activete the TSS - hardware Task State Segment gate */
     init_tss();
 
-    uint32_t user_stack_phys = pmm_alloc_block();
+    uint32_t user_stack_phys = pmm_alloc_frame();
 
     vmm_map_page(user_stack_phys, 0x009FF000, 7);
 

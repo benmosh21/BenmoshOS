@@ -73,10 +73,9 @@ void isr_handler(struct interrupt_registers regs) {
         case 0x0E: {
             uint32_t faulting_address;
             __asm__ volatile("{mov %%cr2, %0 | mov %0, cr2}" : "=r" (faulting_address));
-             puts("\n[EXCEPTION] #PF Page Fault at 0x");
-            print_hex(faulting_address);
+            printf("\n[EXCEPTION] #PF Page Fault at %x", faulting_address);
             puts("\n");
-            uint32_t mem = pmm_alloc_block();
+            uint32_t mem = pmm_alloc_frame();
             vmm_map_page(mem, faulting_address & 0xFFFFF000, 0b011);
             
             break;

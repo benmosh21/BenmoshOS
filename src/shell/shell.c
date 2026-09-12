@@ -185,6 +185,15 @@ void execute_command(char* command) {
                 count++, block, size, free ? "FREE" : "USED");
             block += size;
         }
+    } else if (!strcmp(argv[0], "meminfo")) {
+        uint32_t total_frames = 0;
+        uint32_t free_frames  = 0;
+        uint32_t used_frames  = 0;
+        pmm_get_stats(&total_frames, &free_frames, &used_frames);
+        printf("Physical Memory Info:\n");
+        printf("  Total Frames: %x\n", total_frames);
+        printf("  Free Frames : %x\n", free_frames);
+        printf("  Used Frames : %x\n", used_frames);
     }
     else {
         puts("Unknown command: '");

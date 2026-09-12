@@ -132,7 +132,7 @@ void pmm_init() {
  * @return: uint32_t The 4KB-aligned physical base address of the frame,
  *                  or 0 if the system is completely out of physical memory.
  */
-uint32_t pmm_alloc_block() {
+uint32_t pmm_alloc_frame() {
     // Hierarchical Scan: Jump by 1024 frames at a time
     for (uint32_t i = 0; i < 1024; i++) {
         // If summary word is 0xFFFFFFFF, all 1024 frames underneath are full.
@@ -142,6 +142,7 @@ uint32_t pmm_alloc_block() {
                 if ((summary_bitmap[i] & (1U << j)) == 0) {
                     // Found the exact base word with space. Scan its 32 bits.
                     uint32_t word = (i * 32) + j;
+
                     for (uint32_t k = 0; k < 32; k++) {
                         if ((bitmap[word] & (1U << k)) == 0) {
                             // Calculate the absolute physical frame index
@@ -172,6 +173,13 @@ uint32_t pmm_alloc_block() {
  */
 void pmm_free_block(uint32_t physical_address, uint32_t num_frames) {
     uint32_t starting_frame = physical_address / 4096;
+
+    if (pmm_is_frame_free(starting_frame)) {
+		puts("[PMM] Warning: Attempted to free an already free frame at 0x");
+		print_hex(physical_address);
+		puts("\n");
+		return;
+	}
 
     for (uint32_t i = 0; i < num_frames; i++) {
         uint32_t current_frame = starting_frame + i;
@@ -217,7 +225,8 @@ void pmm_reserve_block(uint32_t physical_address, uint32_t size) {
  * for allocating page directories, page tables, or DMA buffers that cannot be 
  * fragmented across physical memory.
  * 
- * @param: count The number of consecutive 4KB frames required.
+ * @param: count - The number of consecutive 4KB frames required.
+ * 
  * @return: uint32_t The physical base address of the first frame, or 0 if no block fits.
  */
 uint32_t pmm_alloc_contiguous(uint32_t count) {
@@ -253,14 +262,9 @@ uint32_t pmm_alloc_contiguous(uint32_t count) {
 }
 
 /**
- * @brief: Retrieves current physical memory usage statistics.
- * 
- * Used by diagnostic tools and shell dashboards (e.g., meminfo) to report 
- * overall system RAM utilization without performing a full bitmap scan.
- * 
- * @param: out_total Pointer to store the absolute maximum number of frames.
- * @param: out_free Pointer to store the current count of available frames.
- * @param: out_used Pointer to store the count of allocated/reserved frames.
+ * @brief: Retrieves current physical memory usage statistics (total, free and used).
+ *
+ * @param: pointers to caller total_frames, total_free_frames and total_used_frame
  */
 void pmm_get_stats(uint32_t* out_total, uint32_t* out_free, uint32_t* out_used) {
     if (out_total) *out_total = total_frames;
