@@ -1,12 +1,22 @@
 #include "pmm.h"
 #include "../../drivers/print/print.h"
 
+/*
+ *
+ * The pmm (physical memory managment) is devided to 2 levels. The fitst level 
+ * is big bitmap of 32768 32bits entries each entries point to one physical address.
+ * The second level is 1024 32bits enties that points if a block of 32 physical address.
+ * 
+*/
+
 // Base bitmap (1,048,576 bits -> 4GB RAM)
 uint32_t bitmap[32768];
 
 // Summary Bitmap (1024 bits)
 // 0 = Block has at least one free frame. 1 = Block is completely full (all frames allocated)
 uint32_t summary_bitmap[1024];
+
+
 
 uint32_t free_frame_count = 0;
 uint32_t total_frames = 1048576; // 4GB / 4KB = 1,048,576 frames
@@ -175,9 +185,8 @@ void pmm_free_block(uint32_t physical_address, uint32_t num_frames) {
     uint32_t starting_frame = physical_address / 4096;
 
     if (pmm_is_frame_free(starting_frame)) {
-		puts("[PMM] Warning: Attempted to free an already free frame at 0x");
-		print_hex(physical_address);
-		puts("\n");
+		char *message = "[PMM] Warning: Attempted to free an already free frame at 0x" + itoh(physical_address);
+        kernel_panic(message);
 		return;
 	}
 

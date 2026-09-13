@@ -50,6 +50,22 @@ void outportw(uint16_t _port, uint16_t _data) {
     __asm__ volatile ("{outw %0, %1 | out %1, %0}" : : "a" (_data), "Nd" (_port));
 }
 
+// Makes a panic message and then hlt
+void kernel_panic(const char* message) {
+    // disable interrupts
+    __asm__ volatile("cli");
+
+    // Print the panic message
+    set_print_color(0x4F);      // White on red
+    puts("\n\n[KERNEL PANIC]");
+    puts(message);
+    puts("\n-- System Halted --\n");
+
+    // Halt forever
+    for (;;) __asm__ volatile("hlt");
+
+}
+
 /* ---- Syscall dispatcher ----
  *
  * Called from isr128 (int 0x80) with:

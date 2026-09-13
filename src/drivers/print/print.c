@@ -257,24 +257,15 @@ void print_int(int n) {
     puts(buffer);
 }
 
+
 void print_hex(int n) {
     char buffer[9];
-    for (int i = 0; i < 8; i++) {
-        int digit = (n >> ((7 - i) * 4)) & 0xF;
-        if (digit < 10) {
-            buffer[i] = '0' + digit;
-        } else {
-            buffer[i] = 'A' + (digit - 10);
-        }
-    }
-    buffer[8] = '\0';
     
-    // Trim leading zeros for a cleaner look
-    int start = 0;
-    while (buffer[start] == '0' && start < 7) start++;
-    
+    int* start;
+    itoh(n, buffer, start);
+
     puts("0x");
-    puts(&buffer[start]);
+    puts(&buffer[*start]);
 }
 
 void set_print_color(uint16_t color) {

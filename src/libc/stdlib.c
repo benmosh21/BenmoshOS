@@ -41,3 +41,20 @@ int atoi(const char* str) {
 
     return sign * res;
 }
+
+void itoh(int n, char str[], int* start) {
+    for (int i = 0; i < 8; i++) {
+        int digit = (n >> (7 - i) * 4) & 0xF;
+        if (digit < 10) {
+            str[i] = '0' + digit;
+        }
+        else {
+            str[i] = 'A' + (digit - 10);
+        }
+    }
+    str[8] = '\0';
+
+    // Trim leading zeros for a cleaner look
+    *start = 0;
+    while (str[*start] == '0' && *start < 7) (*start)++;
+}

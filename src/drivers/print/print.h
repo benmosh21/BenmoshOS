@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "../../kernel/system.h"
+#include "../../libc/stdlib.h"
 
 /* Forward declarations from system.h to break circular include */
 void outportb(uint16_t _port, unsigned char _data);
