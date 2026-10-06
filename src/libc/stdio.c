@@ -3,17 +3,13 @@
 #include <stddef.h>
 #include "../drivers/print/print.h"
 
-void printf(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-
+void vprintf(const char* format, va_list args) {
     int i = 0;
     while (format[i] != '\0') {
         if (format[i] == '%') {
             i++;
-            if (format[i] == '\0') {
-                break; // Handle case where '%' is at the end of the string
-            }
+            if (format[i] == '\0') break;
+            
             switch (format[i]) {
             case 'd':
             case 'i':
@@ -25,12 +21,8 @@ void printf(const char* format, ...) {
                 break;
             case 's': {
                 char* str = va_arg(args, char*);
-                if (str == NULL) {
-                    puts("(null)");
-                }
-                else {
-                    puts(str);
-                }
+                if (str == NULL) puts("(null)");
+                else puts(str);
                 break;
             }
             case 'c':
@@ -44,12 +36,16 @@ void printf(const char* format, ...) {
                 print_char(format[i]);
                 break;
             }
-        }
-        else {
+        } else {
             print_char(format[i]);
         }
         i++;
     }
+}
 
+void printf(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
     va_end(args);
 }

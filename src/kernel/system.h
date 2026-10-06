@@ -5,6 +5,7 @@
 #include "../drivers/print/print.h"
 #include "../libc/stdlib.h"
 #include "../libc/strings.h"
+#include "../libc/stdio.h"
 #include "../drivers/keyboard/keyboard.h"
 
 extern uint32_t gdt_start;
@@ -17,7 +18,7 @@ void     outportb(uint16_t _port, unsigned char _data);
 void     outportw(uint16_t _port, uint16_t _data);
 
 
-void kernel_panic(const char* message);
+void kernel_panic(const char* message, ...);
 
 /* Syscall dispatcher — called from isr128 (int 0x80)
  *   eax = syscall number

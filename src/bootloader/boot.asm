@@ -80,11 +80,18 @@ BootloaderMain:
     mov es, ax
     xor bx, bx          ; Destination offset inside ES is always 0
     
+    ; macro just in case the Makefile fails to pass the SECTORS_TO_LOAD value
+    %ifndef SECTORS_TO_LOAD
+        %define SECTORS_TO_LOAD 127 
+    %endif
+
     ; Setup our geometry tracking variables (Starting at Cylinder 0, Head 0, Sector 2)
     mov byte [current_cylinder], 0
     mov byte [current_head], 0
     mov byte [current_sector], 2
-    mov word [sectors_left], 127   ; Read 127 sectors (~63.5KB) into memory
+
+    ; Dynamically set the number of sectors to read set by the Makefile (default is 127 sectors)
+    mov word [sectors_left], SECTORS_TO_LOAD
 
 ; read 127 sectors for the kernel to be in
 .read_loop:
@@ -140,7 +147,7 @@ boot_drive:       db 0
 current_cylinder: db 0
 current_head:     db 0
 current_sector:   db 0
-sectors_left:     dw 0
+sectors_left:     dw 0xBEAF
 
 ; Pad out exactly to 446 bytes to place the mandatory MBR partition structure
 times 446 -($ - $$) db 0 

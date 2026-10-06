@@ -2,6 +2,7 @@
 #define PMM_H
 
 #include <stdint.h>
+#include "../../kernel/system.h"
 
 struct memorymap_entry {
     uint64_t base;

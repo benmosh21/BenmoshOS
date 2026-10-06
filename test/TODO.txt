@@ -1,0 +1,5 @@
+make /src/cpu/gdt and move there the gdt_set_gate
+make /src/cpu/ports and move there the in and out functions
+make /src/kernel/syscall and move there the syscall_dispatcher
+make /src/kernel/panic and move there the panic function
+remove system.c\h (all functions moved to their respective files)

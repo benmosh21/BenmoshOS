@@ -88,6 +88,7 @@ __attribute__((section(".text.main")))
 void KernelMain() {
     /* CPU infrastructure */
     load_idt();
+    init_timer(100);
     pic_remap();
 
     /* Memory  */

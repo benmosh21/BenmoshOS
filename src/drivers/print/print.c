@@ -261,11 +261,11 @@ void print_int(int n) {
 void print_hex(int n) {
     char buffer[9];
     
-    int* start;
-    itoh(n, buffer, start);
+    int start = 0;
+    itoh(n, buffer, &start);
 
     puts("0x");
-    puts(&buffer[*start]);
+    puts(&buffer[start]);
 }
 
 void set_print_color(uint16_t color) {

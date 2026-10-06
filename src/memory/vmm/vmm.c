@@ -33,12 +33,12 @@ void vmm_init() {
 void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t flags) {
 
     if (virtual_address & 0xFFF) {
-        puts("[VMM] Error: Virtual address is not page-aligned.\n");
+        kernel_panic("vmm_map_page: Virtual address 0x%x is not 4KB aligned!", virtual_address);
         return;
     }
 
     if (pmm_is_frame_free(physical_address >> 12)) {
-        puts("[VMM] Error: Physical address is not allocated.\n");
+        kernel_panic("vmm_map_page: Physical address 0x%x is not allocated in PMM!", physical_address);
         return;
     }
 
@@ -51,6 +51,7 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
 
         // The table does not exist. Ask the PMM for a raw 4KB hardware frame.
         uint32_t new_table_physical = pmm_alloc_frame();
+        if (!new_table_physical) kernel_panic("VMM Out of Memory! PMM returned 0.");
 
         // Link the physical frame into the directory (Set Present + Read/Write)
         page_directory[pdi] = new_table_physical | 7;

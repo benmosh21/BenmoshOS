@@ -67,9 +67,12 @@ all: $(BUILD_DIR) $(OS_IMAGE)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-$(BOOT_BIN): $(BOOT_SRC)
+$(BOOT_BIN): $(BOOT_SRC) $(KERNEL_BIN)
 	mkdir -p $(BUILD_DIR)
-	$(ASM) -f bin $(BOOT_SRC) -o $(BOOT_BIN)
+	$(eval KERNEL_SIZE=$(shell wc -c < $(KERNEL_BIN)))
+	$(eval SECTORS=$(shell echo $$(( ($(KERNEL_SIZE) + 511) / 512 + 1 )) ))
+	@echo "==> Bootloader: loading $(SECTORS) sectors for BenmoshOS kernel"
+	$(ASM) -f bin -DSECTORS_TO_LOAD=$(SECTORS) $(BOOT_SRC) -o $(BOOT_BIN)
 
 $(ENTRY_OBJ): $(ENTRY_SRC)
 	mkdir -p $(BUILD_DIR)

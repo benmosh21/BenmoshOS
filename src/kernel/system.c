@@ -6,6 +6,7 @@
  */
 
 #include "system.h"
+#include <stdarg.h>
 
 
 void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
@@ -51,14 +52,19 @@ void outportw(uint16_t _port, uint16_t _data) {
 }
 
 // Makes a panic message and then hlt
-void kernel_panic(const char* message) {
+void kernel_panic(const char* message, ...) {
     // disable interrupts
     __asm__ volatile("cli");
 
     // Print the panic message
     set_print_color(0x4F);      // White on red
     puts("\n\n[KERNEL PANIC]");
-    puts(message);
+
+    va_list args;
+    va_start(args, message);
+    vprintf(message, args);
+    va_end(args);
+
     puts("\n-- System Halted --\n");
 
     // Halt forever

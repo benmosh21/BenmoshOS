@@ -15,6 +15,18 @@
 // Wait for I/O operation to complete
 #define io_wait() outportb(0x80, 0)
 
+
+void init_timer(uint32_t frequency) {
+    // The hardware clock runs at 1193180Hz
+    uint32_t devisor = 1193180 / frequency;
+
+    // Send the command byte (0x36) to the PIT command port (0x43)
+    // 0x36 means: Channel 0, Lobyte/Hibyte access, Mode 3 (Square Wave)
+    outportb(0x43, 0x36);
+    outportb(0x40, (uint32_t)(devisor & 0xFF));
+    outportb(0x40, (uint32_t)(devisor >> 8) & 0xFF);
+}
+
 // Remap the PIC to avoid conflicts with CPU exceptions
 void pic_remap() {
     unsigned char a1, a2;

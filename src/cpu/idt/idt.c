@@ -36,6 +36,8 @@ void load_idt() {
 
     /* int 0x80 syscall gate: DPL=3 (0xEE) so ring3 code can trigger it */
     set_idt_gate(0x80, (uint32_t)isr128, 0x08, 0xEE);
+
+    // Set the IDT pointer and load it into the CPU's IDTR register using the lidt instruction.
     __asm__ volatile ("{lidt (%0) | lidt [%0]}" : : "r" (&idt_ptr));
 }
 
@@ -44,7 +46,7 @@ void isr_handler(struct interrupt_registers regs) {
 
         /* ---- CPU Exceptions ---- */
         case 0x00:
-            puts("\n[EXCEPTION] #DE Divide by Zero\n");
+            kernel_panic("Divide by Zero Exception at EIP: 0x%x", regs.eip);
             for (;;) __asm__ volatile("hlt");
 
         case 0x01:
@@ -52,21 +54,15 @@ void isr_handler(struct interrupt_registers regs) {
             for (;;) __asm__ volatile("hlt");
 
         case 0x06:
-            puts("\n[EXCEPTION] #UD Invalid Opcode\n");
+            kernel_panic("Invalid Opcode Exception at EIP: 0x%x", regs.eip);
             for (;;) __asm__ volatile("hlt");
 
         case 0x08:
-            puts("\n[EXCEPTION] #DF Double Fault\n");
+            kernel_panic("Double Fault! The CPU could not invoke an exception handler.");
             for (;;) __asm__ volatile("hlt");
 
         case 0x0D: {
-            puts("\n[EXCEPTION] #GP General Protection Fault  err=0x");
-            print_hex(regs.err_code);
-            puts("  EIP=0x");
-            print_hex(regs.eip);
-            puts("  CS=0x");
-            print_hex(regs.cs);
-            puts("\n");
+            kernel_panic("#GP General Protection Fault! Error: 0x%x, EIP: 0x%x", regs.err_code, regs.eip);
             for (;;) __asm__ volatile("hlt");
         }
 
@@ -79,12 +75,16 @@ void isr_handler(struct interrupt_registers regs) {
             vmm_map_page(mem, faulting_address & 0xFFFFF000, 0b011);
             
             break;
+
+            // NEED TO FIX: make the code not blindly allocate and mapping a new freame.
         }
 
         /* ---- Hardware IRQs ---- */
         case 0x20:
-            /* Timer IRQ0 — fires ~18 times/sec. Do NOT print anything here.
-             * This is where a scheduler tick would go. */
+            /* Timer IRQ0*/
+            //global_ticks++;
+
+
             break;
 
         case 0x21:

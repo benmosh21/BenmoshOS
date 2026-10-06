@@ -1,5 +1,4 @@
 #include "pmm.h"
-#include "../../drivers/print/print.h"
 
 /*
  *
@@ -185,8 +184,7 @@ void pmm_free_block(uint32_t physical_address, uint32_t num_frames) {
     uint32_t starting_frame = physical_address / 4096;
 
     if (pmm_is_frame_free(starting_frame)) {
-		char *message = "[PMM] Warning: Attempted to free an already free frame at 0x" + itoh(physical_address);
-        kernel_panic(message);
+        kernel_panic("[PMM] Warning: Attempted to free an already free frame at %x", physical_address);
 		return;
 	}
 

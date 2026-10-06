@@ -159,7 +159,7 @@ void execute_command(char* command) {
     }
     else if (!strcmp(argv[0], "exit")) {
         shell_exit();
-        }
+    }
     else if (!strcmp(argv[0], "vaddr_decode")) {
             print_int(atoi(argv[1]));
             uint32_t virtual_address = atoi(argv[1]);
