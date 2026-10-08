@@ -1,7 +1,7 @@
 #include "ata.h"
 
 // Helper function to wait for drive readiness and check for errors
-int ata_wait_ready() {
+static int ata_wait_ready() {
     int timeout = 1000000;
     while (timeout--) {
         uint8_t status = inportb(0x1F7);
@@ -16,7 +16,7 @@ int ata_wait_ready() {
 }
 
 // Helper function to wait for Data Request (DRQ)
-int ata_wait_drq() {
+static int ata_wait_drq() {
     int timeout = 1000000;
     while (timeout--) {
         uint8_t status = inportb(0x1F7);

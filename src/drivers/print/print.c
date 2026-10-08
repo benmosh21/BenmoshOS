@@ -3,7 +3,7 @@
  */
 
 #include "print.h"
-#include "../memory/heap/heap.h"
+#include "../../memory/heap/heap.h"
 #include <stddef.h>
 #include <stdarg.h> /* Required for printf */
 
@@ -274,10 +274,10 @@ void set_print_color(uint16_t color) {
 
 void enable_dynamic_history(int total_rows) {
     // Allocate the large ring buffer
-    uint16_t(*new_buffer)[MAX_COL] = (uint16_t(*)[MAX_COL])malloc(total_rows * MAX_COL * sizeof(uint16_t));
+    uint16_t(*new_buffer)[MAX_COL] = (uint16_t(*)[MAX_COL])kmalloc(total_rows * MAX_COL * sizeof(uint16_t));
     
     // Allocate the parallel line length tracking array
-    uint8_t *new_lengths = (uint8_t*)malloc(total_rows * sizeof(uint8_t));
+    uint8_t *new_lengths = (uint8_t*)kmalloc(total_rows * sizeof(uint8_t));
 
     if (new_buffer != NULL && new_lengths != NULL) {
         line_buffer = new_buffer;

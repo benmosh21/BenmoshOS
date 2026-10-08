@@ -4,3 +4,4 @@ BenmoshOS.bin
 .vscode/*
 roadmap.md
 solution.c
+test/test.cpp

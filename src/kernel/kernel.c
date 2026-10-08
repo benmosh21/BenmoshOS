@@ -22,6 +22,7 @@
 #include "../libc/stdio.h"
 #include "../libc/strings.h"
 #include "../libc/stdlib.h"
+#include "task/task.h"
 
 /* External: assembly trampoline that IRET-jumps into ring3 */
 extern void jump_usermode(void* function_pointer);
@@ -84,6 +85,13 @@ __asm__ volatile(
     while (1) {  }
 }
 
+void task1_code() {
+    while(1) {
+        printf("A");
+        task_yield();
+    }
+}
+
 __attribute__((section(".text.main")))
 void KernelMain() {
     /* CPU infrastructure */
@@ -130,7 +138,15 @@ void KernelMain() {
     set_print_color(0x0F);
 
     //jump_usermode(my_user_program);
-    uint8_t x = *(volatile uint8_t*)0x5555555;
+    //uint8_t x = *(volatile uint8_t*)0x5555555;
+
+    task_init();
+    task_create(task1_code);
+
+    while(1) {
+        printf("B");
+        task_yield();
+    }
 
     /* Never reached — all further work done in IRQ handlers */
     while (1) { __asm__ volatile("hlt"); }

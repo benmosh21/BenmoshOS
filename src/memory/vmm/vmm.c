@@ -96,7 +96,6 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
 void vmm_unmap_page(uint32_t virtual_address) {
     uint32_t pdi = virtual_address >> 22;
     uint32_t pti = (virtual_address >> 12) & 0x03FF;
-    uint32_t offset = virtual_address & 0xFFF;
 
     if ((page_directory[pdi] & 1) == 0) {
         // The page table does not exist; nothing to unmap

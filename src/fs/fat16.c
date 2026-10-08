@@ -270,7 +270,7 @@ uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size) {
     }
 
     if (file_found == 1) {
-		uint8_t* file_ram_buffer= (uint8_t*)malloc(directory_entry_file_size);
+		uint8_t* file_ram_buffer= (uint8_t*)kmalloc(directory_entry_file_size);
 
         if (file_ram_buffer == NULL) {
 			puts("Memory allocation failed for file buffer.\n");

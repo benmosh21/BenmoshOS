@@ -9,11 +9,14 @@
 #define STACK_SIZE 4096
 #define MAX_TASKS 16	// For now 16 is good enough
 
+extern void switch_context(uint32_t* current_esp_ptr, uint32_t new_esp_ptr);
+
+
 typedef enum {
-	TASK_READY = 0,
-	TASK_RUNNING = 1,
-	TASK_BLOCKED = 2,
-	TASK_DEAD = 3
+	TASK_READY,
+	TASK_RUNNING,
+	TASK_BLOCKED,
+	TASK_DEAD
 } task_state_t;
 
 typedef struct {
@@ -33,9 +36,9 @@ typedef struct {
 	uint32_t stack_top;
 } task_t;
 
-void task_init(void);
-task_t* task_create(void, (*entry_point)(void));
-void task_yield(void);
+void 	task_init(void);
+task_t* task_create(void (*entry_point)(void));
+void 	task_yield(void);
 task_t* task_current(void);
 
 #endif // TASK_H

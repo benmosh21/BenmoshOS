@@ -9,7 +9,9 @@ int atoi(const char* str);
 
 void itoh(int n, char str[], int* start);
 
-/* Memory allocation exposed from heap.c */
+void sleep(uint32_t ms);
+
+/* user space memory allocation */
 void* malloc(uint32_t size);
 void free(void* ptr);
 

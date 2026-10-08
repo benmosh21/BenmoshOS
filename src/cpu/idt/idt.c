@@ -82,8 +82,13 @@ void isr_handler(struct interrupt_registers regs) {
         /* ---- Hardware IRQs ---- */
         case 0x20:
             /* Timer IRQ0*/
-            //global_ticks++;
+            global_ticks++;
 
+            // tell the PIC that 
+            pic_send_eoi(0);
+
+            // Swap to the next task
+            task_yield();
 
             break;
 

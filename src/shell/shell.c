@@ -14,7 +14,7 @@ void shell_exit() {
 }
 
 void execute_command(char* command) {
-    char** argv = (char**)malloc(32 * sizeof(char*));
+    char** argv = (char**)kmalloc(32 * sizeof(char*));
     if (argv == NULL) {
         puts("shell: out of memory\n");
         return;
@@ -30,7 +30,7 @@ void execute_command(char* command) {
         } else if (in_word == 0) {
             if (argc >= 32) {
                 puts("shell: too many arguments\n");
-                free(argv);
+                kfree(argv);
                 return;
             }
             in_word       = 1;
@@ -39,7 +39,7 @@ void execute_command(char* command) {
     }
 
     if (argc == 0) {
-        free(argv);
+        kfree(argv);
         return;
     }
 
@@ -201,5 +201,5 @@ void execute_command(char* command) {
         puts("'  (use command 'help' for help)\n");
     }
 
-    free(argv);
+    kfree(argv);
 }

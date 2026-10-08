@@ -29,12 +29,6 @@ void init_timer(uint32_t frequency) {
 
 // Remap the PIC to avoid conflicts with CPU exceptions
 void pic_remap() {
-    unsigned char a1, a2;
-
-    // Save masks
-    a1 = inportb(PIC1_DATA);
-    a2 = inportb(PIC2_DATA);
-
     // Start initialization (ICW1)
     outportb(PIC1_COMMAND, ICW1_INIT | ICW1_INIT);
     io_wait();
@@ -42,11 +36,9 @@ void pic_remap() {
     io_wait();
 
     // Set vector offsets (ICW2)
-    // Master PIC starts at 0x20 (32)
-    outportb(PIC1_DATA, 0x20);
+    outportb(PIC1_DATA, 0x20); // Master PIC starts at 0x20 (32)
     io_wait();
-    // Slave PIC starts at 0x28 (40)
-    outportb(PIC2_DATA, 0x28);
+    outportb(PIC2_DATA, 0x28); // Slave PIC starts at 0x28 (40)
     io_wait();
 
     // Tell Master PIC about Slave at IRQ2 (0000 0100) (ICW3)
@@ -62,8 +54,8 @@ void pic_remap() {
     outportb(PIC2_DATA, ICW4_8086);
     io_wait();
 
-    // Restore saved masks
-    outportb(PIC1_DATA, 0xFD); // 1111 1101 - Enable only IRQ1 (keyboard)
+    // Apply the exact masks we need for the OS
+    outportb(PIC1_DATA, 0xFC); // 1111 1100 - Enable IRQ0 (Timer) and IRQ1 (Keyboard)
     io_wait();
     outportb(PIC2_DATA, 0xFF); // 1111 1111 - Disable all IRQs on Slave
     io_wait();
