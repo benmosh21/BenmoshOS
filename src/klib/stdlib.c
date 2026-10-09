@@ -10,6 +10,13 @@ void reverse(char s[]) {
     }
 }
 
+void sleep(uint32_t ms) {
+    uint32_t firstTick = global_ticks;
+    while (firstTick + (ms/10) >= global_ticks) {
+        continue;
+    }
+}
+
 void itoa(int n, char str[]) {
     int i, sign;
     if ((sign = n) < 0) n = -n;

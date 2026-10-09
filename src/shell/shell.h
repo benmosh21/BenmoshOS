@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include "../drivers/print/print.h"
 #include "../fs/fat16.h"
-#include "../kernel/system.h"
+#include "../cpu/ports/ports.h"
 #include "../memory/heap/heap.h"
 #include "../memory/pmm/pmm.h"
-#include "../libc/stdio.h"
-#include "../libc/strings.h"
-#include "../libc/stdlib.h"
+#include "../klib/stdio.h"
+#include "../klib/string.h"
+#include "../klib/stdlib.h"
 
 void execute_command(char* command);
 

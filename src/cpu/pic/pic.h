@@ -2,7 +2,7 @@
 #define PIC_H
 
 #include <stdint.h>
-#include "../../kernel/system.h" // For inportb and outportb
+#include "../ports/ports.h"
 
 void pic_remap();
 void pic_send_eoi(uint8_t irq);

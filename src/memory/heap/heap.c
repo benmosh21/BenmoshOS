@@ -1,20 +1,14 @@
 #include "heap.h"
 #include <stddef.h> // For NULL
 #include <stdint.h>
-#include "../../kernel/system.h"
-
-// 8-byte metadata header
-struct block_header {
-    uint32_t size_and_free; // Top 31 bits = size, Bottom 1 bit = free flag
-    struct block_header* next;          // Memory address of the next header
-} __attribute__((packed));
+#include "../../kernel/panic/panic.h"
 
 // We pre-mapped 4MB to 8MB in the VMM. 4MB in hex is 0x400000.
 // This pointer will always remember where the heap starts.
-struct block_header* heap_start = (struct block_header*)0x400000;
+struct block_header* heap_start = (struct block_header*)HEAP_START;
 
 void heap_init() {
-    heap_start->size_and_free = (0x400000 - 8) | 1; // | 1 marks it as free
+    heap_start->size_and_free = (HEAP_SIZE - 8) | 1; // | 1 marks it as free
     heap_start->next = (struct block_header*)NULL;
 }
 
@@ -50,7 +44,7 @@ void* kmalloc(uint32_t requested_size) {
                 current->next = new_block;
             }
             
-            // Re-enable interrupts nefore returning success
+            // Re-enable interrupts before returning success
             __asm__ volatile("sti");
             return (void*)((uint32_t)current + 8);
 
@@ -59,8 +53,7 @@ void* kmalloc(uint32_t requested_size) {
         current = current->next;
     }
 
-
-    // Re-enable interrupts before returning faliure
+    // Re-enable interrupts before returning failure
     __asm__ volatile("sti");
     return NULL;
 }
@@ -77,7 +70,7 @@ void kfree(void* ptr) {
     struct block_header* header = (struct block_header*)((uint8_t*)ptr - 8);
 
     // Bounds Check
-    if ((uint32_t)header < 0x400000 || (uint32_t)header >= 0x800000) {
+    if ((uint32_t)header < HEAP_START || (uint32_t)header >= HEAP_END) {
         kernel_panic("kfree: Pointer 0x%x is outside heap bounds!", ptr);
     }
 
@@ -134,8 +127,8 @@ void kfree(void* ptr) {
 }
 
 void* kmalloc_aligned(uint32_t size, uint32_t alignment) {
-    // Make sure the alignment is a power of 2
-    if ((alignment & (alignment - 1)) != 0) {
+    // Make sure the alignment is a power of 2 and non-zero
+    if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
         return NULL;
     }
 

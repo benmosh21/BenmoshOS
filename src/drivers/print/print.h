@@ -2,8 +2,8 @@
 #define PRINT_H
 
 #include <stdint.h>
-#include "../../kernel/system.h"
-#include "../../libc/stdlib.h"
+#include "../../cpu/ports/ports.h"
+#include "../../klib/stdlib.h"
 
 /* Forward declarations from system.h to break circular include */
 void outportb(uint16_t _port, unsigned char _data);

@@ -1,4 +1,5 @@
 #include "vmm.h"
+#include "../../kernel/panic/panic.h"
 
 uint32_t page_directory[1024] __attribute__((aligned(4096)));
 uint32_t first_page_table[1024] __attribute__((aligned(4096)));
@@ -7,8 +8,8 @@ uint32_t heap_page_table[1024] __attribute__((aligned(4096)));
 void vmm_init() {
     // Fill the first page table to map the first 4 MB of physical memory
     for (int i = 0; i < 1024; i++) {
-        // Address = i * 4096, Flags = 3 (Present and Read/Write)
-        first_page_table[i] = (i * 4096) | 7;
+        // Address = i * 4096, Flags = 3 (Present and Read/Write, Supervisor only)
+        first_page_table[i] = (i * 4096) | 3;
     }
 
     // Map the next 4 MB for the Heap (0x00400000 - 0x007FFFFF)
@@ -17,7 +18,7 @@ void vmm_init() {
     }
 
     // Put the page tables into the page directory
-    page_directory[0] = ((uint32_t)first_page_table) | 7;
+    page_directory[0] = ((uint32_t)first_page_table) | 3;
     page_directory[1] = ((uint32_t)heap_page_table) | 3; // Link the heap page table
 
     // Load the physical address of the Page Directory into CR3

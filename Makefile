@@ -16,7 +16,7 @@ BUILD_DIR = build
 # -ffreestanding: Tells GCC we are building an OS, not a user app (no standard library)
 # -m32: Compile for 32-bit x86 architecture
 # -fno-pie: Disables Position Independent Executable (crucial for raw kernels)
-INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell -I$(SRC_DIR)/memory -I$(SRC_DIR)/libc
+INCLUDE_FLAGS = -I$(SRC_DIR)/drivers -I$(SRC_DIR)/cpu -I$(SRC_DIR)/kernel -I$(SRC_DIR)/fs -I$(SRC_DIR)/shell -I$(SRC_DIR)/memory -I$(SRC_DIR)/klib
 CFLAGS = -ffreestanding -m32 -g -O0 -Wall -fno-pie -masm=intel $(INCLUDE_FLAGS)
 
 # LDFLAGS: Tells the linker how to arrange the OS in memory using linker.ld
@@ -34,7 +34,9 @@ BOOT_BIN = $(BUILD_DIR)/boot.bin
 ENTRY_OBJ = $(BUILD_DIR)/entry.o
 OBJS = $(ENTRY_OBJ) \
        $(BUILD_DIR)/kernel.o \
-       $(BUILD_DIR)/system.o \
+       $(BUILD_DIR)/panic.o \
+       $(BUILD_DIR)/syscall.o \
+       $(BUILD_DIR)/gdt.o \
        $(BUILD_DIR)/tss.o \
        $(BUILD_DIR)/task_c.o \
        $(BUILD_DIR)/task_asm.o \
@@ -94,23 +96,25 @@ $(BUILD_DIR)/task_asm.o: $(SRC_DIR)/kernel/task/task.asm
 
 # --- C Compilation Rules ---
 # $< represents the .c source file, $@ represents the .o target file
-$(BUILD_DIR)/kernel.o:   $(SRC_DIR)/kernel/kernel.c       ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/system.o:   $(SRC_DIR)/kernel/system.c       ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/tss.o:      $(SRC_DIR)/kernel/tss.c          ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/task_c.o:   $(SRC_DIR)/kernel/task/task.c    ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/idt.o:      $(SRC_DIR)/cpu/idt/idt.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/pic.o:      $(SRC_DIR)/cpu/pic/pic.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/ata.o:      $(SRC_DIR)/drivers/ata/ata.c     ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/print.o:    $(SRC_DIR)/drivers/print/print.c ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/kernel.o:   $(SRC_DIR)/kernel/kernel.c          ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/panic.o:    $(SRC_DIR)/kernel/panic/panic.c     ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/syscall.o:  $(SRC_DIR)/kernel/syscall/syscall.c ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/gdt.o:      $(SRC_DIR)/cpu/gdt/gdt.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/tss.o:      $(SRC_DIR)/kernel/tss/tss.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/task_c.o:   $(SRC_DIR)/kernel/task/task.c       ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/idt.o:      $(SRC_DIR)/cpu/idt/idt.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/pic.o:      $(SRC_DIR)/cpu/pic/pic.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/ata.o:      $(SRC_DIR)/drivers/ata/ata.c        ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/print.o:    $(SRC_DIR)/drivers/print/print.c    ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 $(BUILD_DIR)/keyboard.o: $(SRC_DIR)/drivers/keyboard/keyboard.c ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/fat16.o:    $(SRC_DIR)/fs/fat16.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/shell.o:    $(SRC_DIR)/shell/shell.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/pmm.o:      $(SRC_DIR)/memory/pmm/pmm.c      ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/vmm.o:      $(SRC_DIR)/memory/vmm/vmm.c      ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/heap.o:     $(SRC_DIR)/memory/heap/heap.c    ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/string.o:   $(SRC_DIR)/libc/string.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/stdio.o:    $(SRC_DIR)/libc/stdio.c          ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
-$(BUILD_DIR)/stdlib.o:   $(SRC_DIR)/libc/stdlib.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/fat16.o:    $(SRC_DIR)/fs/fat16.c               ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/shell.o:    $(SRC_DIR)/shell/shell.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/pmm.o:      $(SRC_DIR)/memory/pmm/pmm.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/vmm.o:      $(SRC_DIR)/memory/vmm/vmm.c         ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/heap.o:     $(SRC_DIR)/memory/heap/heap.c       ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/string.o:   $(SRC_DIR)/klib/string.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/stdio.o:    $(SRC_DIR)/klib/stdio.c             ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/stdlib.o:   $(SRC_DIR)/klib/stdlib.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 
 # =============================================================================
 # Disk Image Generation
@@ -134,7 +138,10 @@ run: all
 
 qemu_debug: all
 	@echo "==> Starting QEMU in Debug Mode (Waiting for GDB)..."
-	qemu-system-i386 -drive format=raw,file=$(OS_IMAGE) -s -S
+	qemu-system-i386 -drive format=raw,file=$(OS_IMAGE) -s -S -no-reboot -d int,cpu_reset -D qemu.log
+
+gdb:
+	gdb build/kernel.elf -ex "target remote :1234" -ex "break KernelMain" -ex "continue"
 
 vmdk: all
 	qemu-img convert -f raw -O vmdk $(OS_IMAGE) BenmoshOS.vmdk
@@ -164,4 +171,4 @@ run_iso: iso
 # =============================================================================
 clean:
 	@echo "==> Cleaning Build Files..."
-	rm -rf $(BUILD_DIR) $(OS_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi
+	rm -rf $(BUILD_DIR) $(OS_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi qemu.log

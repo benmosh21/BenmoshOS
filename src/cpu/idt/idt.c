@@ -4,9 +4,13 @@
  */
 
 #include "idt.h"
+#include "../ports/ports.h"
+#include "../../kernel/panic/panic.h"
+#include "../../kernel/task/task.h"
 
 struct idt_entry idt[256];
 struct idt_ptr   idt_ptr;
+volatile uint32_t global_ticks = 0;
 
 void set_idt_gate(int num, uint32_t base, uint16_t sel, uint8_t flags) {
     idt[num].offset_low  = base & 0xFFFF;
@@ -69,14 +73,9 @@ void isr_handler(struct interrupt_registers regs) {
         case 0x0E: {
             uint32_t faulting_address;
             __asm__ volatile("{mov %%cr2, %0 | mov %0, cr2}" : "=r" (faulting_address));
-            printf("\n[EXCEPTION] #PF Page Fault at %x", faulting_address);
-            puts("\n");
-            uint32_t mem = pmm_alloc_frame();
-            vmm_map_page(mem, faulting_address & 0xFFFFF000, 0b011);
-            
+            kernel_panic("Page Fault at Virtual Address: 0x%x (EIP: 0x%x, Error: 0x%x)", 
+                         faulting_address, regs.eip, regs.err_code);
             break;
-
-            // NEED TO FIX: make the code not blindly allocate and mapping a new freame.
         }
 
         /* ---- Hardware IRQs ---- */
@@ -84,10 +83,9 @@ void isr_handler(struct interrupt_registers regs) {
             /* Timer IRQ0*/
             global_ticks++;
 
-            // tell the PIC that 
             pic_send_eoi(0);
 
-            // Swap to the next task
+            // Swap to the next task (EOI is sent uniformly below)
             task_yield();
 
             break;

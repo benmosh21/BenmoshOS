@@ -1,76 +1,6 @@
-/*
- * system.c - System functions for BenmoshOS
- *
- *  - syscall_dispatcher: added syscall 2 (print string from ring3 EBX pointer)
- *    and syscall 3 (yield stub for future scheduler)
- */
-
-#include "system.h"
-#include <stdarg.h>
-
-
-void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
-
-    // Get the location of gdt_start so i can set the bits in the location for the GDT entry
-    uint8_t* gdt_entry = (uint8_t*)&gdt_start + 8 * num;
-
-    gdt_entry[0] = (limit & 0xFF);                              // Limit (7:0)
-    gdt_entry[1] = (limit >> 8) & 0xFF;                         // Limit (15:8)
-    gdt_entry[2] = (base & 0xFF);                               // Base (7:0)
-    gdt_entry[3] = (base >> 8) & 0xFF;                          // Base (15:8)
-    gdt_entry[4] = (base >> 16) & 0xFF;                         // Base (23:16)
-    gdt_entry[5] = access;                                      // Accsess Byte
-    gdt_entry[6] = (gran & 0x0F << 4) | ((limit >> 16) & 0x0F);     // Flags
-    gdt_entry[7] = (base >> 24) & 0xFF;                         // Base (31:24)
-
-}
-
-
-/* ---- I/O port ---- */
-// Read byte from port
-uint8_t inportb(uint16_t _port) {
-    unsigned char rv;
-    __asm__ volatile ("{inb %1, %0 | in %0, %1}" : "=a" (rv) : "Nd" (_port));
-    return rv;
-}
-
-// Read word from port
-uint16_t inportw(uint16_t _port) {
-    uint16_t rv;
-    __asm__ volatile ("{inw %1, %0 | in %0, %1}" : "=a" (rv) : "Nd" (_port));
-    return rv;
-}
-
-// Write byte from port
-void outportb(uint16_t _port, unsigned char _data) {
-    __asm__ volatile ("{outb %0, %1 | out %1, %0}" : : "a" (_data), "Nd" (_port));
-}
-
-// Read word from port
-void outportw(uint16_t _port, uint16_t _data) {
-    __asm__ volatile ("{outw %0, %1 | out %1, %0}" : : "a" (_data), "Nd" (_port));
-}
-
-// Makes a panic message and then hlt
-void kernel_panic(const char* message, ...) {
-    // disable interrupts
-    __asm__ volatile("cli");
-
-    // Print the panic message
-    set_print_color(0x4F);      // White on red
-    puts("\n\n[KERNEL PANIC]");
-
-    va_list args;
-    va_start(args, message);
-    vprintf(message, args);
-    va_end(args);
-
-    puts("\n-- System Halted --\n");
-
-    // Halt forever
-    for (;;) __asm__ volatile("hlt");
-
-}
+#include "syscall.h"
+#include "../../drivers/print/print.h"
+#include "../../drivers/keyboard/keyboard.h"
 
 /* ---- Syscall dispatcher ----
  *
@@ -80,8 +10,8 @@ void kernel_panic(const char* message, ...) {
  *   ecx = arg2
  *   edx = arg3
  *
- * Some syscalls use pointers as input, the poiters come from ring3.
- * Because the OS use and identyty-mapped flat 4GB model that put the kernel and user
+ * Some syscalls use pointers as input, the pointers come from ring3.
+ * Because the OS uses an identity-mapped flat 4GB model that puts the kernel and user
  * in the same page directory, the pointer will be valid in ring0
  */
 uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
@@ -105,6 +35,7 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
         case 3:
             /* Syscall 3: yield — placeholder for future scheduler */
             break;
+
         case 4: {
             /* Syscall 4: Input string from keyboard with max limit configuration */
             static char input_buffer[256];

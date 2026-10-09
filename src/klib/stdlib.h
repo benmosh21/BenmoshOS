@@ -9,7 +9,10 @@ int atoi(const char* str);
 
 void itoh(int n, char str[], int* start);
 
+
+extern volatile uint32_t global_ticks;
 void sleep(uint32_t ms);
+
 
 /* user space memory allocation */
 void* malloc(uint32_t size);

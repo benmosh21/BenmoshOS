@@ -1,10 +1,9 @@
 #include "tss.h"
+#include "../../cpu/gdt/gdt.h"
+#include "../../klib/string.h"
 
 // Define the global instance declared in the header file
 tss_entry_t g_tss;
-
-// Reference the globally visible start marker of your GDT table inside boot.asm
-extern uint32_t gdt_start; 
 
 // Reference your assembly function wrapper that executes the 'ltr' machine instruction
 extern void flush_tss(void);

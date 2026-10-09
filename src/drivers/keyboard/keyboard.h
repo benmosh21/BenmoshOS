@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "../print/print.h"
-#include "../../kernel/system.h"
+#include "../../cpu/ports/ports.h"
 
 /* Forward declaration — avoids circular include with shell.h */
 void execute_command(char* command);

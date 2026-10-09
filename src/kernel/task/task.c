@@ -1,8 +1,8 @@
 #include "task.h"
-
 #include "../../memory/pmm/pmm.h"
 #include "../../memory/vmm/vmm.h"
 #include "../../memory/heap/heap.h"
+#include "../tss/tss.h"
 
 static task_t task_table[MAX_TASKS];
 static uint32_t task_count	 = 0;
@@ -18,7 +18,8 @@ void task_init(void) {
 	task_table[0].pid = next_pid++;
 	task_table[0].state = TASK_RUNNING;
 	task_table[0].stack_phys = 0;	// kernel original stack 
-	task_table[0].stack_top = 0;	// not tracked
+	task_table[0].stack_top = 0x90000;
+	task_table[0].esp = 0;
 	task_count = 1;
 }
 
@@ -42,7 +43,7 @@ task_t* task_create(void (*entry_point)(void)) {
 	uint32_t* sp = (uint32_t*)((uint32_t)stack + STACK_SIZE);
 
 	// put return EIP at the start of the stack
-	*(--sp) = (int32_t)entry_point;
+	*(--sp) = (uint32_t)entry_point;
 
 	// then the eflags
 	*(--sp) = 0x202;
@@ -61,10 +62,10 @@ task_t* task_create(void (*entry_point)(void)) {
 	new_task->esp = (uint32_t)sp;
 
 	// set the metadata
-	task_table[task_count].stack_phys = (uint32_t)stack;
-	task_table[task_count].stack_top = (uint32_t)sp;
-	task_table[task_count].pid = new_task->pid;
-	task_table[task_count].state = new_task->state;
+	new_task->stack_phys = (uint32_t)stack;
+	new_task->stack_top = (uint32_t)stack + STACK_SIZE;
+	new_task->pid = next_pid++;
+	new_task->state = TASK_READY;
 
 	task_count++;
 
@@ -87,7 +88,7 @@ static void schedule() {
 		}
 	} while (current_task != original_task);
 
-	task_table[current_task].state = TASK_READY;
+	task_table[current_task].state = TASK_RUNNING;
 }
 
 void task_yield() {
@@ -100,15 +101,17 @@ void task_yield() {
 	schedule();
 
 	if (current_task != old_task) {
+		// Update TSS esp0 for the new task
+		g_tss.esp0 = task_table[current_task].stack_top;
+
 		// do context switch to the new task
 		switch_context(&task_table[old_task].esp, &task_table[current_task].esp);
 	}
 
-	// abable interrupts
+	// enable interrupts
 	__asm__ volatile("sti");
 }
 
 task_t* task_current() {
-
 	return &task_table[current_task];
 }

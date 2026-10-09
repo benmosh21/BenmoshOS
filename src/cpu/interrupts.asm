@@ -123,7 +123,7 @@ jump_usermode:
 
     ; --- Construct the fake IRET Stack ---
     push 0x23           ; SS: The User Data Segment (0x23)
-    push 0x00A00000     ; ESP: Safe unprivleged User Stack page ceiling
+    push 0x00A00000     ; ESP: Safe unprivileged User Stack page ceiling
     
     pushf               ; EFLAGS: Push the current CPU flags
     pop eax
@@ -160,8 +160,7 @@ global flush_tss
 
 flush_tss:
     ; Offset 0x28 handles entry 5 in your GDT.
-    ; We combine it with the Requested Privilege Level (RPL) of Ring 3: 
-    ; 0x28 | 3 = 0x2B
-    mov ax, 0x2B        
+    ; LTR requires RPL=0 matching descriptor DPL=0
+    mov ax, 0x28        
     ltr ax              ; Load the CPU Task Register (TR) with the selector
     ret

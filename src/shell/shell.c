@@ -1,5 +1,10 @@
 #include "shell.h"
-
+#include "../klib/string.h"
+#include "../klib/stdio.h"
+#include "../klib/stdlib.h"
+#include "../memory/heap/heap.h"
+#include "../memory/pmm/pmm.h"
+#include "../fs/fat16.h"
 
 /* Forward declaration */
 //static void print_shell_prompt();
@@ -63,9 +68,9 @@ void execute_command(char* command) {
     }
     else if (!strcmp(argv[0], "touch")) {
         if (argc < 2) {
-            puts("Usage: wipe <filename>\n");
+            puts("Usage: touch <filename>\n");
         } else if (argc > 2) {
-            puts("Usage: wipe <filename>   (one file at a time)\n");
+            puts("Usage: touch <filename>   (one file at a time)\n");
         } else {
             fat16_create_file(argv[1]);
         }
@@ -154,7 +159,7 @@ void execute_command(char* command) {
             puts("Activating: ");
             puts(argv[1]);
             puts("\n");
-            puts("(No programs loaded yet — use 'wipe' to create files)\n");
+            puts("(No programs loaded yet — use 'touch' to create files)\n");
         }
     }
     else if (!strcmp(argv[0], "exit")) {
@@ -173,17 +178,17 @@ void execute_command(char* command) {
             printf("offset: %x\n", offset);
     }
     else if (!strcmp(argv[0], "heapdump")) {
-        extern uint32_t* heap_start;
-        uint32_t* block = heap_start;
-        int count;
-        while (block < heap_start + HEAP_SIZE) {
-            uint32_t hdr = *(uint32_t*)block;
+        extern struct block_header* heap_start;
+        struct block_header* block = heap_start;
+        int count = 0;
+        while ((uint32_t)block < 0x800000) {
+            uint32_t hdr = block->size_and_free;
             uint32_t size = hdr & ~1U;
             uint32_t free = hdr & 1U;
             if (size == 0) break;
             printf("[%d] @0x%x size=%d %s\n",
-                count++, block, size, free ? "FREE" : "USED");
-            block += size;
+                count++, (uint32_t)block, size, free ? "FREE" : "USED");
+            block = (struct block_header*)((uint32_t)block + size + 8);
         }
     } else if (!strcmp(argv[0], "meminfo")) {
         uint32_t total_frames = 0;

@@ -9,8 +9,7 @@
 #define STACK_SIZE 4096
 #define MAX_TASKS 16	// For now 16 is good enough
 
-extern void switch_context(uint32_t* current_esp_ptr, uint32_t new_esp_ptr);
-
+extern void switch_context(uint32_t* current_esp_ptr, uint32_t* new_esp_ptr);
 
 typedef enum {
 	TASK_READY,

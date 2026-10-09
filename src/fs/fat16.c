@@ -1,10 +1,33 @@
 #include "fat16.h"
 
-
 // ==========================================
 // --- HELPER FUNCTIONS ---
 // ==========================================
 
+// Helper to check short 8.3 file names
+static int match_short_name(const dir_entry_t* entry, const char* target) {
+    char sfn[13];
+    int idx = 0;
+    for (int j = 0; j < 8; j++) {
+        if (entry->filename[j] != ' ') {
+            char c = entry->filename[j];
+            if (c >= 'A' && c <= 'Z') c += 32;
+            sfn[idx++] = c;
+        }
+    }
+    if (entry->extension[0] != ' ') {
+        sfn[idx++] = '.';
+        for (int j = 0; j < 3; j++) {
+            if (entry->extension[j] != ' ') {
+                char c = entry->extension[j];
+                if (c >= 'A' && c <= 'Z') c += 32;
+                sfn[idx++] = c;
+            }
+        }
+    }
+    sfn[idx] = '\0';
+    return (strcmp(sfn, (char*)target) == 0);
+}
 
 // Calculates the Microsoft-mandated 1-byte checksum of the 11-byte 8.3 short name.
 // This checksum is required in every LFN ghost entry to bind it to the real file.
@@ -151,13 +174,12 @@ void fat16_print_file(char* target_file) {
             else if (directory[i].attributes != 0x08) {
 
                 // If we successfully collected a long name, check if it matches target_file
-                if (lfn_buffer[0] != '\0') {
-                    if (strcmp(lfn_buffer, target_file) == 1) {
-                        target_cluster = directory[i].starting_cluster;
-                        directory_entry_file_size = directory[i].file_size;
-                        file_found = 1;
-                        break;
-                    }
+                if ((lfn_buffer[0] != '\0' && strcmp(lfn_buffer, target_file) == 0) ||
+                    (lfn_buffer[0] == '\0' && match_short_name(&directory[i], target_file))) {
+                    target_cluster = directory[i].starting_cluster;
+                    directory_entry_file_size = directory[i].file_size;
+                    file_found = 1;
+                    break;
                 }
 
                 // Clear the LFN buffer for the next file
@@ -255,13 +277,12 @@ uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size) {
                 }
             }
             else if (directory[i].attributes != 0x08) {
-                if (lfn_buffer[0] != '\0') {
-                    if (strcmp(lfn_buffer, target_file) == 1) {
-                        target_cluster = directory[i].starting_cluster;
-                        directory_entry_file_size = directory[i].file_size;
-                        file_found = 1;
-                        break;
-                    }
+                if ((lfn_buffer[0] != '\0' && strcmp(lfn_buffer, target_file) == 0) ||
+                    (lfn_buffer[0] == '\0' && match_short_name(&directory[i], target_file))) {
+                    target_cluster = directory[i].starting_cluster;
+                    directory_entry_file_size = directory[i].file_size;
+                    file_found = 1;
+                    break;
                 }
                 for (int reset = 0; reset < 256; reset++) lfn_buffer[reset] = '\0';
             }
@@ -365,7 +386,7 @@ void fat16_list_files() {
                     // Fallback: No ghost entries found, print the strict 8.3 name
                     for (int j = 0; j < 8; j++) {
                         if (directory[i].filename[j] != ' ') {
-                            char temp[2] = { directory[i].filename[j], '\0' };
+                            char temp[2] = { (char)directory[i].filename[j], '\0' };
                             puts(temp);
                         }
                     }
@@ -373,7 +394,7 @@ void fat16_list_files() {
                         puts(".");
                         for (int j = 0; j < 3; j++) {
                             if (directory[i].extension[j] != ' ') {
-                                char temp[2] = { directory[i].extension[j], '\0' };
+                                char temp[2] = { (char)directory[i].extension[j], '\0' };
                                 puts(temp);
                             }
                         }
@@ -567,7 +588,8 @@ void fat16_write_file(char* target_file, char* data, int rewriting) {
                 }
             }
             else if (directory[i].attributes != 0x08) {
-                if (lfn_buffer[0] != '\0' && strcmp(lfn_buffer, target_file) == 1) {
+                if ((lfn_buffer[0] != '\0' && strcmp(lfn_buffer, target_file) == 0) ||
+                    (lfn_buffer[0] == '\0' && match_short_name(&directory[i], target_file))) {
                     target_dir_sector = root_dir_sector + s;
                     target_dir_index = i;
                     file_found = 1;

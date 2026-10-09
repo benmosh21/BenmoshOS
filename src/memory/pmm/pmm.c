@@ -1,4 +1,5 @@
 #include "pmm.h"
+#include "../../kernel/panic/panic.h"
 
 /*
  *
@@ -15,8 +16,6 @@ uint32_t bitmap[32768];
 // 0 = Block has at least one free frame. 1 = Block is completely full (all frames allocated)
 uint32_t summary_bitmap[1024];
 
-
-
 uint32_t free_frame_count = 0;
 uint32_t total_frames = 1048576; // 4GB / 4KB = 1,048,576 frames
 
@@ -30,6 +29,7 @@ uint32_t total_frames = 1048576; // 4GB / 4KB = 1,048,576 frames
  * @return int 1 if the frame is free (bit is 0), 0 if allocated/reserved (bit is 1).
  */
 int pmm_is_frame_free(uint32_t frame) {
+    if (frame >= total_frames) return 0;
     uint32_t word = frame / 32;
     uint32_t bit = frame % 32;
     return !(bitmap[word] & (1U << bit));
@@ -44,6 +44,7 @@ int pmm_is_frame_free(uint32_t frame) {
  * @param: frame The 0-indexed physical frame number.
  */
 static void pmm_mark_used(uint32_t frame) {
+    if (frame >= total_frames) return;
     uint32_t word = frame / 32;
     uint32_t bit = frame % 32;
     bitmap[word] |= (1U << bit);
@@ -65,6 +66,7 @@ static void pmm_mark_used(uint32_t frame) {
  * @param: frame The 0-indexed physical frame number.
  */
 static void pmm_mark_free(uint32_t frame) {
+    if (frame >= total_frames) return;
     uint32_t word = frame / 32;
     uint32_t bit = frame % 32;
     bitmap[word] &= ~(1U << bit);
@@ -111,8 +113,11 @@ void pmm_init() {
 
             // Free the frames in this usable memory region
             for (uint32_t i = 0; i < num_frames; i++) {
-                pmm_mark_free(starting_frame_index + i);
-                free_frame_count++;
+                uint32_t frame = starting_frame_index + i;
+                if (frame < total_frames) {
+                    pmm_mark_free(frame);
+                    free_frame_count++;
+                }
             }
         }
         entry++; 
@@ -129,6 +134,9 @@ void pmm_init() {
         uint32_t spill_size = kernel_end_address - 0x100000; 
         pmm_reserve_block(0x100000, spill_size);
     }
+
+    // Protect the Kernel Heap (4MB to 8MB)
+    pmm_reserve_block(0x00400000, 0x00400000);
 }
 
 /**
@@ -223,49 +231,6 @@ void pmm_reserve_block(uint32_t physical_address, uint32_t size) {
             free_frame_count--;
         }
     }
-}
-
-/**
- * @brief: Allocates a sequence of physically contiguous 4KB memory frames.
- * 
- * Searches the bitmap for an unbroken run of 'count' free frames. Used primarily 
- * for allocating page directories, page tables, or DMA buffers that cannot be 
- * fragmented across physical memory.
- * 
- * @param: count - The number of consecutive 4KB frames required.
- * 
- * @return: uint32_t The physical base address of the first frame, or 0 if no block fits.
- */
-uint32_t pmm_alloc_contiguous(uint32_t count) {
-    if (count == 0) return 0;
-
-    uint32_t max_frames = 32768 * 32;
-
-    // Loop through physical frames, stopping early enough to avoid out of bounds
-    for (uint32_t i = 0; i <= max_frames - count; i++) {
-        int found = 1;
-
-        // Check if 'count' consecutive frames are free
-        for (uint32_t j = 0; j < count; j++) {
-            if (!pmm_is_frame_free(i + j)) {
-                found = 0;
-                i += j; // Optimization: skip ahead past the used frame
-                break;
-            }
-        }
-
-        // If we found an unbroken sequence, allocate and return
-        if (found) {
-            for (uint32_t j = 0; j < count; j++) {
-                uint32_t current_frame = i + j;
-                pmm_mark_used(current_frame);
-                free_frame_count--;
-            }
-            return i * 4096;
-        }
-    }
-
-    return 0; // Out of contiguous memory
 }
 
 /**

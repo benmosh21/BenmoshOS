@@ -1,4 +1,4 @@
-#include "strings.h"
+#include "string.h"
 
 unsigned char* memcpy(unsigned char* dest, const uint8_t* src, uint32_t count) {
     for (uint32_t i = 0; i < count; i++) dest[i] = src[i];
@@ -21,13 +21,12 @@ int strlen(const char* str) {
     return len;
 }
 
-int strcmp(char* s1, char* s2) {
-    int i = 0;
-    while (s1[i] == s2[i]) {
-        if (s1[i] == '\0') return 0;
-        i++;
+int strcmp(const char* s1, const char* s2) {
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
     }
-    return 1;
+    return *(const unsigned char*)s1 - *(const unsigned char*)s2;
 }
 
 int memcmp(const char* s1, const char* s2, int count) {

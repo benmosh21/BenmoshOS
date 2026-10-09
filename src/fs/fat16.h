@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../drivers/print/print.h"
-#include "../libc/strings.h"
+#include "../klib/string.h"
 #include "../drivers/ata/ata.h"      // Needed for ata_read_sector
 #include "../memory/heap/heap.h"
 
@@ -35,7 +35,6 @@ typedef struct {
     uint32_t file_size;
 } dir_entry_t;
 #pragma pack(pop)
-
 
 struct lfn_entry {
     uint8_t  sequence_number; // Order of this entry (1, 2, 3...)

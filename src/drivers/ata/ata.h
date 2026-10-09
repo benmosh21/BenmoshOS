@@ -2,7 +2,7 @@
 #define ATA_H
 
 #include <stdint.h>
-#include "../../kernel/system.h"
+#include "../../cpu/ports/ports.h"
 #include "../print/print.h"
 
 

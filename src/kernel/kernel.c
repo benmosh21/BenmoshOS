@@ -8,9 +8,9 @@
  */
 
 #include <stdint.h>
-#include "system.h"
 #include "../cpu/idt/idt.h"
 #include "../cpu/pic/pic.h"
+#include "../cpu/gdt/gdt.h"
 #include "../drivers/print/print.h"
 #include "../drivers/ata/ata.h"
 #include "../fs/fat16.h"
@@ -18,10 +18,10 @@
 #include "../memory/vmm/vmm.h"
 #include "../memory/heap/heap.h"
 #include "../shell/shell.h"
-#include "tss.h"
-#include "../libc/stdio.h"
-#include "../libc/strings.h"
-#include "../libc/stdlib.h"
+#include "tss/tss.h"
+#include "../klib/stdio.h"
+#include "../klib/string.h"
+#include "../klib/stdlib.h"
 #include "task/task.h"
 
 /* External: assembly trampoline that IRET-jumps into ring3 */
@@ -35,7 +35,7 @@ extern void jump_usermode(void* function_pointer);
  *   ECX = arg2
  *   EDX = arg3
  *
- * Syscall numbers (see system.c syscall_dispatcher):
+ * Syscall numbers (see syscall_dispatcher):
  *   1 = kernel test ping
  *   2 = print null-terminated string at EBX
  *   3 = yield (future use)
@@ -88,6 +88,7 @@ __asm__ volatile(
 void task1_code() {
     while(1) {
         printf("A");
+        sleep(1000);
         task_yield();
     }
 }
@@ -95,6 +96,7 @@ void task1_code() {
 __attribute__((section(".text.main")))
 void KernelMain() {
     /* CPU infrastructure */
+    task_init();
     load_idt();
     init_timer(100);
     pic_remap();
@@ -104,18 +106,16 @@ void KernelMain() {
     vmm_init();
     heap_init();
 
-    /* Activete the TSS - hardware Task State Segment gate */
+    /* Activate the TSS - hardware Task State Segment gate */
     init_tss();
 
     uint32_t user_stack_phys = pmm_alloc_frame();
-
     vmm_map_page(user_stack_phys, 0x009FF000, 7);
 
     /* Print subsystem — enable_dynamic_history */
     enable_dynamic_history(1000);
     screen_clear();
 
-    
     set_print_color(0x0A);
     puts("  ____                                 _      ___  ____\n");
     puts(" | __ )  ___ _ __  _ __ ___   ___  ___| |__  / _ \\/ ___|\n");
@@ -127,7 +127,6 @@ void KernelMain() {
     set_print_color(0x07);
     puts("  Type 'help' for help\n\n");
 
-
     /* Enable hardware interrupts BEFORE ring3 jump
      *    (keyboard IRQ must fire while ring3 is spinning) */
     __asm__ volatile("sti");
@@ -137,14 +136,12 @@ void KernelMain() {
     puts("BenmoshOS> ");
     set_print_color(0x0F);
 
-    //jump_usermode(my_user_program);
-    //uint8_t x = *(volatile uint8_t*)0x5555555;
-
-    task_init();
+    
     task_create(task1_code);
 
     while(1) {
         printf("B");
+        sleep(1000);
         task_yield();
     }
 
