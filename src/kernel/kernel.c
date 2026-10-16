@@ -24,6 +24,8 @@
 #include "../klib/stdlib.h"
 #include "task/task.h"
 
+int count = 0;
+
 /* External: assembly trampoline that IRET-jumps into ring3 */
 extern void jump_usermode(void* function_pointer);
 
@@ -85,18 +87,47 @@ __asm__ volatile(
     while (1) {  }
 }
 
-void task1_code() {
-    while(1) {
-        printf("A");
-        sleep(1000);
-        task_yield();
+// Task A: Runs continuously in an infinite loop WITHOUT yielding!
+// Preemption forces it to share the CPU with the shell.
+void task_a(void) {
+    uint32_t count = 0;
+    while (1) {
+        count++;
+        // Do heavy work without task_yield()
+        if (count % 10000000 == 0) {
+            // set_print_color(0x0A); // Light Green
+            // puts("[A]");
+            // set_print_color(0x0F);
+            int x = 1;
+            int *y = x;
+            //sleep(100);    
+        }
     }
 }
 
+// Task B: Runs for a brief period and then simply RETURNS!
+// Tests that falling off the end triggers task_exit() and the reaper cleans it up.
+void task_b(void) {
+    puts("\n[Task B started - will exit after 5 iterations]\n");
+    for (int i = 0; i < 5; i++) {
+        // Delay loop
+        for (volatile int d = 0; d < 5000000; d++);
+        set_print_color(0x0C); // Light Red
+        puts("[B]");
+        set_print_color(0x0F);
+    }
+    puts("\n[Task B finished - returning naturally!]\n");
+    return; // Tests our automatic task_exit trampoline!
+}
+
+
 __attribute__((section(".text.main")))
 void KernelMain() {
-    /* CPU infrastructure */
+
+    // setting tasks (need to be before load_idt)
     task_init();
+
+    /* CPU infrastructure */
     load_idt();
     init_timer(100);
     pic_remap();
@@ -123,7 +154,7 @@ void KernelMain() {
     puts(" | |_) |  __/ | | | | | | | | (_) \\__ \\ | | | |_| |___) |\n");
     puts(" |____/ \\___|_| |_|_| |_| |_|\\___/|___/_| |_|\\___/|____/\n");
     set_print_color(0x0B);
-    puts("\n  BenmoshOS v0.2  |  x86 bare-metal  |  Ring0 + Ring3\n");
+    puts("\n  BenmoshOS v0.3  |  x86 bare-metal  |  Ring0 + Ring3\n");
     set_print_color(0x07);
     puts("  Type 'help' for help\n\n");
 
@@ -137,13 +168,13 @@ void KernelMain() {
     set_print_color(0x0F);
 
     
-    task_create(task1_code);
+    task_create(task_a);
+    //task_create(task_b);
 
     while(1) {
-        printf("B");
-        sleep(1000);
-        task_yield();
+        
     }
+
 
     /* Never reached — all further work done in IRQ handlers */
     while (1) { __asm__ volatile("hlt"); }

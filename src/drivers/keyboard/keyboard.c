@@ -204,9 +204,21 @@ void keyboard_handler() {
         history_pos = -1;
         live_line_backup_index = 0;
 
-        execute_command(key_buffer);
-
+        // copy the command to local buffer so key_buffer is immediately clean
+        char cmd_copy[256];
+        int k = 0;
+        while (key_buffer[k] != '\0' && k < 255) {
+            cmd_copy[k] = key_buffer[k];
+            k++;
+        }
+        cmd_copy[k] = '\0';
+        
+        // Clear input buffer immediately before running the command
         buffer_index = 0;
+        key_buffer[0] = '\0';
+
+        execute_command(cmd_copy);
+
         set_print_color(0x0E);
         puts("BenmoshOS> ");
         set_print_color(0x0F);

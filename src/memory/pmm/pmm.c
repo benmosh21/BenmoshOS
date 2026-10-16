@@ -9,7 +9,7 @@
  * 
 */
 
-// Base bitmap (1,048,576 bits -> 4GB RAM)
+// Base bitmap (1,048,576 bits (1MB) -> 4GB RAM)
 uint32_t bitmap[32768];
 
 // Summary Bitmap (1024 bits)

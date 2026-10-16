@@ -10,7 +10,7 @@ void kernel_panic(const char* message, ...) {
 
     // Print the panic message
     set_print_color(0x4F);      // White on red
-    puts("\n\n[KERNEL PANIC] ");
+    puts("\n\n[BENMOSH PANIC] ");
 
     va_list args;
     va_start(args, message);

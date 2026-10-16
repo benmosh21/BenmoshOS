@@ -1,5 +1,17 @@
-make /src/cpu/gdt and move there the gdt_set_gate
-make /src/cpu/ports and move there the in and out functions
-make /src/kernel/syscall and move there the syscall_dispatcher
-make /src/kernel/panic and move there the panic function
-remove system.c\h (all functions moved to their respective files)
+give a task heap.
+
+make remalloc, and then add the option to remalloc a task's stack and heap.
+then make it dynamic, so that a task can remalloc its stack and heap when full.
+
+make process.h \ process.c. each process is a task.
+make threads.h \ threads.c. each thread is a task.
+make option to make child processes.
+
+
+figure out how to use the cpu cores to run multiple tasks at once.
+
+
+after all of that i will do fs
+after that finish userland, and then add file editor and file manager
+and after that i will do or permitions or gui
+then i will do networking.

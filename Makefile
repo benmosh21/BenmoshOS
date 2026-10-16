@@ -22,6 +22,7 @@ CFLAGS = -ffreestanding -m32 -g -O0 -Wall -fno-pie -masm=intel $(INCLUDE_FLAGS)
 # LDFLAGS: Tells the linker how to arrange the OS in memory using linker.ld
 LDFLAGS_BIN = -T linker.ld -m elf_i386 --no-warn-rwx-segments -z noexecstack --oformat binary -Map=$(BUILD_DIR)/kernel.map
 LDFLAGS_ELF = -T linker.ld -m elf_i386 --no-warn-rwx-segments -z noexecstack
+
 # =============================================================================
 # Source Files & Object Mappings
 # =============================================================================
@@ -59,6 +60,7 @@ OBJS = $(ENTRY_OBJ) \
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 KERNEL_ELF = $(BUILD_DIR)/kernel.elf
 OS_IMAGE   = BenmoshOS.bin
+ISO_IMAGE  = $(BUILD_DIR)/BenmoshOS.iso
 
 # =============================================================================
 # Build Targets
@@ -95,7 +97,6 @@ $(BUILD_DIR)/task_asm.o: $(SRC_DIR)/kernel/task/task.asm
 	$(ASM) -f elf32 $< -o $@
 
 # --- C Compilation Rules ---
-# $< represents the .c source file, $@ represents the .o target file
 $(BUILD_DIR)/kernel.o:   $(SRC_DIR)/kernel/kernel.c          ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 $(BUILD_DIR)/panic.o:    $(SRC_DIR)/kernel/panic/panic.c     ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 $(BUILD_DIR)/syscall.o:  $(SRC_DIR)/kernel/syscall/syscall.c ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
@@ -140,9 +141,6 @@ qemu_debug: all
 	@echo "==> Starting QEMU in Debug Mode (Waiting for GDB)..."
 	qemu-system-i386 -drive format=raw,file=$(OS_IMAGE) -s -S -no-reboot -d int,cpu_reset -D qemu.log
 
-gdb:
-	gdb build/kernel.elf -ex "target remote :1234" -ex "break KernelMain" -ex "continue"
-
 vmdk: all
 	qemu-img convert -f raw -O vmdk $(OS_IMAGE) BenmoshOS.vmdk
 	@echo "==> VMware image created: BenmoshOS.vmdk"
@@ -151,20 +149,22 @@ vdi: $(OS_IMAGE)
 	qemu-img convert -f raw -O vdi $(OS_IMAGE) BenmoshOS.vdi
 	@echo "==> VirtualBox image created: BenmoshOS.vdi"
 
-iso: $(BOOT_BIN) $(KERNEL_BIN)
-	@echo "==> Building ISO Image..."
-	@mkdir -p $(BUILD_DIR)/iso/boot
-	dd if=/dev/zero of=$(BUILD_DIR)/iso/boot/floppy.img bs=1024 count=2880 2>/dev/null
-	mkfs.fat -F 16 -s 1 -R 128 $(BUILD_DIR)/iso/boot/floppy.img >/dev/null
-	dd if=$(BOOT_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=1 count=3 conv=notrunc 2>/dev/null
-	dd if=$(BOOT_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=1 skip=62 seek=62 count=450 conv=notrunc 2>/dev/null
-	dd if=$(BOOT_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=512 skip=1 seek=1 count=1 conv=notrunc 2>/dev/null
-	dd if=$(KERNEL_BIN) of=$(BUILD_DIR)/iso/boot/floppy.img bs=512 seek=2 conv=notrunc 2>/dev/null
-	mcopy -i $(BUILD_DIR)/iso/boot/floppy.img test.txt ::my_super_long_test_file.txt
-	genisoimage -R -J -c boot/bootcat -b boot/floppy.img -o build/os.iso $(BUILD_DIR)/iso
+iso: $(OS_IMAGE)
+	@echo "==> Building Bootable ISO Image..."
+	@mkdir -p $(BUILD_DIR)/iso_root
+	cp $(OS_IMAGE) $(BUILD_DIR)/iso_root/bootdisk.img
+	genisoimage -quiet -R -J \
+	    -b bootdisk.img \
+	    -hard-disk-boot \
+	    -c boot.cat \
+	    -boot-load-size 4 \
+	    -o $(ISO_IMAGE) \
+	    $(BUILD_DIR)/iso_root
+	@echo "==> ISO created: $(ISO_IMAGE)"
 
 run_iso: iso
-	qemu-system-x86_64 -cdrom build/os.iso
+	@echo "==> Starting QEMU with CD-ROM..."
+	qemu-system-x86_64 -drive format=raw,media=disk,file=$(ISO_IMAGE)
 
 # =============================================================================
 # Clean
@@ -172,3 +172,5 @@ run_iso: iso
 clean:
 	@echo "==> Cleaning Build Files..."
 	rm -rf $(BUILD_DIR) $(OS_IMAGE) BenmoshOS.vmdk BenmoshOS.vdi qemu.log
+
+.PHONY: all run qemu_debug vmdk vdi iso run_iso clean

@@ -5,6 +5,7 @@
 #include "../memory/heap/heap.h"
 #include "../memory/pmm/pmm.h"
 #include "../fs/fat16.h"
+#include "../kernel/task/task.h"
 
 /* Forward declaration */
 //static void print_shell_prompt();
@@ -143,6 +144,8 @@ void execute_command(char* command) {
         puts("  touch <file>        - Create empty file\n");
         puts("  write <text> <file> - Write text to file\n");
         puts("  echo [text...]      - print text\n");
+        puts("  ps                  - List running tasks and CPU ticks\n");
+        puts("  kill <pid>          - Terminate a running task\n");
         puts("  clear               - Clear the screen\n");
         puts("  color <0-15>        - Change text color\n");
         puts("  sysinfo             - Show system information\n");
@@ -199,6 +202,30 @@ void execute_command(char* command) {
         printf("  Total Frames: %x\n", total_frames);
         printf("  Free Frames : %x\n", free_frames);
         printf("  Used Frames : %x\n", used_frames);
+    } else if (!strcmp(argv[0], "ps")) {
+        puts("PID    STATE    TICKS    STACK_TOP\n");
+        puts("----------------------------------\n");
+        uint32_t count = task_get_count();
+        for (uint32_t i = 0; i < count; i++) {
+            task_t* t = task_get(i);
+            if (!t) continue;
+
+            const char* state_str = "UNKNOWN";
+            if (t->state == TASK_RUNNING) state_str = "RUNNING";
+            else if (t->state == TASK_READY) state_str = "READY";
+            else if (t->state == TASK_BLOCKED) state_str = "BLOCKED";
+            else if (t->state == TASK_DEAD) state_str = "DEAD";
+
+            printf("%d      %s     %d      %x\n", t->pid, state_str, t->ticks, t->stack_top);
+        }
+    } else if (!strcmp(argv[0], "kill")) {
+        if (argc != 2) {
+            puts("Usage: kill <pid>");
+        } else {
+            uint32_t pid = atoi(argv[1]);
+            task_kill(pid);
+            printf("Killed process %d\n", pid);
+        }
     }
     else {
         puts("Unknown command: '");

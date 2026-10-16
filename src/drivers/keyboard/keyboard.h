@@ -13,4 +13,6 @@ void keyboard_handler();
 extern volatile int syscall_input_active;
 char keyboard_pop_char();
 
+char* keyboard_get_char(void);
+
 #endif

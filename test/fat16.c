@@ -4,604 +4,210 @@
 #define DIR_ENTRY_SIZE 32
 #define DIRECTORY_SIZE 4096
 
-static bpb_t fat_bpb;
-static uint32_t fat_start_sector;
-static uint32_t root_dir_start_sector;
+// Cached volume layout (computed once from BPB)
+static uint32_t root_dir_sector;
+static uint32_t root_dir_size_sectors;
 static uint32_t data_start_sector;
+static uint32_t fat_start_sector;
+static uint16_t sectors_per_fat;
+static uint8_t  fat_count;
+static uint8_t  sectors_per_cluster;
+static int      fat16_initialized = 0;
 
+void fat16_init() {
+    uint32_t buffer[512];
+    ata_read_sector(0, buffer);
+    bpb_t* bpb = (bpb_t*)buffer;
 
-static int fat_strcasecmp(const char* a, const char* b) {
-    while (*a && *b) {
-        char ca = (*a >= 'a' && *a <= 'z') ? (char)(*a - 32) : *a;
-        char cb = (*b >= 'a' && *b <= 'z') ? (char)(*b - 32) : *b;
-        if (ca != cb) return 1;
-        a++; b++;
-    }
-    return *a != *b;
+    fat_start_sector      = bpb->reserved_sectors;
+    sectors_per_fat       = bpb->sectors_per_fat;
+    fat_count             = bpb->fat_count;
+    sectors_per_cluster   = bpb->sectors_per_cluster;
+    root_dir_sector       = fat_start_sector + (fat_count * sectors_per_fat);
+    root_dir_size_sectors = (bpb->root_dir_entries * 32) / 512;
+    data_start_sector     = fat_start_sector + root_dir_size_sectors;
+
+    fat16_initialized = 1;
 }
 
-uint32_t get_next_segment(const char* path, uint32_t* pathIndex, char* outBuffer) {
-    uint32_t counter = 0;
-
-    // Skip any '/' in the start of the folder
-    while (path[pathIndex[0]] == '/') {
-        pathIndex[0]++;
+static void ensure_init() {
+    if (!fat16_initialized) {
+        fat16_init();
     }
-
-    if (path[pathIndex[0]] == '\0') {
-        return 2;
-    }
-
-    // Add each char into the buffer untile null byter for end of path or / for end of directory name
-    while (path[pathIndex[0] + counter] != '/' && path[pathIndex[0] + counter] != '\0') {
-        // Prevent bounds overflow
-        if (counter < 255) {
-            outBuffer[counter] = path[pathIndex[0] + counter];
-        }
-        counter++;
-    }
-
-    if (path[pathIndex[0] + counter] == '\0') {
-        // Add null terminator to the buffer
-        outBuffer[counter < 255 ? counter : 255] = '\0';
-
-        // find the new pathIndex
-        pathIndex[0] += counter;
-
-        return 1;
-    }
-
-    // Add null terminator to the buffer
-    outBuffer[counter < 255 ? counter : 255] = '\0';
-
-    // find the new pathIndex
-    pathIndex[0] += counter;
-
-    return 0;
 }
 
-// Returns 0 on success, 1 if the name is invalid for an 8.3 format
-uint32_t sfnEncoder(char* name, char* sfn) {
-    /*
-    * A standard 8.3 name has a strict maximum of 12 characters:
-    * 8 for the base name + 1 dot + 3 for the extension.
-    */
-    if (strlen(name) > 12) {
-        return 1;
-    }
+// ==============================================
+//  LAYER 1 - FAT table & Cluster Manafement
+// ==============================================
 
-    /*
-    * Pre-fill the 11-byte output array entirely with spaces.
-    * This automatically handles files that don't have extensions!
-    */
-    memset((unsigned char*)sfn, ' ', 11);
+// Read where a cluster points in the FAT table
+static uint16_t fat16_read_fat_entry(uint16_t cluster) {
+    ensure_init();
+    uint32_t fat_sector = fat_start_sector + ((cluster * 2) / 512);
+    uint32_t fat_offset = (cluster * 2) % 512;
 
-    uint32_t r = 0; // Read index to track where we are in 'name'
-    uint32_t w = 0; // Write index to track where we are in 'sfn'
-    uint8_t dot = 0;
-
-    while (name[r] != '\0') {
-        if (name[r] == '.') {
-            if (dot == 1) {
-                return 1; // Error: Standard SFNs cannot contain multiple dots
-            }
-            dot = 1;
-            w = 8; // Jump the write index directly to the 3-byte extension block
-            r++;   // Move past the dot in the read string so we don't copy it
-            continue;
-        }
-
-        // Boundary checks to prevent overflowing the 8-byte and 3-byte segments
-        if (dot == 0 && w >= 8) {
-            return 1; // Error: Base name exceeds 8 characters
-        }
-        if (dot == 1 && w >= 11) {
-            return 1; // Error: Extension exceeds 3 characters
-        }
-
-        // Safely convert lowercase letters to uppercase
-        if (name[r] >= 'a' && name[r] <= 'z') {
-            sfn[w] = name[r] - 32;
-        }
-        else {
-            sfn[w] = name[r]; // Copy numbers and uppercase letters exactly as they are
-        }
-
-        r++;
-        w++;
-    }
-
-    return 0; // Success
+    uint8_t buffer[512];
+    ata_read_sector(fat_sector, buffer);
+    return *(uint16_t*)&buffer[fat_offset];
 }
 
+// Write a FAT pointer and MIRROR IT to all FAT tables (FAT1 and FAT2)
+static void fat16_write_fat_entry(uint16_t cluster, uint16_t value) {
+    ensure_init();
+    uint32_t sector_offset = (cluster * 2) / 512;
+    uint32_t byte_offset   = (cluster * 2) % 512;
 
-// Stateful LFN parsing: Returns index on match, -1 on end of directory, -2 to keep searching.
-int32_t findEntryInBuffer(char* name, char* formatName, dir_entry_t* entries, uint32_t numEntries, lfn_state_t* state) {
+    uint8_t buffer[512];
 
-    for (uint32_t i = 0; i < numEntries; i++) {
-
-        // Stop scanning if we hit end of directory
-        if (entries[i].filename[0] == 0x00) {
-            return -1;
-        }
-
-        if (entries[i].filename[0] == 0xE5) {
-            state->checksum = 0;
-            state->rightChecksum = 0;
-            memset((unsigned char*)state->lfn_buffer, 0, sizeof(state->lfn_buffer));
-            continue;
-        }
-
-        if (entries[i].attributes == 0x0F) {
-            struct lfn_entry* lfn = (struct lfn_entry*)&entries[i];
-
-            int32_t chunkIndex = (lfn->sequence_number & 0x1F) - 1;
-
-            // Safety bounds check for the chunk index
-            if (chunkIndex >= 0 && chunkIndex < 20) {
-                uint32_t offset = chunkIndex * 13;
-
-                // Set the lfn_buffer while skipping the 0x0000 terminator and 0xFFFF padding
-                for (uint32_t j = 0; j < 5; j++) {
-                    if (lfn->name1[j] != 0xFFFF && lfn->name1[j] != 0x0000) {
-                        state->lfn_buffer[offset++] = (char)(lfn->name1[j] & 0xFF);
-                    }
-                }
-                for (uint32_t j = 0; j < 6; j++) {
-                    if (lfn->name2[j] != 0xFFFF && lfn->name2[j] != 0x0000) {
-                        state->lfn_buffer[offset++] = (char)(lfn->name2[j] & 0xFF);
-                    }
-                }
-                for (uint32_t j = 0; j < 2; j++) {
-                    if (lfn->name3[j] != 0xFFFF && lfn->name3[j] != 0x0000) {
-                        state->lfn_buffer[offset++] = (char)(lfn->name3[j] & 0xFF);
-                    }
-                }
-            }
-            // Verify that all ghost entries in this stack share the exact same checksum
-            if (state->rightChecksum == 0) {
-                state->checksum = lfn->checksum;
-                state->rightChecksum = 1;
-            }
-            else if (state->rightChecksum == 1) {
-                if (state->checksum != lfn->checksum) {
-                    state->rightChecksum = 2; // Checksum corrupted, mark as invalid
-                    memset((unsigned char*)state->lfn_buffer, 0, sizeof(state->lfn_buffer));
-                }
-            }
-        } // End of if
-
-        // standard 8.3 SFN entry
-        else {
-            uint32_t lfnMatch = 0;
-            uint32_t sfnMatch = 0;
-
-            // Check if the LFN matched
-            if (state->rightChecksum == 1 && fat_strcasecmp(name, state->lfn_buffer) == 0) {
-                uint8_t sfn_checksum = 0;
-                for (uint32_t j = 0; j < 11; j++) {
-                    sfn_checksum = ((sfn_checksum & 1) ? 0x80 : 0) + (sfn_checksum >> 1) + entries[i].short_name[j];
-                }
-                if (state->checksum == sfn_checksum) {
-                    lfnMatch = 1;
-                }
-            }
-
-            // Check if the SFN matched
-            char targetSFN[11];
-            if (sfnEncoder(name, targetSFN) == 0) {
-                if (memcmp(targetSFN, entries[i].short_name, 11) == 0) {
-                    sfnMatch = 1;
-                }
-            }
-
-            // return success if either matched
-            if (sfnMatch || lfnMatch) {
-                memcpy((uint8_t*)formatName, (uint8_t*)entries[i].short_name, 11);
-                return (int32_t)i;
-            }
-            // if not then we do the check again
-            else {
-                state->rightChecksum = 0;
-                memset((unsigned char*)state->lfn_buffer, 0, sizeof(state->lfn_buffer));
-            }
-        } // End of else if
-    } // End of for loop
-
-    return -2; // Not found
-
-} // End of getFormatName
-
-
-uint32_t fat16_init() {
-    char buffer[ATA_SECTOR_SIZE];
-
-    // Check for read errors
-    if (ata_read_sector(0, (uint8_t*)buffer) != 0) return 1;
-
-    memcpy((unsigned char*)&fat_bpb, (const uint8_t*)buffer, sizeof(fat_bpb));
-
-    // Ensure FAT format uses 512-byte sectors to match our ATA driver
-    if (fat_bpb.bytes_per_sector != ATA_SECTOR_SIZE) return 1;
-
-    if (fat_bpb.sectors_per_cluster == 0 || fat_bpb.fat_count == 0 ||
-        fat_bpb.sectors_per_fat == 0 || fat_bpb.root_dir_entries) return 1;
-
-    // calculate the start of the fat & root_directory
-    fat_start_sector = fat_bpb.reserved_sectors;
-    root_dir_start_sector = fat_start_sector + (fat_bpb.fat_count * fat_bpb.sectors_per_fat);
-
-    // Prevent truncation by safely rounding up
-    uint32_t root_dir_bytes = fat_bpb.root_dir_entries * DIR_ENTRY_SIZE;
-    uint32_t root_dir_sectors = (root_dir_bytes + fat_bpb.bytes_per_sector - 1) / fat_bpb.bytes_per_sector;
-
-    data_start_sector = root_dir_start_sector + root_dir_sectors;
-
-    return 0;
+    // Update each FAT copy on disk (FAT1 and FAT2)
+    for (uint32_t i = 0; i < fat_count; i++) {
+        uint32_t target_sec = fat_start_sector + (i * sectors_per_fat) + sector_offset;
+        ata_read_sector(target_sec, buffer);
+        *(uint16_t*)&buffer[byte_offset] = value;
+        ata_write_sector(target_sec, buffer);
+    }
 }
 
+// Scan the ENTIRE disk to find a free cluster (0x0000)
+static uint16_t fat16_alloc_cluster() {
+    ensure_init();
+    uint8_t buffer[512];
+    
+    // Scan across all sectors of the FAT table
+    for (uint32_t s = 0; s < sectors_per_fat; s++) {
+        ata_read_sector(fat_start_sector + s, buffer);
+        uint16_t* table = (uint16_t*)buffer;
 
+        for (int i = 0; i < 256; i++) {
+            uint16_t cluster_idx = (s * 256) + i;
+            if (cluster_idx < 2) continue; // Clusters 0 and 1 are reserved
 
-
-uint32_t fat_read_fileT(char* path, char* fileBuffer, uint32_t maxBufferSize, uint32_t* outFileSize) {
-
-    // Check if path and fileBuffer exist
-    if (!path || !fileBuffer || !outFileSize) return 1;
-
-    static char lastDirectoryBuffer[DIRECTORY_SIZE];
-
-    // Declare the variables
-    uint32_t pathIndex = 0;
-    uint32_t count = 0;
-    char segmentName[256];
-    uint32_t bytes_read = 0;
-    uint32_t val = 0;
-
-
-    while (1) {
-        val = get_next_segment(path, &pathIndex, segmentName);
-
-        // Check each path segment if it exsist and if yes find if the directory contain the next directory
-        if (val == 0) {
-            char name[11];
-            uint32_t found = 0;
-            uint32_t nextCluster = 0;
-
-            lfn_state_t lfn_state;
-            memset((unsigned char*)&lfn_state, 0, sizeof(lfn_state_t));
-
-            if (count == 0) {
-                uint32_t entries_per_sector = fat_bpb.bytes_per_sector / DIR_ENTRY_SIZE;
-                for (uint32_t sector = root_dir_start_sector; sector < data_start_sector; sector++) {
-
-                    char buffer[ATA_SECTOR_SIZE];
-
-                    if (ata_read_sector(sector, (uint8_t*)buffer) != 0) return 1;
-
-                    int32_t match_idx = findEntryInBuffer(segmentName, name, (dir_entry_t*)buffer, entries_per_sector, &lfn_state);
-
-                    if (match_idx == -1) break;
-                    if (match_idx >= 0) {
-
-                        dir_entry_t* dir = &((dir_entry_t*)buffer)[match_idx];
-
-                        if ((dir->attributes & 0x10) == 0) return 1;
-
-                        found = 1;
-                        nextCluster = dir->starting_cluster;
-
-                        break;
-                    }
-                }
+            if (table[i] == 0x0000) {
+                // Found free cluster: mark as End-Of-File (0xFFFF)
+                fat16_write_fat_entry(cluster_idx, 0xFFFF);
+                return cluster_idx;
             }
-
-            else {
-
-                uint32_t total_entries = bytes_read / DIR_ENTRY_SIZE;
-                int32_t match_index = findEntryInBuffer(segmentName, name, (dir_entry_t*)lastDirectoryBuffer, total_entries, &lfn_state);
-
-                if (match_index >= 0) {
-                    dir_entry_t* dir = &((dir_entry_t*)lastDirectoryBuffer)[match_index];
-                    if ((dir->attributes & 0x10) == 0) return 1;
-
-                    found = 1;
-                    nextCluster = dir->starting_cluster;
-                }
-            }
-
-            if (!found) return 1;
-
-            uint32_t innerBytesRead = 0;
-            uint32_t cluster_read = 0;
-
-            // Prevent buffer overflow by capping read limit
-            uint32_t bytes_to_read = DIRECTORY_SIZE;
-
-            while (1) {
-
-                if (cluster_read++ > 65536) return 1;
-
-                // Prevent reading out of directory
-                if (nextCluster < 2 || (nextCluster >= 0xFFF0 && nextCluster <= 0xFFF7)) return 1;
-                if (nextCluster >= 0xFFF8) break;
-
-                char sectorBuffer[ATA_SECTOR_SIZE];
-
-                // Read the current cluster
-                for (uint32_t t = 0; t < fat_bpb.sectors_per_cluster && innerBytesRead < bytes_to_read; t++) {
-                    uint32_t data_sector = data_start_sector + (nextCluster - 2) * fat_bpb.sectors_per_cluster + t;
-                    if (ata_read_sector(data_sector, (uint8_t*)sectorBuffer) != 0) return 1;
-
-                    uint32_t bytes_left_to_copy = bytes_to_read - innerBytesRead;
-                    uint32_t chunk_size = bytes_left_to_copy < ATA_SECTOR_SIZE ? bytes_left_to_copy : ATA_SECTOR_SIZE;
-
-                    memcpy(lastDirectoryBuffer + innerBytesRead, sectorBuffer, chunk_size);
-                    innerBytesRead += chunk_size;
-                }
-
-                if (innerBytesRead >= bytes_to_read) break;
-
-                uint32_t fat_sector = fat_start_sector + (2 * nextCluster) / ATA_SECTOR_SIZE;
-                if (ata_read_sector(fat_sector, (uint8_t*)sectorBuffer) != 0) return 1;
-
-                uint16_t offset = (2 * nextCluster) % ATA_SECTOR_SIZE;
-                uint8_t low_byte = (uint8_t)sectorBuffer[offset];
-                uint8_t high_byte = (uint8_t)sectorBuffer[offset + 1];
-                nextCluster = (uint16_t)(low_byte | (high_byte << 8));
-
-            } // End of while loop
-            bytes_read = innerBytesRead;
-            count++;
-        } // End of if
-
-        else if (val == 1) {
-            char name[11];
-            uint32_t found = 0;
-            uint32_t nextCluster = 0;
-
-            uint32_t bytes_to_read = 0;
-            lfn_state_t lfn_state;
-            memset((unsigned char*)&lfn_state, 0, sizeof(lfn_state_t));
-
-            if (count == 0) {
-                uint32_t entries_per_sector = fat_bpb.bytes_per_sector / DIR_ENTRY_SIZE;
-                for (uint32_t sector = root_dir_start_sector; sector < data_start_sector; sector++) {
-
-                    char buffer[ATA_SECTOR_SIZE];
-
-                    if (ata_read_sector(sector, (uint8_t*)buffer) != 0) return 1;
-
-                    int32_t match_idx = findEntryInBuffer(segmentName, name, (dir_entry_t*)buffer, entries_per_sector, &lfn_state);
-
-                    if (match_idx == -1) break;
-                    if (match_idx >= 0) {
-
-                        dir_entry_t* dir = &((dir_entry_t*)buffer)[match_idx];
-
-                        if ((dir->attributes & 0x10) != 0) return 1;
-
-                        found = 1;
-                        nextCluster = dir->starting_cluster;
-
-                        // Prevent buffer overflow by capping read limit
-                        bytes_to_read = dir->file_size;
-
-                        break;
-                    }
-                }
-            }
-
-            else {
-
-                uint32_t total_entries = bytes_read / DIR_ENTRY_SIZE;
-                int32_t match_index = findEntryInBuffer(segmentName, name, (dir_entry_t*)lastDirectoryBuffer, total_entries, &lfn_state);
-
-                if (match_index >= 0) {
-                    dir_entry_t* dir = &((dir_entry_t*)lastDirectoryBuffer)[match_index];
-                    if ((dir->attributes & 0x10) != 0) return 1;
-
-                    found = 1;
-                    nextCluster = dir->starting_cluster;
-
-                    // Prevent buffer overflow by capping read limit
-                    bytes_to_read = dir->file_size;
-                }
-            }
-
-            if (!found) return 1;
-
-            uint32_t innerBytesRead = 0;
-            uint32_t cluster_read = 0;
-
-            uint32_t truncated = 0;
-            if (bytes_to_read > maxBufferSize) {
-                bytes_to_read = maxBufferSize;
-                truncated = 1;
-            }
-
-            // If the file is empty
-            if (bytes_to_read == 0) {
-                *outFileSize = 0;
-                return truncated ? 2 : 0; // 0 = success, 1 = error, 2 = success but truncated
-            }
-
-            while (1) {
-
-                if (cluster_read++ > 65536) return 1;
-
-                // Prevent reading out of directory
-                if (nextCluster < 2 || (nextCluster >= 0xFFF0 && nextCluster <= 0xFFF7)) return 1;
-                if (nextCluster >= 0xFFF8) break;
-
-                char sectorBuffer[ATA_SECTOR_SIZE];
-
-                // Read the current cluster
-                for (uint32_t t = 0; t < fat_bpb.sectors_per_cluster && innerBytesRead < bytes_to_read; t++) {
-                    uint32_t data_sector = data_start_sector + (nextCluster - 2) * fat_bpb.sectors_per_cluster + t;
-                    if (ata_read_sector(data_sector, (uint8_t*)sectorBuffer) != 0) return 1;
-
-                    uint32_t bytes_left_to_copy = bytes_to_read - innerBytesRead;
-                    uint32_t chunk_size = bytes_left_to_copy < ATA_SECTOR_SIZE ? bytes_left_to_copy : ATA_SECTOR_SIZE;
-
-                    memcpy(fileBuffer + innerBytesRead, sectorBuffer, chunk_size);
-                    innerBytesRead += chunk_size;
-                }
-
-                if (innerBytesRead >= bytes_to_read) break;
-
-                uint32_t fat_sector = fat_start_sector + (2 * nextCluster) / ATA_SECTOR_SIZE;
-                if (ata_read_sector(fat_sector, (uint8_t*)sectorBuffer) != 0) return 1;
-
-                uint16_t offset = (2 * nextCluster) % ATA_SECTOR_SIZE;
-                uint8_t low_byte = (uint8_t)sectorBuffer[offset];
-                uint8_t high_byte = (uint8_t)sectorBuffer[offset + 1];
-                nextCluster = (uint16_t)(low_byte | (high_byte << 8));
-
-            } // End of while loop
-            bytes_read = innerBytesRead;
-            count++;
-
-            *outFileSize = bytes_read;
-            return truncated ? 2 : 0; // 0 = success, 1 = error, 2 = success but truncated
-        } // End of else if
-        else if (val == 2) {
-            break;
-        }
-    } // End of while 
-    return 1;
-} // End of fat_read_file
-
-
-
-
-uint32_t listDirectory(char* path, char* directoryBuffer, uint32_t* outDirectorySize, uint32_t maxBufferSize) {
-
-    static char lastDirectoryBuffer[DIRECTORY_SIZE];
-
-    // Check if path and directoryBuffer exist
-    if (!path || !directoryBuffer || !outDirectorySize) return 1;
-
-    // Detect root
-    uint32_t peek = 0;
-    while (path[peek] == '/') peek++;
-    uint32_t isRoot = (path[peek] == '\0');
-
-    uint32_t bytes_read = 0;
-
-    if (isRoot) {
-        for (uint32_t sector = root_dir_start_sector; sector < data_start_sector; sector++) {
-            if (bytes_read + ATA_SECTOR_SIZE > DIRECTORY_SIZE) break;
-            if (ata_read_sector(sector, (uint8_t*)lastDirectoryBuffer + bytes_read)) return 1;
-            bytes_read += ATA_SECTOR_SIZE;
         }
     }
-    else {
-        uint32_t pathIndex = 0;
-        uint32_t count = 0;
-        char segmentName[512];
+    return 0; // Disk is full
+}
 
-        // Check each path segment if it exsist and if yes find if the directory contain the next directory
-        while (get_next_segment(path, &pathIndex, segmentName) != 2) {
-            char name[11];
-            uint32_t found = 0;
-            uint32_t nextCluster = 0;
+// Free an entire cluster chain so space is not leaked!
+static void fat16_free_chain(uint16_t start_cluster) {
+    if (start_cluster < 2) return;
 
-            lfn_state_t lfn_state;
-            memset((unsigned char*)&lfn_state, 0, sizeof(lfn_state_t));
+    uint16_t* curr = start_cluster;
+    while (curr >= 2 && curr < 0xFFF8) {
+        uint16_t next = fat16_read_fat_entry(curr);
+        fat16_write_fat_entry(curr, 0x0000); // Free the cluster
+        curr = next;
+    }
+    
+}
 
-            if (count == 0) {
-                uint32_t entries_per_sector = fat_bpb.bytes_per_sector / DIR_ENTRY_SIZE;
-                for (uint32_t sector = root_dir_start_sector; sector < data_start_sector; sector++) {
+// ==============================================
+//  LAYER 1 - FAT table & Cluster Manafement
+// ==============================================
 
-                    char buffer[ATA_SECTOR_SIZE];
-
-                    if (ata_read_sector(sector, (uint8_t*)buffer) != 0) {
-                        return 1;
-                    }
-
-                    int32_t match_idx = findEntryInBuffer(segmentName, name, (dir_entry_t*)buffer, entries_per_sector, &lfn_state);
-
-                    if (match_idx == -1) break;
-                    if (match_idx >= 0) {
-
-                        dir_entry_t* dir = &((dir_entry_t*)buffer)[match_idx];
-
-                        if ((dir->attributes & 0x10) == 0) return 1;
-
-                        found = 1;
-                        nextCluster = dir->starting_cluster;
-
-                        break;
-                    }
-                }
+static int match_sfn(const dir_entry_t* entry, const char* target) {
+    char sfn[13];
+    int idx = 0;
+    for (int j = 0; j < 8; j++) {
+        if (entry->filename[j] != ' ') {
+            char c = entry->filename[j];
+            if (c >= 'A' && c <= 'Z') c += 32;
+            sfn[idx++] = c;
+        }
+    }
+    if (entry->extension[0] != ' ') {
+        sfn[idx++] = '.';
+        for (int j = 0; j < 3; j++) {
+            if (entry->extension[j] != ' ') {
+                char c = entry->extension[j];
+                if (c >= 'A' && c <= 'Z') c += 32;
+                sfn[idx++] = c;
             }
-            else {
+        }
+    }
+    sfn[idx] = '\0';
+    return (strcmp(sfn, target));
+}
 
-                uint32_t total_entries = bytes_read / DIR_ENTRY_SIZE;
-                int32_t match_index = findEntryInBuffer(segmentName, name, (dir_entry_t*)lastDirectoryBuffer, total_entries, &lfn_state);
+static uint8_t lfn_checksum(const uint8_t* short_name) {
+    uint8_t sum = 0;
+    for (int i = 11; i != 0; i--) {
+        sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + *short_name++;
+    }
+    return sum;
+}
 
-                if (match_index >= 0) {
-                    dir_entry_t* dir = &((dir_entry_t*)lastDirectoryBuffer)[match_index];
-                    if ((dir->attributes & 0x10) == 0) return 1;
+static void generate_short_name(const char* lfn, uint8_t* sfn_out, int attempt) {
+    for (int i = 0; i < 11; i++) sfn_out[i] = ' ';
+    
+    char base_name[8];
+    int base_len = 0, i = 0;
 
-                    found = 1;
-                    nextCluster = dir->starting_cluster;
-                }
-            }
+    while (lfn[i] != '\0' && base_len < 8 && lfn[i] != '.') {
+        char c = lfn[i];
+        if (c != ' ') {
+            if (c >= "a" && c <= "z") c -= 32;
+            base_name[base_len++] = c;
+        }
+        i++;
+    }
 
-            if (!found) return 1;
+    int suffix_len = (attempt < 10) ? 2 : ((attempt) < 100 ? 3 : 4);
+    int keep_len = (base_len + suffix_len > 8) ? (8 - suffix_len) : base_len;
 
-            uint32_t innerBytesRead = 0;
-            uint32_t cluster_read = 0;
+    for (int j = 0; j < keep_len; j++) sfn_out[j] = base_name[j];
 
-            // Prevent buffer overflow by capping read limit
-            uint32_t bytes_to_read = DIRECTORY_SIZE;
+    sfn_out[keep_len] = '~';
+    if (attempt < 10) {
+        sfn_out[keep_len + 1] = (attempt / 10) + '0';
+    } else if (attempt < 100) {    
+        sfn_out[keep_len + 1] = (attempt / 10) + '0';
+        sfn_out[keep_len + 2] = (attempt % 10) + '1';
+    }   
+    
+    int last_dot = -1, len = 0;
+    while (lfn[len] != '\0') {
+        if (lfn[len] == '.') last_dot = len;
+        len++;
+    }
 
-            while (1) {
+    if (last_dot != -1) {
+        int ext_idx = 8;
+        i = last_dot + 1;
+        while (lfn[i] != '\0' && ext_idx < 11) {
+            char c = lfn[i];
+            if (c >= 'a' && c <= 'z') c -= 32;
+            sfn_out[ext_idx] = c;
+            i++;
+        }
+    }
+}
 
-                if (cluster_read++ > 65536) return 1;
+// Find a file by name. Returns 1 if found, fills out_entry, out_sec, out_idx.
+void fat16_list_files() {
 
-                // Prevent reading out of directory
-                if (nextCluster < 2 || (nextCluster >= 0xFFF0 && nextCluster <= 0xFFF7)) return 1;
-                if (nextCluster >= 0xFFF8) break;
+}
 
-                char sectorBuffer[ATA_SECTOR_SIZE];
+void fat16_print_file(const char* target_file) {
 
-                // Read the current cluster
-                for (uint32_t t = 0; t < fat_bpb.sectors_per_cluster && innerBytesRead < bytes_to_read; t++) {
-                    uint32_t data_sector = data_start_sector + (nextCluster - 2) * fat_bpb.sectors_per_cluster + t;
-                    if (ata_read_sector(data_sector, (uint8_t*)sectorBuffer) != 0) return 1;
+}
 
-                    uint32_t bytes_left_to_copy = bytes_to_read - innerBytesRead;
-                    uint32_t chunk_size = bytes_left_to_copy < ATA_SECTOR_SIZE ? bytes_left_to_copy : ATA_SECTOR_SIZE;
+uint8_t* fat16_load_file(const char* target_file, uint32_t* out_file_size) {
+    return NULL;
+}
 
-                    memcpy(lastDirectoryBuffer + innerBytesRead, sectorBuffer, chunk_size);
-                    innerBytesRead += chunk_size;
-                }
+int fat16_create_file(const char* target_name) {
+    return -1;
+}
 
-                if (innerBytesRead >= bytes_to_read) break;
+int fat16_write_file(const char* target_file, const char* data, int append) {
+    return -1;
+}
 
-                uint32_t fat_sector = fat_start_sector + (2 * nextCluster) / ATA_SECTOR_SIZE;
-                if (ata_read_sector(fat_sector, (uint8_t*)sectorBuffer) != 0) return 1;
-
-                uint16_t offset = (2 * nextCluster) % ATA_SECTOR_SIZE;
-                uint8_t low_byte = (uint8_t)sectorBuffer[offset];
-                uint8_t high_byte = (uint8_t)sectorBuffer[offset + 1];
-                nextCluster = (uint16_t)(low_byte | (high_byte << 8));
-
-            } // End of while loop
-            bytes_read = innerBytesRead;
-            count++;
-        } // End of while loop
-    } // End of else if
-
-    if (bytes_read > maxBufferSize) bytes_read = maxBufferSize;
-    memcpy(directoryBuffer, lastDirectoryBuffer, bytes_read);
-    *outDirectorySize = bytes_read;
-    return 0;
-
-} // End of listDirectory
-
-void fat16_write_file(char* path, char* data, uint32_t rewriting) {
-
+int fat16_delete_file(const char* target_file) {
+    return -1;
 }
