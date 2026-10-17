@@ -37,3 +37,24 @@ int memcmp(const char* s1, const char* s2, int count) {
     }
     return 0;
 }
+
+char *strcpy(char* dest, const char* src) {
+    char* original_dest = dest;
+    while (*src) {
+        *dest++ = *src++;
+    }
+    *dest = '\0'; // Null-terminate the destination string
+    return original_dest;
+}
+
+char *strncpy(char* dest, const char* src, int n) {
+    char* original_dest = dest;
+    int i;
+    for (i = 0; i < n && src[i] != '\0'; i++) {
+        dest[i] = src[i];
+    }
+    for (; i < n; i++) {
+        dest[i] = '\0'; // Null-terminate the remaining space
+    }
+    return original_dest;
+}

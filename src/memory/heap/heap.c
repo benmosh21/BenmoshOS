@@ -15,7 +15,7 @@ void heap_init() {
 void* kmalloc(uint32_t requested_size) {
 
     // Disable interrupts to prevent list corruption during multitasking
-    __asm__ volatile("cli");
+    uint32_t flags = irq_save();
 
     // Align requested_size up to the nearest multiple of 4
     // This ensures the bottom bits (including our flag bit) are always 0
@@ -54,7 +54,7 @@ void* kmalloc(uint32_t requested_size) {
     }
 
     // Re-enable interrupts before returning failure
-    __asm__ volatile("sti");
+    irq_restore(flags);
     return NULL;
 }
 
@@ -64,7 +64,7 @@ void kfree(void* ptr) {
     }
 
     // Disable interrupts to prevent multitasking list corruption
-    __asm__ volatile("cli");
+    uint32_t flags = irq_save();
 
     // Locate the metadata header
     struct block_header* header = (struct block_header*)((uint8_t*)ptr - 8);
@@ -123,7 +123,7 @@ void kfree(void* ptr) {
     }
 
     // Re-enable interrupts
-    __asm__ volatile("sti");
+    irq_restore(flags);
 }
 
 void* kmalloc_aligned(uint32_t size, uint32_t alignment) {

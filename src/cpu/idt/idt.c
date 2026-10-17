@@ -50,7 +50,7 @@ void isr_handler(struct interrupt_registers regs) {
 
         /* ---- CPU Exceptions ---- */
         case 0x00:
-            kernel_panic("Divide by Zero Exception at EIP: %x", regs.eip);
+            kernel_panic("Divide by Zero Exception at EIP: 0x%x", regs.eip);
             for (;;) __asm__ volatile("hlt");
 
         case 0x01:
@@ -58,7 +58,7 @@ void isr_handler(struct interrupt_registers regs) {
             for (;;) __asm__ volatile("hlt");
 
         case 0x06:
-            kernel_panic("Invalid Opcode Exception at EIP: %x", regs.eip);
+            kernel_panic("Invalid Opcode Exception at EIP: 0x%x", regs.eip);
             for (;;) __asm__ volatile("hlt");
 
         case 0x08:
@@ -66,14 +66,14 @@ void isr_handler(struct interrupt_registers regs) {
             for (;;) __asm__ volatile("hlt");
 
         case 0x0D: {
-            kernel_panic("#GP General Protection Fault! Error: %x, EIP: %x", regs.err_code, regs.eip);
+            kernel_panic("#GP General Protection Fault! Error: 0x%x, EIP: 0x%x", regs.err_code, regs.eip);
             for (;;) __asm__ volatile("hlt");
         }
 
         case 0x0E: {
             uint32_t faulting_address;
             __asm__ volatile("{mov %%cr2, %0 | mov %0, cr2}" : "=r" (faulting_address));
-            kernel_panic("Page Fault at Virtual Address: %x (EIP: %x, Error: %x)", 
+            kernel_panic("Page Fault at Virtual Address: 0x%x (EIP: 0x%x, Error: 0x%x)", 
                          faulting_address, regs.eip, regs.err_code);
             break;
         }

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "../cpu/ports/ports.h"
 
 // define all important data
 #define HEAP_START 0x400000

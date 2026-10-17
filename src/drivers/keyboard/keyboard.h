@@ -5,14 +5,8 @@
 #include "../print/print.h"
 #include "../../cpu/ports/ports.h"
 
-/* Forward declaration — avoids circular include with shell.h */
-void execute_command(char* command);
-
-void keyboard_handler();
-
-extern volatile int syscall_input_active;
-char keyboard_pop_char();
-
-char* keyboard_get_char(void);
+void keyboard_handler(void);
+char keyboard_pop_char(void);
+char kbd_getchar(void);
 
 #endif

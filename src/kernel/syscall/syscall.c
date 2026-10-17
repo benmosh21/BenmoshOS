@@ -45,9 +45,6 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
             if (max_len > 255) max_len = 255; // Hardware safety cap bounds
 
             uint32_t index = 0;
-            
-            // Signal to keyboard ISR that we are waiting for input
-            syscall_input_active = 1; 
 
             // Synchronous polling loop reading inputs safely until limit is achieved
             while (index < (max_len - 1)) {
@@ -55,7 +52,10 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
                 __asm__ volatile ("sti\n\thlt\n\tcli");
 
                 char c = keyboard_pop_char();
-                if (c == 0) continue; // No input available yet
+                if (c == 0) {
+                    task_yield(); // No input yet, yield to other tasks
+                    continue;
+                }
 
                 if (c == '\n') {
                     input_buffer[index++] = '\n';
@@ -76,8 +76,7 @@ uint32_t syscall_dispatcher(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t e
                 }
             }
             
-            // Release the keyboard back to the kernel shell
-            syscall_input_active = 0;
+            
             input_buffer[index] = '\0';
             
             // Return address memory pointer targeting the completed kernel buffer inside EAX

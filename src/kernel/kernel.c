@@ -162,18 +162,12 @@ void KernelMain() {
      *    (keyboard IRQ must fire while ring3 is spinning) */
     __asm__ volatile("sti");
 
-    /* Print prompt then drop to ring3 */
-    set_print_color(0x0E);
-    puts("BenmoshOS> ");
-    set_print_color(0x0F);
-
     
     task_create(task_a);
     //task_create(task_b);
 
-    while(1) {
-        
-    }
+    
+    shell_run();
 
 
     /* Never reached — all further work done in IRQ handlers */

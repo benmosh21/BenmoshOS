@@ -169,10 +169,8 @@ void task_kill(uint32_t pid) {
 		if (task_table[i].pid == pid && task_table[i].state != TASK_DEAD) {
 			task_table[i].state = TASK_DEAD;
 			if (i == current_task) {
-				printf("test");
-				//task_yield();
+				task_yield();
 			}
-			printf("test");
 			return;
 		}
 	}

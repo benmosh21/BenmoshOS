@@ -9,5 +9,7 @@ unsigned short* memsetw(unsigned short* dest, uint16_t val, uint32_t count);
 int strlen(const char* str);
 int strcmp(const char* s1, const char* s2);
 int memcmp(const char* s1, const char* s2, int count);
+char *strcpy(char* dest, const char* src);
+char *strncpy(char* dest, const char* src, int n);
 
 #endif

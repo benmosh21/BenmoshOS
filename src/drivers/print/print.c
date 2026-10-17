@@ -89,6 +89,8 @@ void update_screen() {
 }
 
 void screen_clear() {
+    uint32_t flags = irq_save(); // Disable interrupts during screen clear
+
     uint16_t blank_cell = (uint16_t)' ' | ((uint16_t)current_color << 8);
     uint32_t total_cells = max_history_rows * MAX_COL;
     memsetw((unsigned short*)line_buffer, blank_cell, total_cells);
@@ -102,6 +104,7 @@ void screen_clear() {
     }
     
     update_screen();
+    irq_restore(flags); // Restore interrupts after screen clear
 }
 
 
@@ -136,6 +139,8 @@ void apply_ansi_color(int code) {
 /* --- Printing Logic --- */
 
 void print_char(char character) {
+    uint32_t flags = irq_save(); // Disable interrupts during printing
+
     static int ansi_state = 0;
     static int ansi_code = 0;
 
@@ -148,11 +153,13 @@ void print_char(char character) {
     } else if (ansi_state == 2) {
         if (character >= '0' && character <= '9') {
             ansi_code = ansi_code * 10 + (character - '0');
+            irq_restore(flags); // Restore interrupts while parsing ANSI code
             return;
         }
         if (character == 'm') {
             apply_ansi_color(ansi_code);
             ansi_state = 0;
+            irq_restore(flags); // Restore interrupts after applying ANSI color
             return;
         }
         ansi_state = 0; 
@@ -203,6 +210,8 @@ void print_char(char character) {
     }
 
     update_screen();
+
+    irq_restore(flags); // Restore interrupts after printing
 }
 
 void puts(const char *str) {
@@ -217,6 +226,8 @@ void puts(const char *str) {
 /* --- Scrolling Logic --- */
 
 void scroll_history_up(int lines) {
+    uint32_t flags = irq_save(); // Disable interrupts during scrolling
+
     if (view_start_row >= (uint32_t)lines) {
         view_start_row -= lines;
     } else {
@@ -233,9 +244,11 @@ void scroll_history_up(int lines) {
     }
     
     update_screen();
+    irq_restore(flags); // Restore interrupts after scrolling
 }
 
 void scroll_history_down(int lines) {
+    uint32_t flags = irq_save(); // Disable interrupts during scrolling
     uint32_t max_view_start = 0;
     if (absolute_write_row >= MAX_ROW - 1) {
         max_view_start = absolute_write_row - MAX_ROW + 1;
@@ -247,6 +260,7 @@ void scroll_history_down(int lines) {
     }
     
     update_screen();
+    irq_restore(flags); // Restore interrupts after scrolling
 }
 
 
@@ -264,7 +278,6 @@ void print_hex(int n) {
     int start = 0;
     itoh(n, buffer, &start);
 
-    puts("0x");
     puts(&buffer[start]);
 }
 

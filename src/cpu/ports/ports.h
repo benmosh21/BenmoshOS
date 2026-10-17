@@ -34,4 +34,30 @@ static inline void io_wait(void) {
     outportb(0x80, 0);
 }
 
+// Save interrupt flags and disable interrupts
+static inline uint32_t irq_save(void) {
+    uint32_t flags;
+    __asm__ volatile (
+        "pushfd\n\t"
+        "pop %0\n\t"
+        "cli"
+        : "=r"(flags)
+        :
+        : "memory"
+    );
+    return flags;
+}
+
+
+// Restore the interrupt flags to the previous state
+static inline void irq_restore(uint32_t flags) {
+    __asm__ volatile (
+        "push %0\n\t"
+        "popf"
+        :
+        : "r"(flags)
+        : "memory"
+    );
+}
+
 #endif

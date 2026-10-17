@@ -43,6 +43,8 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
         return;
     }
 
+    uint32_t irq_state = irq_save();
+
     // Calculate the indices for the Page Directory and Page Table
     uint32_t pdi = virtual_address >> 22;
     uint32_t pti = (virtual_address >> 12) & 0x03FF;
@@ -92,9 +94,14 @@ void vmm_map_page(uint32_t physical_address, uint32_t virtual_address, uint32_t 
 
     // Flush the TLB for the requested virtual address
     __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (virtual_address) : "memory");
+
+    irq_restore(irq_state);
 }
 
 void vmm_unmap_page(uint32_t virtual_address) {
+
+    uint32_t irq_state = irq_save();
+
     uint32_t pdi = virtual_address >> 22;
     uint32_t pti = (virtual_address >> 12) & 0x03FF;
 
@@ -118,9 +125,14 @@ void vmm_unmap_page(uint32_t virtual_address) {
 
     // Flush the TLB for the requested virtual address
     __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (virtual_address) : "memory");
+
+    irq_restore(irq_state);
 }
 
 uint32_t vmm_get_physical(uint32_t virtual_address) {
+
+    uint32_t irq_state = irq_save();
+
     uint32_t pdi = virtual_address >> 22;
     uint32_t pti = (virtual_address >> 12) & 0x03FF;
     uint32_t offset = virtual_address & 0xFFF;
@@ -149,6 +161,8 @@ uint32_t vmm_get_physical(uint32_t virtual_address) {
     // Unmap the scratchpad
     first_page_table[1023] = 0;
     __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
+
+    irq_restore(irq_state);
 
     return physical;
 }
