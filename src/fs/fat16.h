@@ -4,12 +4,33 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../drivers/print/print.h"
-#include "../klib/string.h"
-#include "../drivers/ata/ata.h"      // Needed for ata_read_sector
+#include "../drivers/ata/ata.h"
 #include "../memory/heap/heap.h"
+#include "../klib/string.h"
+
+/* Standard Status & Error Codes */
+#define EOK          0   /* Success */
+#define ENOENT       2   /* No such file or directory */
+#define EIO          5   /* Hardware disk I/O error */
+#define ENOMEM      12   /* Out of memory */
+#define EEXIST      17   /* File or directory already exists */
+#define ENOTDIR     20   /* Component of path is not a directory */
+#define EISDIR      21   /* Is a directory, operation expected a file */
+#define EINVAL      22   /* Invalid argument */
+#define ENOSPC      28   /* No space left on disk */
+#define ENOTEMPTY   39   /* Directory not empty */
+
+/* FAT Attributes */
+#define FAT_ATTR_READ_ONLY 0x01
+#define FAT_ATTR_HIDDEN    0x02
+#define FAT_ATTR_SYSTEM    0x04
+#define FAT_ATTR_VOLUME_ID 0x08
+#define FAT_ATTR_DIRECTORY 0x10
+#define FAT_ATTR_ARCHIVE   0x20
+#define FAT_ATTR_LFN       0x0F
 
 #pragma pack(push, 1)
-// Maps the first 36 bytes of Sector 0
+
 typedef struct {
     uint8_t  jump[3];
     uint8_t  oem[8];
@@ -23,7 +44,6 @@ typedef struct {
     uint16_t sectors_per_fat;
 } bpb_t;
 
-// Maps the 32-byte FAT16 Directory Entry
 typedef struct {
     uint8_t  filename[8];
     uint8_t  extension[3];
@@ -34,24 +54,28 @@ typedef struct {
     uint16_t starting_cluster;
     uint32_t file_size;
 } dir_entry_t;
-#pragma pack(pop)
 
 struct lfn_entry {
-    uint8_t  sequence_number; // Order of this entry (1, 2, 3...)
-    uint16_t name1[5];        // First 5 characters (UTF-16)
-    uint8_t  attribute;       // MUST be 0x0F to prove it's a ghost entry
-    uint8_t  type;            // Always 0x00
-    uint8_t  checksum;        // Matches this ghost to the real 8.3 file below it
-    uint16_t name2[6];        // Next 6 characters (UTF-16)
-    uint16_t first_cluster;   // Always 0x0000 in a ghost entry
-    uint16_t name3[2];        // Last 2 characters (UTF-16)
-} __attribute__((packed));
+    uint8_t  sequence_number;
+    uint16_t name1[5];
+    uint8_t  attribute;
+    uint8_t  type;
+    uint8_t  checksum;
+    uint16_t name2[6];
+    uint16_t first_cluster;
+    uint16_t name3[2];
+};
 
-// Our main function that the kernel will call
-void fat16_print_file(char* target_file);
-uint8_t* fat16_load_file(char* target_file, uint32_t* out_file_size);
-void fat16_list_files();
-void fat16_create_file(char* target_name);
-void fat16_write_file(char* target_file, char* data, int rewriting);
+#pragma pack(pop)
 
-#endif
+/* Public API */
+void     fat16_init(void);
+int      fat16_list_directory(const char* path);
+uint8_t* fat16_load_file(const char* path, uint32_t* out_file_size);
+int      fat16_create_file(const char* path);
+int      fat16_write_file(const char* path, const char* data, uint32_t len, int append);
+int      fat16_delete_file(const char* path);
+int      fat16_make_directory(const char* path);
+int      fat16_remove_directory(const char* path);
+
+#endif /* FAT16_H */

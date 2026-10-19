@@ -250,37 +250,6 @@ void execute_command(char* command) {
     if (argc == 0) {
         return;
     }
-
-    if (!strcmp(argv[0], "ls")) {
-        if (argc > 1) {
-            puts("Usage: ls (no arguments)\n");
-        } else {
-            puts("Files on disk:\n");
-            fat16_list_files();
-        }
-    }
-    else if (!strcmp(argv[0], "cat")) {
-        if (argc != 2) {
-            puts("Usage: cat <filename>\n");
-        } else {
-            fat16_print_file(argv[1]);
-        }
-    }
-    else if (!strcmp(argv[0], "touch")) {
-        if (argc != 2) {
-            puts("Usage: touch <filename>\n");
-        } else {
-            fat16_create_file(argv[1]);
-        }
-    }
-    else if (!strcmp(argv[0], "write")) {
-        if (argc < 3) {
-            puts("Usage: write <word> <filename>\n");
-        } else {
-            fat16_write_file(argv[2], argv[1], 0);
-            puts("Written.\n");
-        }
-    }
     else if (!strcmp(argv[0], "echo")) {
         for (int i = 1; i < argc; i++) {
             puts(argv[i]);
@@ -433,6 +402,110 @@ void execute_command(char* command) {
             uint32_t pid = (uint32_t)atoi(argv[1]);
             task_kill(pid);
             printf("Killed process %d\n", pid);
+        }
+    } 
+    else if (!strcmp(argv[0], "ls")) {
+        const char* path = (argc > 1) ? argv[1] : "/";
+        int res = fat16_list_directory(path);
+        if (res == -ENOENT) {
+            printf("ls: cannot access '%s': No such file or directory\n", path);
+        } else if (res == -ENOTDIR) {
+            printf("ls: '%s': Not a directory\n", path);
+        } else if (res != EOK) {
+            printf("ls: error reading directory '%s' (%d)\n", path, res);
+        }
+    }
+    else if (!strcmp(argv[0], "cat")) {
+        if (argc != 2) {
+            puts("Usage: cat <path>\n");
+        } else {
+            uint32_t size = 0;
+            uint8_t* content = fat16_load_file(argv[1], &size);
+            if (!content) {
+                printf("cat: cannot open '%s'\n", argv[1]);
+            } else {
+                for (uint32_t i = 0; i < size; i++) {
+                    print_char((char)content[i]);
+                }
+                puts("\n");
+                kfree(content);
+            }
+        }
+    }
+    else if (!strcmp(argv[0], "touch")) {
+        if (argc != 2) {
+            puts("Usage: touch <path>\n");
+        } else {
+            int res = fat16_create_file(argv[1]);
+            if (res == -EEXIST) {
+                printf("touch: '%s': File exists\n", argv[1]);
+            } else if (res == -ENOENT) {
+                printf("touch: cannot touch '%s': No such parent directory\n", argv[1]);
+            } else if (res != EOK) {
+                printf("touch: failed to create file '%s' (%d)\n", argv[1], res);
+            }
+        }
+    }
+    else if (!strcmp(argv[0], "mkdir")) {
+        if (argc != 2) {
+            puts("Usage: mkdir <path>\n");
+        } else {
+            int res = fat16_make_directory(argv[1]);
+            if (res == -EEXIST) {
+                printf("mkdir: cannot create directory '%s': File exists\n", argv[1]);
+            } else if (res == -ENOENT) {
+                printf("mkdir: cannot create directory '%s': No such parent directory\n", argv[1]);
+            } else if (res != EOK) {
+                printf("mkdir: failed to create '%s' (%d)\n", argv[1], res);
+            }
+        }
+    }
+    else if (!strcmp(argv[0], "rm")) {
+        if (argc != 2) {
+            puts("Usage: rm <path>\n");
+        } else {
+            int res = fat16_delete_file(argv[1]);
+            if (res == -ENOENT) {
+                printf("rm: cannot remove '%s': No such file\n", argv[1]);
+            } else if (res == -EISDIR) {
+                printf("rm: cannot remove '%s': Is a directory (use rmdir)\n", argv[1]);
+            } else if (res != EOK) {
+                printf("rm: failed to remove '%s' (%d)\n", argv[1], res);
+            }
+        }
+    }
+    else if (!strcmp(argv[0], "rmdir")) {
+        if (argc != 2) {
+            puts("Usage: rmdir <path>\n");
+        } else {
+            int res = fat16_remove_directory(argv[1]);
+            if (res == -ENOENT) {
+                printf("rmdir: failed to remove '%s': No such directory\n", argv[1]);
+            } else if (res == -ENOTDIR) {
+                printf("rmdir: failed to remove '%s': Not a directory\n", argv[1]);
+            } else if (res == -ENOTEMPTY) {
+                printf("rmdir: failed to remove '%s': Directory not empty\n", argv[1]);
+            } else if (res != EOK) {
+                printf("rmdir: failed to remove '%s' (%d)\n", argv[1], res);
+            }
+        }
+    }
+    else if (!strcmp(argv[0], "write")) {
+        if (argc < 3) {
+            puts("Usage: write <text> <path>\n");
+        } else {
+            const char* text = argv[1];
+            const char* path = argv[2];
+            int res = fat16_write_file(path, text, strlen(text), 1);
+            if (res == -ENOENT) {
+                printf("write: '%s': No such file\n", path);
+            } else if (res == -EISDIR) {
+                printf("write: '%s': Is a directory\n", path);
+            } else if (res != EOK) {
+                printf("write: failed writing to '%s' (%d)\n", path, res);
+            } else {
+                puts("Written.\n");
+            }
         }
     }
     else {
