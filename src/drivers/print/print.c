@@ -282,7 +282,21 @@ void print_hex(int n) {
 }
 
 void set_print_color(uint16_t color) {
-    current_color = color;
+    current_color = (uint8_t)(color & 0xFF);
+
+    // Identify the active row index in the ring buffer
+    uint32_t current_buffer_idx = absolute_write_row % max_history_rows;
+
+    // Preserve the character currently under the cursor, but replace its attribute byte
+    uint16_t current_char = line_buffer[current_buffer_idx][write_col] & 0x00FF;
+    line_buffer[current_buffer_idx][write_col] = current_char | ((uint16_t)current_color << 8);
+
+    // If the active row is currently visible on the screen, update video memory directly
+    int screen_y = absolute_write_row - view_start_row;
+    if (screen_y >= 0 && screen_y < MAX_ROW) {
+        uint16_t *video_memory = (uint16_t *)VIDEO_ADDRESS;
+        video_memory[screen_y * MAX_COL + write_col] = line_buffer[current_buffer_idx][write_col];
+    }
 }
 
 void enable_dynamic_history(int total_rows) {

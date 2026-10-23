@@ -381,7 +381,8 @@ static int iterate_directory(uint16_t dir_cluster, dir_entry_callback_t callback
             dir_entry_t* dir = (dir_entry_t*)buffer;
             for (int i = 0; i < 16; i++) {
                 int action = callback(sec, i, &dir[i], context);
-                if (action != 0) return action;
+                if (action < 0) return action; // Propaget error code
+                if (action > 0) return EOK; // Normal early exit
             }
         }
     } else {
@@ -398,7 +399,8 @@ static int iterate_directory(uint16_t dir_cluster, dir_entry_callback_t callback
                 dir_entry_t* dir = (dir_entry_t*)buffer;
                 for (int i = 0; i < 16; i++) {
                     int action = callback(sec, i, &dir[i], context);
-                    if (action != 0) return action;
+                    if (action < 0) return action; // Propagate error code
+                    if (action > 0) return EOK; // Normal early exit
                 }
             }
             curr = fat16_read_fat_entry(curr);
@@ -753,7 +755,9 @@ uint8_t* fat16_load_file(const char* path, uint32_t* out_file_size) {
 
     if (entry.file_size == 0) {
         if (out_file_size) *out_file_size = 0;
-        return NULL;
+        uint8_t* empty_buffer = (uint8_t*)kmalloc(1);
+        if (empty_buffer) empty_buffer[0] = '\0';
+        return empty_buffer;
     }
 
     uint8_t* ram_buffer = (uint8_t*)kmalloc(entry.file_size);
@@ -834,7 +838,17 @@ int fat16_write_file(const char* path, const char* data, uint32_t len, int appen
     if (res != EOK) return res;
 
     res = fat16_find_in_dir(parent_cluster, filename, &entry, &target_sec, &target_idx);
-    if (res != EOK) return res;
+
+    // If the file does not exist, create it first
+    if (res == -ENOENT) {
+        /* File does not exist; create it first */
+        res = fat16_insert_entry(parent_cluster, filename, FAT_ATTR_ARCHIVE, 0, 0);
+        if (res != EOK) return res;
+
+        /* Re-resolve to get the new entry */
+        res = fat16_find_in_dir(parent_cluster, filename, &entry, &target_sec, &target_idx);
+        if (res != EOK) return res;
+    } else if (res != EOK) return res;
 
     if (entry.attributes & FAT_ATTR_DIRECTORY) return -EISDIR;
 
@@ -1212,12 +1226,19 @@ int fat16_list_directory(const char* path) {
         dir_entry_t entry;
 
         int res = fat16_resolve_path(path, &parent_cluster, dirname, &entry);
-        if (res != EOK) return res;
+        if (res != EOK){ 
+            set_print_color(0x0F);
+            return res; 
+        }
 
         res = fat16_find_in_dir(parent_cluster, dirname, &entry, NULL, NULL);
-        if (res != EOK) return res;
+        if (res != EOK) {
+            set_print_color(0x0F);
+            return res;
+        }
 
         if (!(entry.attributes & FAT_ATTR_DIRECTORY)) {
+            set_print_color(0x0F);
             return -ENOTDIR;
         }
 
@@ -1227,5 +1248,9 @@ int fat16_list_directory(const char* path) {
     list_dir_ctx_t ctx;
     memset((uint8_t*)&ctx, 0, sizeof(ctx));
 
-    return iterate_directory(target_cluster, list_dir_callback, &ctx);
+    int status = iterate_directory(target_cluster, list_dir_callback, &ctx);
+
+    set_print_color(0x0F);
+    
+    return status;
 }

@@ -120,8 +120,8 @@ static void schedule() {
 }
 
 void task_yield() {
-	// Disable interrupts so PIT timer cant fire while swapping
-	__asm__ volatile("cli");
+	// Save the current CPU state and switch to the next READY task
+	uint32_t flags = irq_save();
 
 	uint32_t old_task = current_task;
 
@@ -139,12 +139,12 @@ void task_yield() {
 	// after each switch checking for dead_tasks
 	reap_dead_tasks();
 
-	// enable interrupts
-	__asm__ volatile("sti");
+	// reenable interrupts after context switch is done
+	irq_restore(flags);
 }
 
 void task_exit() {
-	__asm__ volatile("cli");
+	uint32_t flags = irq_save();
 
 	if (current_task == 0) {
 		for (;;) {

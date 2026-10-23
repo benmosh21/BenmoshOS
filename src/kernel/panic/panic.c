@@ -6,7 +6,7 @@
 // Makes a panic message and then hlt
 void kernel_panic(const char* message, ...) {
     // disable interrupts
-    __asm__ volatile("cli");
+    uint32_t flags = irq_save();
 
     // Print the panic message
     set_print_color(0x4F);      // White on red

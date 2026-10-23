@@ -213,6 +213,7 @@ void shell_run(void) {
 
     while (1) {
         shell_keyboard();
+        set_print_color(0x0F);
     }
 }
 
@@ -407,6 +408,7 @@ void execute_command(char* command) {
     else if (!strcmp(argv[0], "ls")) {
         const char* path = (argc > 1) ? argv[1] : "/";
         int res = fat16_list_directory(path);
+        set_print_color(0x0F);
         if (res == -ENOENT) {
             printf("ls: cannot access '%s': No such file or directory\n", path);
         } else if (res == -ENOTDIR) {

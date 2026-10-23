@@ -45,7 +45,7 @@ void* kmalloc(uint32_t requested_size) {
             }
             
             // Re-enable interrupts before returning success
-            __asm__ volatile("sti");
+            irq_restore(flags);
             return (void*)((uint32_t)current + 8);
 
         }

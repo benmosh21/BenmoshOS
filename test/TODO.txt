@@ -1,118 +1,83 @@
 =============================================================================
-BenmoshOS Engineering Roadmap
+BenmoshOS Production Engineering Roadmap (No Shortcuts)
 =============================================================================
 
-[PHASE 1: FILESYSTEM & STORAGE COMPLETION]
-1.1 Cache BPB on boot
-    - Initialize FAT16 once in fat16_init()
-    - Store sectors_per_cluster, root_dir_sector, fat_start_sector globally
-    - Stop reading Sector 0 on every file call
-
-1.2 Implement cluster chain management
-    - Complete fat16_read_fat_entry(cluster)
-    - Complete fat16_write_fat_entry(cluster, value) with dual-FAT mirroring
-    - Complete fat16_alloc_cluster()
-    - Complete fat16_free_chain(start_cluster) to prevent disk space leaks
-
-1.3 Complete file operations
-    - Implement fat16_delete_file(filename)
-      * Mark directory entry first byte with 0xE5
-      * Mark any associated LFN ghost entries with 0xE5
-      * Call fat16_free_chain() to release allocated clusters
-    - Overhaul fat16_write_file()
-      * Support arbitrary write lengths spanning multiple clusters safely
-      * Support truncate mode vs append mode properly
-    - Unify read path: keep fat16_read() as pure byte buffer loading; 
-      move all printing/puts logic to shell.c
+[PHASE 1: STORAGE & DIRECTORY ENGINE COMPLETION]
+1.1 Directory Tree Verification
+    - Verify mkdir, rmdir, and recursive path operations in QEMU
+    - Confirm zero-byte file load handling and clean EOF traversal in iterate_directory
 
 -----------------------------------------------------------------------------
-
-[PHASE 2: VIRTUAL MEMORY & PROCESS ISOLATION]
-2.1 Page fault handler enhancements
-    - Read CR2 register on #PF (Interrupt 14)
-    - Check if address falls in user stack guard space (0x00900000 - 0x00A00000)
-    - Automatically allocate a frame and map it (Demand Paged Stack)
-
-2.2 Per-Process Page Directories
-    - Create vmm_create_address_space()
-      * Clone the kernel page tables (0xC0000000 or top mapping) into new directory
-      * Leave user space (lower addresses) zeroed
-    - Update switch_context to swap CR3 on task switch if page directory differs
-
-2.3 Process memory heap (sys_brk)
-    - Track start_brk and current_brk in the process control block
-    - Add Syscall for sys_brk: maps/unmaps virtual pages as user heap expands
+[PHASE 2: LOW-LEVEL ARCHITECTURAL REFACTOR (THE SOLID FOUNDATION)]
+2.1 Re-entrant CPU State Control
+    - Replace all naked cli/sti with irq_save() / irq_restore()
+    - Audit all interrupt critical sections across heap, tasking, and memory
+2.2 Intrusive Data Structures (The Linux Model)
+    - Implement list_head and container_of macros
+    - Replace task_table[16] array compaction with intrusive linked lists
+    - Implement dedicated task queues: ready_list, sleep_list, zombie_list
+2.3 Cascading Resource Cleanup Standard
+    - Refactor multi-allocation functions to use downward goto labels
 
 -----------------------------------------------------------------------------
-[PHASE 2.5: ARCHITECTURE REFACTOR & DATA STRUCTURES]
-- Implement intrusive doubly linked list (list_head and container_of)
-- Replace static task_table[16] with intrusive scheduler runqueues
-- Audit codebase: replace raw cli/sti with irq_save/irq_restore
-- Reorganize directory tree into arch/x86/ and kernel/
------------------------------------------------------------------------------
-
-[PHASE 3: PROCESS LIFECYCLE & ELF32 LOADER]
-3.1 Process Control Block (PCB) separation
-    - Split task_t into thread/context and process_t (PID, parent_pid, cr3, brk)
-    - Support process states: EMBRYO, READY, RUNNING, SLEEPING, ZOMBIE, DEAD
-
-3.2 ELF32 Executable Loader
-    - Define ELF32 header structures (Elf32_Ehdr, Elf32_Phdr)
-    - Create elf_load(uint8_t* elf_data, process_t* out_proc)
-    - Verify ELF magic bytes (\x7F, 'E', 'L', 'F')
-    - Map each PT_LOAD segment to its specified virtual address
-    - Zero out .bss segment according to p_memsz > p_filesz
-    - Return e_entry point
-
-3.3 Process creation syscalls
-    - Implement sys_execve(const char* path, char** argv)
-      * Load ELF from FAT16
-      * Replace current memory space
-      * Set ESP and jump to user entry
-    - Implement sys_fork()
-      * Clone parent page directory (duplicate frames)
-      * Clone process metadata and register state
-      * Return 0 to child, child PID to parent
-    - Implement sys_waitpid(int pid, int* status) and sys_exit(int code)
-      * Clean up zombie processes and release all physical frames
+[PHASE 3: VIRTUAL MEMORY & PER-PROCESS ADDRESS SPACES]
+3.1 Address Space Cloning & Isolation
+    - Implement vmm_create_address_space()
+    - Higher-half / Kernel mapping preservation (0x00000000-0x00800000 mapped identically)
+    - Distinct userland page directory per task
+3.2 Hardware Context Switching with CR3
+    - Update switch_context assembly to swap CR3 on task switch
+    - Reload TSS esp0 on every context switch for Ring 3 kernel re-entry
+3.3 Demand Paging & The Page Fault Handler (#PF)
+    - Parse CR2 register and error codes in ISR 14
+    - Implement guard page and dynamic stack expansion (fault-on-touch)
+3.4 User Heap Virtual Expansion (sys_brk)
+    - Track start_brk and current_brk per process
+    - Map fresh 4KB pages when brk increases, unmap when shrinking
 
 -----------------------------------------------------------------------------
-
-[PHASE 4: VFS & FILE DESCRIPTORS]
-4.1 File Descriptor Table
-    - Add file_descriptor_t* fd_table[MAX_FDS] to process struct
-    - Reserve standard streams: 0 = stdin, 1 = stdout, 2 = stderr
-4.2 File Syscalls
-    - sys_open(const char* path, int flags)
-    - sys_read(int fd, void* buf, size_t count)
-    - sys_write(int fd, const void* buf, size_t count)
-    - sys_close(int fd)
-4.3 Pipeline primitives
-    - Implement anonymous pipes (ring buffer with reader/writer references)
-    - Implement sys_pipe(int pipefd[2])
-
------------------------------------------------------------------------------
-
-[PHASE 5: STANDALONE USERLAND & SHELL]
-5.1 Minimal C Runtime (crt0.o) & User Library
-    - Write crt0.asm entry point (calls main, handles sys_exit on return)
-    - Provide user-space stdio/stdlib wrapping int 0x80 syscalls
-5.2 Move Shell out of Ring 0
-    - Compile shell as standalone /bin/sh.elf on FAT16 disk
-    - Kernel boots, mounts root FAT16, loads /bin/sh.elf, drops to Ring 3
-5.3 Core Utilities
-    - /bin/ls, /bin/cat, /bin/echo, /bin/touch, /bin/rm
-    - Simple text editor (e.g., mini nano/ed clone)
+[PHASE 4: PROCESS LIFECYCLE & THE ELF32 LOADER]
+4.1 Process Control Block (PCB) & Threading Split
+    - Separate thread execution context from process resources
+    - Implement process states: EMBRYO, READY, RUNNING, SLEEPING, ZOMBIE, DEAD
+4.2 ELF32 Binary Parser
+    - Parse Elf32_Ehdr and verify ELF magic (\x7F, 'E', 'L', 'F')
+    - Iterate Elf32_Phdr program headers
+    - Allocate and map PT_LOAD segments directly into target address space
+    - Zero out .bss segments where p_memsz > p_filesz
+4.3 Process Spawning & Cloning
+    - Implement sys_execve(path, argv) loading ELF directly off FAT16
+    - Implement sys_fork() with page directory frame copying
+    - Implement sys_exit(status) and sys_waitpid(pid, status_ptr)
 
 -----------------------------------------------------------------------------
+[PHASE 5: VFS & UNIFIED FILE DESCRIPTORS]
+5.1 VFS Node Interface
+    - Define vfs_node_t with .read, .write, .open, .close function pointer tables
+    - Wrap fat16.c behind the VFS abstraction
+5.2 File Descriptor Table
+    - Implement per-process fd_table[MAX_FDS]
+    - Bind fd 0, 1, 2 to standard console I/O
+5.3 Syscall Interface Wiring
+    - sys_open, sys_read, sys_write, sys_close, sys_pipe
 
-[PHASE 6: ADVANCED PLATFORM FEATURES]
-6.1 SMP (Symmetric Multiprocessing)
-    - Detect ACPI MADT table
+-----------------------------------------------------------------------------
+[PHASE 6: RING 3 USERLAND & SYSTEM SHELL]
+6.1 Minimal C Runtime (crt0.o)
+    - Write crt0.asm entry point to setup user stack and invoke main()
+    - Implement libc wrappers around int 0x80 syscalls
+6.2 Move Shell out of Kernel
+    - Compile shell.c into /bin/sh.elf stored on the FAT16 disk
+    - Kernel boots, mounts root, and launches /bin/sh in Ring 3
+
+-----------------------------------------------------------------------------
+[PHASE 7: HARDWARE CONCURRENCY & NETWORKING]
+7.1 SMP (Symmetric Multiprocessing)
+    - Parse ACPI MADT table
     - Initialize Local APIC and I/O APIC
-    - Send INIT-SIPI-SIPI sequence to wake application processors (APs)
-    - Implement multicore spinlocks for scheduler and memory allocators
-6.2 Device Drivers & Networking
+    - Wake Application Processors (APs) via INIT-SIPI-SIPI sequence
+    - Implement spinlocks for SMP-safe scheduler and memory pools
+7.2 PCI & Ethernet Driver
     - PCI bus enumeration
-    - Realtek RTL8139 or Intel E1000 network driver
-    - Ethernet packet buffering, ARP, IPv4, ICMP (ping), UDP, TCP
+    - RTL8139 or Intel E1000 driver
+    - Minimal packet pipeline (ARP, IPv4, ICMP, UDP)

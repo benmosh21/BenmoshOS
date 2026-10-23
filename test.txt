@@ -1,2 +1,10 @@
 this is a test file
 i connected it to a normal file
+outside of the OS and it works fine (i guess because i dont understand how to use the OS file system
+i know i should understand it but i dont have time to do that right now even though i am the one who wrote it
+is it a good idea to not understand your own code, especially when it is an OS? i guess it is not a good idea but i am not going to do anything about it right now
+copilot help me understand my own code, please!!!
+the code is a function that iterates through directory entries in a FAT16 file system. It takes a callback function as an argument, which is called for each directory entry. The callback function can return different values to indicate how the iteration should proceed:
+- If the callback returns a negative value, the iteration stops and the error code is propagated back
+- If the callback returns a positive value, the iteration stops and the function returns EOK to
+    
