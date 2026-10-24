@@ -2,82 +2,49 @@
 BenmoshOS Production Engineering Roadmap (No Shortcuts)
 =============================================================================
 
-[PHASE 1: STORAGE & DIRECTORY ENGINE COMPLETION]
-1.1 Directory Tree Verification
-    - Verify mkdir, rmdir, and recursive path operations in QEMU
-    - Confirm zero-byte file load handling and clean EOF traversal in iterate_directory
+[PHASE 1: STORAGE & DIRECTORY ENGINE COMPLETION] - COMPLETED
+[x] 1.1 Cache BPB geometry on boot to eliminate redundant sector 0 reads
+[x] 1.2 Implement cluster allocation, EOF tracking, chain freeing, and dual FAT mirroring
+[x] 1.3 Implement unified directory iterator supporting root and subdirectories
+[x] 1.4 Implement canonical path resolution (/dir1/dir2/file.txt)
+[x] 1.5 Implement directory management (mkdir, rmdir) with empty checks
+[x] 1.6 Implement file operations: load, create, multi-cluster write, and delete (0xE5)
+[x] 1.7 Fix zero-byte file loads and clean early EOF return (res == 1) in iterate_directory
 
 -----------------------------------------------------------------------------
-[PHASE 2: LOW-LEVEL ARCHITECTURAL REFACTOR (THE SOLID FOUNDATION)]
-2.1 Re-entrant CPU State Control
-    - Replace all naked cli/sti with irq_save() / irq_restore()
-    - Audit all interrupt critical sections across heap, tasking, and memory
-2.2 Intrusive Data Structures (The Linux Model)
-    - Implement list_head and container_of macros
-    - Replace task_table[16] array compaction with intrusive linked lists
-    - Implement dedicated task queues: ready_list, sleep_list, zombie_list
-2.3 Cascading Resource Cleanup Standard
-    - Refactor multi-allocation functions to use downward goto labels
+[PHASE 2: LOW-LEVEL ARCHITECTURAL REFACTOR] - IN PROGRESS
+[x] 2.1 Re-entrant CPU State Control (irq_save / irq_restore across heap, task, ports)
+[x] 2.2 Intrusive Data Structures (list_head, container_of, ready_list, all_tasks_list)
+[ ] 2.3 Cascading Resource Cleanup Standard (goto unwind patterns in allocators)
 
 -----------------------------------------------------------------------------
 [PHASE 3: VIRTUAL MEMORY & PER-PROCESS ADDRESS SPACES]
-3.1 Address Space Cloning & Isolation
-    - Implement vmm_create_address_space()
-    - Higher-half / Kernel mapping preservation (0x00000000-0x00800000 mapped identically)
-    - Distinct userland page directory per task
-3.2 Hardware Context Switching with CR3
-    - Update switch_context assembly to swap CR3 on task switch
-    - Reload TSS esp0 on every context switch for Ring 3 kernel re-entry
-3.3 Demand Paging & The Page Fault Handler (#PF)
-    - Parse CR2 register and error codes in ISR 14
-    - Implement guard page and dynamic stack expansion (fault-on-touch)
-3.4 User Heap Virtual Expansion (sys_brk)
-    - Track start_brk and current_brk per process
-    - Map fresh 4KB pages when brk increases, unmap when shrinking
+[ ] 3.1 Address Space Creation & Kernel Mapping Cloning (vmm_create_address_space)
+[ ] 3.2 Hardware Context Switching with CR3 (update switch_context assembly + TSS esp0)
+[ ] 3.3 Demand Paging & Page Fault Handler (#PF - ISR 14 stack auto-growth)
+[ ] 3.4 User Heap Virtual Expansion (sys_brk)
 
 -----------------------------------------------------------------------------
 [PHASE 4: PROCESS LIFECYCLE & THE ELF32 LOADER]
-4.1 Process Control Block (PCB) & Threading Split
-    - Separate thread execution context from process resources
-    - Implement process states: EMBRYO, READY, RUNNING, SLEEPING, ZOMBIE, DEAD
-4.2 ELF32 Binary Parser
-    - Parse Elf32_Ehdr and verify ELF magic (\x7F, 'E', 'L', 'F')
-    - Iterate Elf32_Phdr program headers
-    - Allocate and map PT_LOAD segments directly into target address space
-    - Zero out .bss segments where p_memsz > p_filesz
-4.3 Process Spawning & Cloning
-    - Implement sys_execve(path, argv) loading ELF directly off FAT16
-    - Implement sys_fork() with page directory frame copying
-    - Implement sys_exit(status) and sys_waitpid(pid, status_ptr)
+[ ] 4.1 Process Control Block (PCB) & Threading Split
+[ ] 4.2 ELF32 Binary Parser & Loader (Elf32_Ehdr, PT_LOAD mapping, .bss zeroing)
+[ ] 4.3 Process Spawning & Cloning (sys_execve, sys_fork, sys_waitpid, sys_exit)
 
 -----------------------------------------------------------------------------
 [PHASE 5: VFS & UNIFIED FILE DESCRIPTORS]
-5.1 VFS Node Interface
-    - Define vfs_node_t with .read, .write, .open, .close function pointer tables
-    - Wrap fat16.c behind the VFS abstraction
-5.2 File Descriptor Table
-    - Implement per-process fd_table[MAX_FDS]
-    - Bind fd 0, 1, 2 to standard console I/O
-5.3 Syscall Interface Wiring
-    - sys_open, sys_read, sys_write, sys_close, sys_pipe
+[ ] 5.1 VFS Node Interface (vfs_node_t with .read, .write, .open, .close)
+[ ] 5.2 Per-Process File Descriptor Table (fd 0, 1, 2 for stdin/stdout/stderr)
+[ ] 5.3 Syscall Interface Wiring (sys_open, sys_read, sys_write, sys_close, sys_pipe)
 
 -----------------------------------------------------------------------------
 [PHASE 6: RING 3 USERLAND & SYSTEM SHELL]
-6.1 Minimal C Runtime (crt0.o)
-    - Write crt0.asm entry point to setup user stack and invoke main()
-    - Implement libc wrappers around int 0x80 syscalls
-6.2 Move Shell out of Kernel
-    - Compile shell.c into /bin/sh.elf stored on the FAT16 disk
-    - Kernel boots, mounts root, and launches /bin/sh in Ring 3
+[ ] 6.1 Minimal C Runtime (crt0.o) & User Library (int 0x80 wrappers)
+[ ] 6.2 Move Shell out of Kernel (/bin/sh.elf on FAT16 disk)
+[ ] 6.3 Implement Shell Builtins (cd, ls, cat, echo, kill, etc.)
+[ ] 6.4 Implement Shell Scripting (sh -c "echo hello; ls; cat file.txt")
 
 -----------------------------------------------------------------------------
 [PHASE 7: HARDWARE CONCURRENCY & NETWORKING]
-7.1 SMP (Symmetric Multiprocessing)
-    - Parse ACPI MADT table
-    - Initialize Local APIC and I/O APIC
-    - Wake Application Processors (APs) via INIT-SIPI-SIPI sequence
-    - Implement spinlocks for SMP-safe scheduler and memory pools
-7.2 PCI & Ethernet Driver
-    - PCI bus enumeration
-    - RTL8139 or Intel E1000 driver
-    - Minimal packet pipeline (ARP, IPv4, ICMP, UDP)
+[ ] 7.1 SMP (Symmetric Multiprocessing: MADT, Local APIC, I/O APIC, Spinlocks)
+[ ] 7.2 PCI & Ethernet Driver (RTL8139 / Intel E1000)
+[ ] 7.3 TCP/IP Stack (ARP, ICMP, UDP, TCP, DHCP, DNS)

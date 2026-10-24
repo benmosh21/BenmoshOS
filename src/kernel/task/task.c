@@ -3,11 +3,25 @@
 #include "../../memory/vmm/vmm.h"
 #include "../../memory/heap/heap.h"
 #include "../tss/tss.h"
+#include "../../cpu/ports/ports.h"
 
-static task_t task_table[MAX_TASKS];
+static LIST_HEAD(ready_list);
+LIST_HEAD(all_tasks_list);
+static LIST_HEAD(dead_list);
+
+static task_t* 	current_task_ptr = NULL;
+static task_t 	kernel_task;// The kernel task PCB
 static uint32_t task_count	 = 0;
-static uint32_t current_task = 0;
 static uint32_t next_pid	 = 1;
+
+static void task_exit_trampoline(void (*entry_point)(void)) {
+    /* Enable interrupts now that we are executing the task context */
+    __asm__ volatile("sti");
+    
+    entry_point();
+    
+    task_exit();
+}
 
 void task_init(void) {
 	/*
@@ -15,36 +29,52 @@ void task_init(void) {
 	 * Because the task is already running and having a stack we dont need to set it.
 	 * switch_context will fill the rest needed in the stack 
 	 */
-	task_table[0].pid = next_pid++;
-	task_table[0].state = TASK_RUNNING;
-	task_table[0].stack_base = 0;	// kernel original stack 
-	task_table[0].stack_top = 0x90000;
-	task_table[0].esp = 0;
+
+	current_task_ptr = &kernel_task;
+
+	kernel_task.pid 		= next_pid++;
+	kernel_task.state 		= TASK_RUNNING;
+	kernel_task.stack_base 	= 0;	// kernel original stack
+	kernel_task.stack_top  	= 0x90000;
+	kernel_task.esp 		= 0; // will be filled by switch_context
+	kernel_task.ticks 		= 0;
+	
+	list_init(&kernel_task.list);
+	list_init(&kernel_task.all_list);
+
+	list_add_tail(&kernel_task.all_list, &all_tasks_list);
+
+	current_task_ptr = &kernel_task;
 	task_count = 1;
+	
 }
 
 task_t* task_create(void (*entry_point)(void)) {
 
-	// check if there is place for more task
-	if (task_count >= MAX_TASKS) {
-		return NULL;
-	}
+	uint32_t flags = irq_save();
 
 	// get a pointer to the next available struct in the array
-	task_t* new_task = &task_table[task_count];
+	task_t* new_task = (task_t*)kmalloc(sizeof(task_t));
+	if (new_task == NULL) {
+		irq_restore(flags);
+		return NULL;
+	}
 
 	// alocate aligned 4KB stack for the task
 	uint32_t* stack = (uint32_t*)kmalloc_aligned(STACK_SIZE, 16);
 	if (stack == NULL) {
+		kfree(new_task);
+		irq_restore(flags);
 		return NULL;
 	}
 
 	// put the stack at the end of the stack space (stack grows down)
 	uint32_t* sp = (uint32_t*)((uint32_t)stack + STACK_SIZE);
 
-	*(--sp) = (uint32_t)task_exit;
 	// put return EIP at the start of the stack
 	*(--sp) = (uint32_t)entry_point;
+	*(--sp) = 0; // dummy return address for trampoline
+	*(--sp) = (uint32_t)task_exit_trampoline;
 
 	// then the eflags
 	*(--sp) = 0x202;
@@ -69,90 +99,88 @@ task_t* task_create(void (*entry_point)(void)) {
 	new_task->state 	 = TASK_READY;
 	new_task->ticks 	 = 0;
 
+	list_init(&new_task->list);
+	list_init(&new_task->all_list);
+
+	list_add_tail(&new_task->list, &ready_list);
+	list_add_tail(&new_task->all_list, &all_tasks_list);
+
 	task_count++;
 
+	irq_restore(flags);
 	return new_task;
 }
 
 
 // free dead_tasks memories
 static void reap_dead_tasks() {
-	for (uint32_t i = 0; i < task_count; i++) {
-		if (task_table[i].state == TASK_DEAD && i != current_task) {
-			if (task_table[i].stack_base != 0) {
-				if ((void*)task_table[i].stack_base != NULL) {
-					kfree_aligned((void*)task_table[i].stack_base);
-				}
-				task_table[i].stack_base = 0;
-			}
 
-			for (uint32_t j = i; j < task_count -1; j++) {
-				task_table[j] = task_table[j+1];
-			}
-			task_count--;
+	struct list_head* pos, *n;
 
-			if (current_task > i) {
-				current_task--;
-			}
-			i--;
+	list_for_each_safe(pos, n, &dead_list) {
+		task_t* task = list_entry(pos, task_t, list);
+
+		// Remove the task from the dead list and all_tasks_list
+		list_del(&task->list);
+		list_del(&task->all_list);
+
+		// Free the stack memory if it was allocated
+		if (task->stack_base != 0) {
+			kfree_aligned((void*)task->stack_base);
 		}
-	}
-}
-
-// Find the next READY task in the circular array
-static void schedule() {
-	uint32_t original_task = current_task;
-
-	if (task_table[current_task].state == TASK_RUNNING) {
-		task_table[current_task].state = TASK_READY;
+		kfree(task);
+		task_count--;
 	}
 
-	do {
-		current_task = (current_task + 1) % task_count;
-
-		if (task_table[current_task].state == TASK_READY) {
-			break;
-		}
-	} while (current_task != original_task);
-
-	task_table[current_task].state = TASK_RUNNING;
-	task_table[current_task].ticks++;
 }
 
+
+// Find the next READY task in the ready_list do context switch to it
 void task_yield() {
 	// Save the current CPU state and switch to the next READY task
 	uint32_t flags = irq_save();
 
-	uint32_t old_task = current_task;
+	reap_dead_tasks(); // Clean up any dead tasks after switching
 
-	// will find next task to run and set the current_task to that new task
-	schedule();
-
-	if (current_task != old_task) {
-		// Update TSS esp0 for the new task
-		g_tss.esp0 = task_table[current_task].stack_top;
-
-		// do context switch to the new task
-		switch_context(&task_table[old_task].esp, &task_table[current_task].esp);
+	if (list_empty(&ready_list)) {
+		irq_restore(flags);
+		return; // No other tasks to switch to
 	}
 
-	// after each switch checking for dead_tasks
-	reap_dead_tasks();
+	task_t* old_task = current_task_ptr;
+
+	if (old_task->state == TASK_RUNNING) {
+		old_task->state = TASK_READY;
+		list_add_tail(&old_task->list, &ready_list);
+	}
+
+	task_t* next_task = list_first_entry(&ready_list, task_t, list);
+	list_del(&next_task->list);
+
+	next_task->state = TASK_RUNNING;
+	next_task->ticks++;
+	current_task_ptr = next_task;
+
+	// Update hardware TSS for ring 3 re-entry
+	g_tss.esp0 = next_task->stack_top;
+
+	switch_context(&old_task->esp, &next_task->esp);
 
 	// reenable interrupts after context switch is done
 	irq_restore(flags);
 }
 
 void task_exit() {
-	uint32_t flags = irq_save();
+	irq_save();
 
-	if (current_task == 0) {
+	if (current_task_ptr == &kernel_task) {
 		for (;;) {
 			__asm__ volatile("hlt");
 		}
 	}
 
-	task_table[current_task].state = TASK_DEAD;
+	current_task_ptr->state = TASK_DEAD;
+	list_add_tail(&current_task_ptr->list, &dead_list);
 
 	task_yield();
 	
@@ -162,28 +190,37 @@ void task_exit() {
     }
 }
 
-void task_kill(uint32_t pid) {
-	if (pid <= 1) return; // dont remove the kernel
+// kill task, return 0 if success, else return -1
+int task_kill(uint32_t pid) {
+	uint32_t flags = irq_save();
 
-	for (int i = 0 ; i < task_count; i++) {
-		if (task_table[i].pid == pid && task_table[i].state != TASK_DEAD) {
-			task_table[i].state = TASK_DEAD;
-			if (i == current_task) {
-				task_yield();
+	if (pid <= 1) {
+		irq_restore(flags);
+		return -1; // Prevent killing the kernel task
+	}
+
+	struct list_head* pos;
+	list_for_each(pos, &all_tasks_list) {
+		task_t* task = list_entry(pos, task_t, all_list);
+		if (task->pid == pid && task->state != TASK_DEAD) {
+			if (task == current_task_ptr) {
+				task_exit(); // If it's the current task, exit it
+			} else {
+				list_del(&task->list); // Remove from ready list if it's there
+				task->state = TASK_DEAD;
+				list_add_tail(&task->list, &dead_list);
 			}
-			return;
+			irq_restore(flags);
+			return 0;
 		}
 	}
-    
+
+	irq_restore(flags);
+	return -1; // Task with the given PID not found
 }
 
 task_t* task_current() {
-	return &task_table[current_task];
-}
-
-task_t *task_get(uint32_t index) {
-	if (index >= task_count) return NULL;
-    return &task_table[index];
+	return current_task_ptr;
 }
 
 uint32_t task_get_count() {

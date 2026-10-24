@@ -163,8 +163,10 @@ void KernelMain() {
     __asm__ volatile("sti");
 
     
+    // task_create(task_b);
     task_create(task_a);
-    //task_create(task_b);
+    task_create(task_a);
+    task_create(task_a);
 
     
     shell_run();

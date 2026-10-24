@@ -54,6 +54,7 @@ OBJS = $(ENTRY_OBJ) \
        $(BUILD_DIR)/heap.o \
        $(BUILD_DIR)/string.o \
        $(BUILD_DIR)/stdio.o \
+	   $(BUILD_DIR)/test.o \
        $(BUILD_DIR)/stdlib.o
 
 # --- Output Binaries ---
@@ -96,6 +97,10 @@ $(BUILD_DIR)/task_asm.o: $(SRC_DIR)/kernel/task/task.asm
 	@mkdir -p $(@D)
 	$(ASM) -f elf32 $< -o $@
 
+$(BUILD_DIR)/test.o: $(SRC_DIR)/kernel/test.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # --- C Compilation Rules ---
 $(BUILD_DIR)/kernel.o:   $(SRC_DIR)/kernel/kernel.c          ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 $(BUILD_DIR)/panic.o:    $(SRC_DIR)/kernel/panic/panic.c     ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
@@ -116,6 +121,7 @@ $(BUILD_DIR)/heap.o:     $(SRC_DIR)/memory/heap/heap.c       ; @mkdir -p $(@D); 
 $(BUILD_DIR)/string.o:   $(SRC_DIR)/klib/string.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 $(BUILD_DIR)/stdio.o:    $(SRC_DIR)/klib/stdio.c             ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 $(BUILD_DIR)/stdlib.o:   $(SRC_DIR)/klib/stdlib.c            ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/tests.o: $(SRC_DIR)/kernel/test.c ; @mkdir -p $(@D); $(CC) $(CFLAGS) -c $< -o $@
 
 # =============================================================================
 # Disk Image Generation

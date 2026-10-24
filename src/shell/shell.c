@@ -1,4 +1,5 @@
 #include "shell.h"
+#include "../kernel/test.h"
 
 #define MAX_HISTORY     256
 #define MAX_LINE_LENGTH 256
@@ -381,10 +382,13 @@ void execute_command(char* command) {
     else if (!strcmp(argv[0], "ps")) {
         puts("PID    STATE    TICKS    STACK_TOP\n");
         puts("----------------------------------\n");
-        uint32_t count = task_get_count();
 
-        for (uint32_t i = 0; i < count; i++) {
-            task_t* t = task_get(i);
+        extern struct list_head all_tasks_list;
+        struct list_head* pos;
+
+        uint32_t flag = irq_save();
+        list_for_each(pos, &all_tasks_list) {
+            task_t* t = list_entry(pos, task_t, all_list);
             if (!t) continue;
 
             const char* state_str = "UNKNOWN";
@@ -395,14 +399,22 @@ void execute_command(char* command) {
 
             printf("%d      %s  %d        0x%x\n", t->pid, state_str, t->ticks, t->stack_top);
         }
+        irq_restore(flag);
     }
     else if (!strcmp(argv[0], "kill")) {
         if (argc != 2) {
             puts("Usage: kill <pid>\n");
         } else {
             uint32_t pid = (uint32_t)atoi(argv[1]);
-            task_kill(pid);
-            printf("Killed process %d\n", pid);
+            if (task_kill(pid) == -1) {
+                if (pid <= 1) {
+                    printf("kill: cannot kill process %d: Permission denied\n", pid);
+                } else {
+                    printf("kill: cannot kill process %d: No such process\n", pid);
+                }
+            } else {
+                printf("Killed process %d\n", pid);
+            }
         }
     } 
     else if (!strcmp(argv[0], "ls")) {
@@ -509,8 +521,9 @@ void execute_command(char* command) {
                 puts("Written.\n");
             }
         }
-    }
-    else {
+    } else if (!strcmp(argv[0], "test")) {
+        run_all_tests();
+    } else {
         puts("Unknown command: '");
         puts(argv[0]);
         puts("' (use 'help' for available commands)\n");
