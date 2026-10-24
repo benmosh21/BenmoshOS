@@ -53,20 +53,21 @@ task_t* task_create(void (*entry_point)(void)) {
 
 	uint32_t flags = irq_save();
 
-	// get a pointer to the next available struct in the array
-	task_t* new_task = (task_t*)kmalloc(sizeof(task_t));
+	task_t* new_task = NULL;
+	uint32_t* stack = NULL;
+
+	// Allocate memory for the new task's PCB
+	new_task = (task_t*)kmalloc(sizeof(task_t));
 	if (new_task == NULL) {
-		irq_restore(flags);
-		return NULL;
+		goto err_out;
 	}
 
-	// alocate aligned 4KB stack for the task
-	uint32_t* stack = (uint32_t*)kmalloc_aligned(STACK_SIZE, 16);
+	// Allocate a new stack for the task, aligned to 16 bytes
+	stack = (uint32_t*)kmalloc_aligned(STACK_SIZE, 16);
 	if (stack == NULL) {
-		kfree(new_task);
-		irq_restore(flags);
-		return NULL;
+		goto err_free_task;
 	}
+
 
 	// put the stack at the end of the stack space (stack grows down)
 	uint32_t* sp = (uint32_t*)((uint32_t)stack + STACK_SIZE);
@@ -109,6 +110,12 @@ task_t* task_create(void (*entry_point)(void)) {
 
 	irq_restore(flags);
 	return new_task;
+
+err_free_task:
+	kfree(new_task);
+err_out:
+	irq_restore(flags);
+	return NULL;
 }
 
 
