@@ -2,6 +2,7 @@
 #define PMM_H
 
 #include <stdint.h>
+#include "../../kernel/panic/panic.h"
 
 struct memorymap_entry {
     uint64_t base;

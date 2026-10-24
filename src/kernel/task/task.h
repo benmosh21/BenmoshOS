@@ -22,6 +22,7 @@ typedef enum {
 typedef struct {
 	// CPU state
 	uint32_t esp;
+	uint32_t cr3;
 
 	// Kernel metadata
 	uint32_t 	 pid;

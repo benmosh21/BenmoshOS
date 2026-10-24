@@ -1,5 +1,5 @@
 #include "pmm.h"
-#include "../../kernel/panic/panic.h"
+
 
 /*
  *
@@ -149,33 +149,31 @@ void pmm_init() {
  * @return: uint32_t The 4KB-aligned physical base address of the frame,
  *                  or 0 if the system is completely out of physical memory.
  */
-uint32_t pmm_alloc_frame() {
-    // Hierarchical Scan: Jump by 1024 frames at a time
-    for (uint32_t i = 0; i < 1024; i++) {
-        // If summary word is 0xFFFFFFFF, all 1024 frames underneath are full.
-        if (summary_bitmap[i] != 0xFFFFFFFF) {
-            // Found a summary bucket with space. Scan its 32 base words.
-            for (int j = 0; j < 32; j++) {
-                if ((summary_bitmap[i] & (1U << j)) == 0) {
-                    // Found the exact base word with space. Scan its 32 bits.
-                    uint32_t word = (i * 32) + j;
-
-                    for (uint32_t k = 0; k < 32; k++) {
-                        if ((bitmap[word] & (1U << k)) == 0) {
-                            // Calculate the absolute physical frame index
-                            uint32_t frame = (word * 32) + k;
-                            pmm_mark_used(frame);
-                            free_frame_count--;
-
-                            return frame * 4096;
-                        }
+uint32_t pmm_alloc_frame(void) {
+    /* 
+     * Scan each 32-bit word directly.
+     * If word == 0xFFFFFFFF, all 32 frames in this bucket are full. Skip it!
+     */
+    for (uint32_t w = 0; w < 32768; w++) {
+        if (bitmap[w] != 0xFFFFFFFF) {
+            for (uint32_t b = 0; b < 32; b++) {
+                if ((bitmap[w] & (1U << b)) == 0) {
+                    uint32_t frame = (w * 32) + b;
+                    
+                    /* Protect Frame 0 from ever being allocated */
+                    if (frame == 0) {
+                        continue;
                     }
+
+                    pmm_mark_used(frame);
+                    free_frame_count--;
+                    return frame * 4096;
                 }
             }
         }
     }
-    
-    return 0; // Return 0 if we are out of memory
+
+    return 0; /* Truly out of memory */
 }
 
 /**

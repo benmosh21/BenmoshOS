@@ -5,6 +5,8 @@
 #include "../tss/tss.h"
 #include "../../cpu/ports/ports.h"
 
+extern uint32_t page_directory[];
+
 static LIST_HEAD(ready_list);
 LIST_HEAD(all_tasks_list);
 static LIST_HEAD(dead_list);
@@ -39,6 +41,9 @@ void task_init(void) {
 	kernel_task.esp 		= 0; // will be filled by switch_context
 	kernel_task.ticks 		= 0;
 	
+	
+	kernel_task.cr3 = (uint32_t)page_directory;
+
 	list_init(&kernel_task.list);
 	list_init(&kernel_task.all_list);
 
@@ -55,6 +60,7 @@ task_t* task_create(void (*entry_point)(void)) {
 
 	task_t* new_task = NULL;
 	uint32_t* stack = NULL;
+	uint32_t* new_pdir = NULL;
 
 	// Allocate memory for the new task's PCB
 	new_task = (task_t*)kmalloc(sizeof(task_t));
@@ -67,6 +73,13 @@ task_t* task_create(void (*entry_point)(void)) {
 	if (stack == NULL) {
 		goto err_free_task;
 	}
+
+	// Create a new address space for the task
+	new_pdir = vmm_create_address_space();
+	if (new_pdir == NULL) {
+		goto err_free_stack;
+	}
+	new_task->cr3 = (uint32_t)new_pdir;
 
 
 	// put the stack at the end of the stack space (stack grows down)
@@ -111,6 +124,10 @@ task_t* task_create(void (*entry_point)(void)) {
 	irq_restore(flags);
 	return new_task;
 
+err_free_pdir:
+	vmm_destroy_address_space(new_task->cr3);
+err_free_stack:
+	kfree_aligned(stack);
 err_free_task:
 	kfree(new_task);
 err_out:
@@ -130,6 +147,11 @@ static void reap_dead_tasks() {
 		// Remove the task from the dead list and all_tasks_list
 		list_del(&task->list);
 		list_del(&task->all_list);
+
+		// Free the address space if it was created
+		if (task->cr3 != (uint32_t)page_directory) {
+			vmm_destroy_address_space((uint32_t*)task->cr3);
+		}
 
 		// Free the stack memory if it was allocated
 		if (task->stack_base != 0) {

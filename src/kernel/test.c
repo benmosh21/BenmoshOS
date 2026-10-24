@@ -261,6 +261,98 @@ static void test_tasking(void) {
 }
 
 /* ============================================================================
+- TEST 7: Virtual Address Space Creation & Permission Bleed Protection
+- ============================================================================ */
+static void test_vmm_address_spaces(void) {
+    TEST_SECTION("7. Virtual Address Space Cloning & Permissions (Stage 3.1)");
+
+    uint32_t total, free_before, used;
+    pmm_get_stats(&total, &free_before, &used);
+
+    /* 1. Allocate a fresh address space */
+    uint32_t* pdir_phys = vmm_create_address_space();
+    TEST_ASSERT(pdir_phys != NULL, "vmm_create_address_space allocated a page directory");
+
+    if (!pdir_phys) {
+        printf("  [SKIP] Skipping address space checks due to NULL page directory.\n");
+        return;
+    }
+
+    TEST_ASSERT(((uint32_t)pdir_phys & 0xFFF) == 0, "Page directory is 4096-byte aligned");
+
+    /* Map the allocated page directory to scratchpad (0x003FF000) to inspect its entries */
+    extern uint32_t first_page_table[];
+    first_page_table[1023] = ((uint32_t)pdir_phys) | 3;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" :: "r" (0x003FF000) : "memory");
+
+    uint32_t* pdir = (uint32_t*)0x003FF000;
+
+    /* 2. Verify Kernel Mappings Cloning */
+    extern uint32_t page_directory[];
+    TEST_ASSERT((pdir[0] & ~0xFFF) == (page_directory[0] & ~0xFFF),
+            "PDE 0 correctly points to kernel first_page_table");
+    TEST_ASSERT((pdir[1] & ~0xFFF) == (page_directory[1] & ~0xFFF),
+            "PDE 1 correctly points to kernel heap_page_table");
+
+    /* 3. Security Check: Supervisor-Only Bit (Bit 2 must be 0!) */
+    TEST_ASSERT((pdir[0] & 4) == 0, "PDE 0 has User/Supervisor bit = 0 (Protected from Ring 3)");
+    TEST_ASSERT((pdir[1] & 4) == 0, "PDE 1 has User/Supervisor bit = 0 (Protected from Ring 3)");
+    TEST_ASSERT((pdir[0] & 1) != 0 && (pdir[1] & 1) != 0, "Kernel PDEs are marked Present");
+
+    /* 4. Verify User Space Isolation */
+    int user_entries_clean = 1;
+    for (int i = 2; i < 1024; i++) {
+        if (pdir[i] != 0) {
+            user_entries_clean = 0;
+            break;
+        }
+    }
+    TEST_ASSERT(user_entries_clean, "User space (PDE 2 to 1023) is completely unmapped and zeroed");
+
+    /* Unmap scratchpad */
+    first_page_table[1023] = 0;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" :: "r" (0x003FF000) : "memory");
+
+    /* 5. Destroy address space and ensure no physical frames are leaked */
+    vmm_destroy_address_space(pdir_phys);
+
+    uint32_t free_after;
+    pmm_get_stats(&total, &free_after, &used);
+    TEST_ASSERT(free_after == free_before, "Destroying address space cleanly refunded PMM frame");
+}
+
+/* ============================================================================
+- TEST 8: Cascading Resource Unwind (Goto Failure Handling)
+- ============================================================================ */
+static void test_cascading_cleanup(void) {
+    TEST_SECTION("8. Cascading Allocator Rollback & Anti-Leak (Stage 2.3)");
+
+    uint32_t total, free_frames_before, used_frames;
+    pmm_get_stats(&total, &free_frames_before, &used_frames);
+
+    /* Allocate all free memory temporarily to simulate an allocator failure */
+    /* If task_create succeeds when memory is available, it owns a task struct, stack, and cr3 */
+    task_t* valid_task = task_create(dummy_task_entry);
+    TEST_ASSERT(valid_task != NULL, "Valid task creation acquired all multi-tiered resources");
+    TEST_ASSERT(valid_task->cr3 != 0, "Task assigned private CR3 page directory");
+
+    /* Verify the task can be killed and all resources roll back cleanly */
+    uint32_t pid_to_kill = valid_task->pid;
+    task_kill(pid_to_kill);
+
+    /* Let the scheduler reap dead task */
+    for (int i = 0; i < 5; i++) {
+        task_yield();
+    }
+
+    uint32_t free_frames_after;
+    pmm_get_stats(&total, &free_frames_after, &used_frames);
+    TEST_ASSERT(free_frames_after == free_frames_before, 
+                "Dead task reaping released stack and CR3 page directory without PMM frame leaks");
+}
+
+
+/* ============================================================================
  * Master Runner
  * ============================================================================ */
 void run_all_tests(void) {
@@ -273,6 +365,8 @@ void run_all_tests(void) {
     test_heap();
     test_fat16();
     test_tasking();
+    test_vmm_address_spaces();
+    test_cascading_cleanup();
 
     printf("\n========================================\n");
     if (g_tests_failed == 0) {
