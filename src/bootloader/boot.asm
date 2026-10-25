@@ -16,7 +16,7 @@ start:
 oem_name:             db 'BMOS    '       ; 8-byte OEM Identifier string
 bytes_per_sector:     dw 512              ; Sector size
 sectors_per_cluster:  db 1                ; Sectors per allocation unit
-reserved_sectors:     dw 50               ; Sectors reserved for Stage 1, Stage 2, and Kernel
+reserved_sectors:     dw 256              ; Sectors reserved for Stage 1, Stage 2, and Kernel
 fat_count:            db 2                ; Number of File Allocation Tables (Main + Backup)
 root_dir_entries:     dw 512              ; Max entries in root directory
 total_sectors_16:     dw 0                ; 0 means use the 32-bit count below instead

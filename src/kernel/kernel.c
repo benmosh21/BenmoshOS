@@ -120,6 +120,87 @@ void task_b(void) {
     return; // Tests our automatic task_exit trampoline!
 }
 
+/* Assembly raw payload for a standalone user task */
+__attribute__((naked)) void user_process_binary(void) {
+    __asm__ volatile(
+        ".intel_syntax noprefix\n"
+
+        /* 1. Print hello from user space using syscall 2 */
+        "mov eax, 2\n"
+        "lea ebx, [test_msg]\n"
+        "int 0x80\n"
+
+        /* 
+         * 2. DEMAND PAGING TEST:
+         * ESP starts at 0x00A00000.
+         * We deliberately push past the single pre-mapped page (0x009FF000)
+         * to trigger Page Faults (#PF) on unmapped pages.
+         */
+        
+        /* Touch 0x009FE000 (Triggers #PF -> Handler allocates frame -> Resumes) */
+        "mov dword ptr [0x009FEFFC], 0xDEADBEEF\n"
+
+        /* Touch 0x009FD000 (Triggers #PF -> Handler allocates frame -> Resumes) */
+        "mov dword ptr [0x009FDFFC], 0xCAFEBABE\n"
+
+        /* 3. Verify read-back from demand-paged memory */
+        "mov edx, dword ptr [0x009FEFFC]\n"
+        "cmp edx, 0xDEADBEEF\n"
+        "jne .failed\n"
+
+        "mov edx, dword ptr [0x009FDFFC]\n"
+        "cmp edx, 0xCAFEBABE\n"
+        "jne .failed\n"
+
+        /* 4. Success banner */
+        "mov eax, 2\n"
+        "lea ebx, [success_msg]\n"
+        "int 0x80\n"
+        "jmp .spin\n"
+
+    ".failed:\n"
+        "mov eax, 2\n"
+        "lea ebx, [fail_msg]\n"
+        "int 0x80\n"
+
+    ".spin:\n"
+        "jmp .spin\n"
+
+        "test_msg:    .asciz \"[User Process] Running in Ring 3 at 0x00800000!\\n\"\n"
+        "success_msg: .asciz \"[User Process] PASSED! Demand paging expanded stack successfully.\\n\"\n"
+        "fail_msg:    .asciz \"[User Process] FAILED: Stack memory mismatch.\\n\"\n"
+    );
+}
+
+/**
+ * @brief Spawns and executes a proper user process with memory isolation.
+ */
+void launch_user_process(void) {
+    /* 1. Allocate a physical frame for User Code */
+    uint32_t code_frame = pmm_alloc_frame();
+    if (!code_frame) kernel_panic("No memory for user code frame!");
+
+    /* 2. Map virtual address 0x00800000 with User permissions (flags = 7) in CURRENT page dir */
+    vmm_map_page_current(code_frame, 0x00800000, 7);
+
+    /* 3. Copy our position-independent user code into the user page */
+    memcpy((uint8_t*)0x00800000, (const uint8_t*)user_process_binary, 512);
+
+    /* 4. Allocate only the single initial top page for the user stack (0x009FF000) */
+    uint32_t stack_top_frame = pmm_alloc_frame();
+    if (!stack_top_frame) kernel_panic("No memory for user stack frame!");
+    vmm_map_page_current(stack_top_frame, 0x009FF000, 7);
+
+    /*
+     * 5. The pages below 0x009FF000 (0x009FE000, 0x009FD000, etc.) are 
+     * LEFT UNMAPPED ON PURPOSE.
+     * When the user program writes to them, the CPU will trip Interrupt 14 (#PF),
+     * and our demand-paging handler will automatically allocate and map them!
+     */
+
+    /* 6. Switch to Ring 3 (User Code: 0x00800000, User Stack: 0x00A00000) */
+    jump_usermode((void*)0x00800000);
+}
 
 __attribute__((section(".text.main")))
 void KernelMain() {
@@ -163,14 +244,11 @@ void KernelMain() {
     __asm__ volatile("sti");
 
     
-    // task_create(task_b);
-    task_create(task_a);
-    task_create(task_a);
-    task_create(task_a);
+
 
     
-    shell_run();
-
+    /* Jump into ring3 user program */
+    launch_user_process();
 
     /* Never reached — all further work done in IRQ handlers */
     while (1) { __asm__ volatile("hlt"); }

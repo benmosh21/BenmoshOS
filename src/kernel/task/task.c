@@ -193,7 +193,7 @@ void task_yield() {
 	// Update hardware TSS for ring 3 re-entry
 	g_tss.esp0 = next_task->stack_top;
 
-	switch_context(&old_task->esp, &next_task->esp);
+	switch_context(&old_task->esp, next_task->esp, next_task->cr3);
 
 	// reenable interrupts after context switch is done
 	irq_restore(flags);

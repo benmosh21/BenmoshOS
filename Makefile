@@ -129,7 +129,7 @@ $(BUILD_DIR)/tests.o: $(SRC_DIR)/kernel/test.c ; @mkdir -p $(@D); $(CC) $(CFLAGS
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 	@echo "==> Building Disk Image: $(OS_IMAGE)"
 	dd if=/dev/zero of=$@ bs=1M count=10 2>/dev/null
-	mkfs.fat -F 16 -R 128 $@ >/dev/null
+	mkfs.fat -F 16 -R 256 $@ >/dev/null
 	dd if=$(BOOT_BIN) of=$@ bs=1 count=3 conv=notrunc 2>/dev/null
 	dd if=$(BOOT_BIN) of=$@ bs=1 skip=62 seek=62 count=450 conv=notrunc 2>/dev/null
 	dd if=$(BOOT_BIN) of=$@ bs=512 skip=1 seek=1 count=1 conv=notrunc 2>/dev/null

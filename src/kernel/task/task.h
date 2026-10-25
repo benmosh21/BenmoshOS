@@ -9,7 +9,7 @@
 
 #define STACK_SIZE 4096
 
-extern void switch_context(uint32_t* current_esp_ptr, uint32_t* new_esp_ptr);
+extern void switch_context(uint32_t* current_esp_ptr, uint32_t new_esp, uint32_t new_cr3);
 extern struct list_head all_tasks_list;
 
 typedef enum {

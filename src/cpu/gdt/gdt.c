@@ -2,7 +2,13 @@
 
 void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
     // Get the location of gdt_start so i can set the bits in the location for the GDT entry
-    uint8_t* gdt_entry = (uint8_t*)&gdt_start + 8 * num;
+    struct {
+        uint16_t limit;
+        uint32_t base;
+    } __attribute__((packed)) gdtr;
+
+    __asm__ volatile ("sgdt %0" : "=m"(gdtr));
+    uint8_t* gdt_entry = (uint8_t*)gdtr.base + (8 * num);
 
     gdt_entry[0] = (limit & 0xFF);                                  // Limit (7:0)
     gdt_entry[1] = (limit >> 8) & 0xFF;                             // Limit (15:8)

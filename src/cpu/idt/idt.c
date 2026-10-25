@@ -73,11 +73,43 @@ void isr_handler(struct interrupt_registers regs) {
         case 0x0E: {
             uint32_t faulting_address;
             __asm__ volatile("{mov %%cr2, %0 | mov %0, cr2}" : "=r" (faulting_address));
-            kernel_panic("Page Fault at Virtual Address: 0x%x (EIP: 0x%x, Error: 0x%x)", 
-                         faulting_address, regs.eip, regs.err_code);
+
+            int present = regs.err_code & 0x1;       /* Bit 0: 0 = not present, 1 = protection violation */
+            int write   = regs.err_code & 0x2;       /* Bit 1: 1 = write access */
+            int user    = regs.err_code & 0x4;       /* Bit 2: 1 = occurred in user mode (Ring 3) */
+
+            /* 
+             * User Stack Demand Paging:
+             * Stack resides in range 0x00900000 - 0x00A00000 (1MB max stack ceiling).
+             * Fault must be caused by a Not-Present page (!present).
+             */
+            if (!present && faulting_address >= 0x00900000 && faulting_address < 0x00A00000) {
+                uint32_t new_frame = pmm_alloc_frame();
+                if (!new_frame) {
+                    kernel_panic("Out of physical memory during stack expansion!");
+                }
+
+                /* Map the 4KB boundary containing the fault address: User + Writable (flags = 7) */
+                uint32_t page_aligned_addr = faulting_address & ~0xFFF;
+                vmm_map_page_current(new_frame, page_aligned_addr, 7);
+
+                /* Diagnostic print: confirms the page fault handler caught and fixed the fault */
+                printf("[#PF Handled] Allocated frame 0x%x for stack page 0x%x\n", 
+                       new_frame, page_aligned_addr);
+
+                /* Page mapped successfully - iret will re-execute the faulting instruction */
+                return;
+            }
+
+            /* Unhandled / Illegal Page Fault: print details and halt */
+            kernel_panic("Fatal Page Fault at 0x%x (EIP: 0x%x, Error: 0x%x [%s%s%s])", 
+                         faulting_address, regs.eip, regs.err_code,
+                         present ? "PROTECTION " : "NOT-PRESENT ",
+                         write   ? "WRITE "      : "READ ",
+                         user    ? "USER"        : "KERNEL");
             break;
         }
-
+        
         /* ---- Hardware IRQs ---- */
         case 0x20:
             /* Timer IRQ0*/

@@ -274,3 +274,120 @@ uint32_t *vmm_create_address_space()
     irq_restore(flags);
     return (uint32_t *)pdir_phys; // Return the physical address of the new
 }
+
+/**
+ * @brief Maps a virtual page in the currently active page directory (from CR3).
+ */
+void vmm_map_page_current(uint32_t physical_address, uint32_t virtual_address, uint32_t flags) {
+    if (virtual_address & 0xFFF) {
+        kernel_panic("vmm_map_page_current: Virtual address 0x%x is not 4KB aligned!", virtual_address);
+        return;
+    }
+
+    uint32_t irq_state = irq_save();
+
+    // Get the current page directory from CR3
+    uint32_t pdi = virtual_address >> 22;
+    uint32_t pti = (virtual_address >> 12) & 0x03FF;
+
+    // get current physical page directory from CR3
+    uint32_t cur_cr3;
+    __asm__ volatile ("{mov %%cr3, %0 | mov %0, cr3}" : "=r"(cur_cr3));
+
+    /**
+     * Map current page directory to scratchpad
+     * to access the page tables for the current process.
+     */
+    extern uint32_t first_page_table[];
+    first_page_table[1023] = cur_cr3 | 3; // Map the current page directory to the scratchpad
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
+
+    // Access the current page directory via the scratchpad
+    uint32_t* pdir = (uint32_t*)0x003FF000;
+
+    if ((pdir[pdi] & 1) == 0) {
+        uint32_t new_table_phys = pmm_alloc_frame();
+        if (!new_table_phys) kernel_panic("VMM Out of Memory! PMM returned 0.");
+
+        // set present + read/write + supervisor flags (flag = 7)
+        pdir[pdi] = new_table_phys | 7;
+
+        // temporarily map the new page table to the scratchpad to zero it out
+        first_page_table[1023] = new_table_phys | 3;
+        __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
+
+        uint32_t* scratch = (uint32_t*)0x003FF000;
+        for (int i = 0; i < 1024; i++) {
+            scratch[i] = 0;
+        }
+    }
+
+    // Map the target page table to the scratchpad to set the page table entry
+    first_page_table[1023] = (pdir[pdi] & ~0xFFF) | 3;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory"); 
+
+    uint32_t* ptable = (uint32_t*)0x003FF000;
+    ptable[pti] = physical_address | flags;
+
+    // Unmap the scratchpad
+    first_page_table[1023] = 0;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" ::"r" (0x003FF000) : "memory");
+
+    irq_restore(irq_state);
+}
+
+
+/**
+ * @brief Maps a virtual page into a specific page directory (by physical address).
+ */
+void vmm_map_page_in_pdir(uint32_t pdir_phys, uint32_t phys_addr, uint32_t virt_addr, uint32_t flags) {
+    uint32_t irq_state = irq_save();
+
+    uint32_t pdi = virt_addr >> 22;
+    uint32_t pti = (virt_addr >> 12) & 0x03FF;
+
+    extern uint32_t first_page_table[];
+
+    /* 1. Map target Page Directory to scratchpad */
+    first_page_table[1023] = (pdir_phys & ~0xFFF) | 3;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" :: "r" (0x003FF000) : "memory");
+    uint32_t* pdir = (uint32_t*)0x003FF000;
+
+    /* 2. Check if Page Table exists; allocate if missing */
+    if ((pdir[pdi] & 1) == 0) {
+        uint32_t new_ptable = pmm_alloc_frame();
+        if (!new_ptable) {
+            kernel_panic("vmm_map_page_in_pdir: Out of memory!");
+        }
+
+        /* Set present + read/write + user */
+        pdir[pdi] = new_ptable | 7;
+
+        /* Temporarily zero the new table */
+        first_page_table[1023] = new_ptable | 3;
+        __asm__ volatile("{invlpg (%0) | invlpg [%0]}" :: "r" (0x003FF000) : "memory");
+        uint32_t* scratch = (uint32_t*)0x003FF000;
+        for (int i = 0; i < 1024; i++) {
+            scratch[i] = 0;
+        }
+
+        /* Re-map page directory back to scratchpad */
+        first_page_table[1023] = (pdir_phys & ~0xFFF) | 3;
+        __asm__ volatile("{invlpg (%0) | invlpg [%0]}" :: "r" (0x003FF000) : "memory");
+    }
+
+    uint32_t ptable_phys = pdir[pdi] & ~0xFFF;
+
+    /* 3. Map target Page Table to scratchpad to set the PTE */
+    first_page_table[1023] = ptable_phys | 3;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" :: "r" (0x003FF000) : "memory");
+    uint32_t* ptable = (uint32_t*)0x003FF000;
+
+    ptable[pti] = (phys_addr & ~0xFFF) | flags;
+
+    /* 4. Unmap scratchpad and restore */
+    first_page_table[1023] = 0;
+    __asm__ volatile("{invlpg (%0) | invlpg [%0]}" :: "r" (0x003FF000) : "memory");
+
+    irq_restore(irq_state);
+}

@@ -250,9 +250,11 @@ static int match_sfn(const dir_entry_t* entry, const char* target) {
     /* Case-insensitive string comparison */
     int i = 0;
     while (sfn[i] != '\0' && target[i] != '\0') {
-        char t = target[i];
-        if (t >= 'A' && t <= 'Z') t += 32;
-        if (sfn[i] != t) return 0;
+        char c1 = sfn[i];
+        char c2 = target[i];
+        if (c2 >= 'A' && c2 <= 'Z') c2 += 32;
+        if (c1 >= 'A' && c1 <= 'Z') c1 += 32;
+        if (c1 != c2) return 0;
         i++;
     }
 
@@ -437,6 +439,7 @@ static int find_file_callback(uint32_t sector, int slot_idx, dir_entry_t* entry,
     
     /* 0xE5 marks a deleted tombstone entry; clear orphan LFN fragments */
     if (first_byte == 0xE5) {
+        memset((uint8_t*)ctx->lfn_buffer, 0, sizeof(ctx->lfn_buffer));
         ctx->lfn_buffer[0] = '\0';
         return 0;
     }
@@ -457,9 +460,22 @@ static int find_file_callback(uint32_t sector, int slot_idx, dir_entry_t* entry,
     /* Non-volume label real entry */
     if (entry->attributes != FAT_ATTR_VOLUME_ID) {
         int matched = 0;
-        if (ctx->lfn_buffer[0] != '\0' && strcmp(ctx->lfn_buffer, ctx->target_name) == 0) {
-            matched = 1;
-        } else if (match_sfn(entry, ctx->target_name)) {
+        if (ctx->lfn_buffer[0] != '\0') {
+            int i = 0;
+            while (ctx->lfn_buffer[i] != '\0' && ctx->target_name[i] != '\0') {
+                char c1 = ctx->lfn_buffer[i];
+                char c2 = ctx->target_name[i];
+                if (c1 >= 'A' && c1 <= 'Z') c1 += 32;
+                if (c2 >= 'A' && c2 <= 'Z') c2 += 32;
+                if (c1 != c2) break;
+                i++;
+            }
+            if (ctx->lfn_buffer[i] == '\0' && ctx->target_name[i] == '\0') {
+                matched = 1;
+            }
+        }
+
+        if (!matched && match_sfn(entry, ctx->target_name)) {
             matched = 1;
         }
 
@@ -468,13 +484,15 @@ static int find_file_callback(uint32_t sector, int slot_idx, dir_entry_t* entry,
             ctx->out_sector = sector;
             ctx->out_idx    = slot_idx;
             ctx->found      = 1;
-            return 1; /* Match found, stop traversal */
+            return 1;
         }
-        ctx->lfn_buffer[0] = '\0';
+
+        memset((uint8_t*)ctx->lfn_buffer, 0, sizeof(ctx->lfn_buffer));
     }
 
     return 0;
 }
+
 
 /**
  * @brief Searches a specific directory for a named file or folder.
@@ -558,6 +576,10 @@ static int fat16_resolve_path(const char* path, uint16_t* out_parent_cluster, ch
 
             current_dir = entry.starting_cluster;
         } else {
+            if (component[0] == '\0') {
+                return -EINVAL; /* Path ends with a slash, invalid final component */
+            }
+
             /* Final target component reached */
             if (out_parent_cluster) *out_parent_cluster = current_dir;
             if (out_final_name)     strcpy(out_final_name, component);
